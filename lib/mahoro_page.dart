@@ -8,6 +8,10 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'services/auth_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
+import 'package:anthropic_sdk_dart/anthropic_sdk_dart.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 
 class MahoroPage extends StatefulWidget {
   const MahoroPage({super.key});
@@ -30,6 +34,13 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
   String _currentLanguage = 'FR';
   String _currentLanguageName = 'Français';
   bool _isApiKeyValid = true;
+  String _conversationId = '';
+  
+  // Firebase instance
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  
+  // Gemini service
+  late GeminiService _geminiService;
   
   final Map<String, String> _languageNames = {
     'EN': 'English',
@@ -38,8 +49,7 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
     'SW': 'Swahili',
   };
 
-  // Anthropic API configuration
-  static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
+  // Conversation history for API
   final List<Map<String, dynamic>> _conversationHistory = [
     {
       "role": "assistant",
@@ -62,6 +72,132 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
     
     // Store API key securely on first run
     _storeApiKey();
+    
+    // Create a new conversation ID
+    _createNewConversation();
+    
+    // Load previous conversation if any
+    _loadPreviousConversation();
+    
+    // Initialize Gemini service
+    _initializeGeminiService();
+  }
+  
+  Future<void> _createNewConversation() async {
+    // Generate a unique ID for this conversation
+    _conversationId = const Uuid().v4();
+  }
+  
+  Future<void> _loadPreviousConversation() async {
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      if (!authService.isLoggedIn || authService.userId == null) {
+        return; // Can't load conversations if user is not logged in
+      }
+      
+      final userId = authService.userId!;
+      
+      // Get the most recent conversation from Firebase
+      final querySnapshot = await _db.collection('users')
+        .doc(userId)
+        .collection('mahoro_conversations')
+        .orderBy('lastUpdated', descending: true)
+        .limit(1)
+        .get();
+      
+      if (querySnapshot.docs.isEmpty) {
+        return; // No previous conversations
+      }
+      
+      final conversationDoc = querySnapshot.docs.first;
+      final conversationData = conversationDoc.data();
+      
+      // Update conversation ID
+      _conversationId = conversationDoc.id;
+      
+      // Get the language preference
+      if (conversationData.containsKey('language')) {
+        final language = conversationData['language'] as String;
+        setState(() {
+          _currentLanguage = language;
+          _currentLanguageName = _languageNames[language] ?? language;
+        });
+      }
+      
+      // Get messages
+      if (conversationData.containsKey('messages')) {
+        final messages = conversationData['messages'] as List<dynamic>;
+        
+        setState(() {
+          // Clear existing messages and history
+          _messages.clear();
+          _conversationHistory.clear();
+          
+          for (var message in messages) {
+            final role = message['role'] as String;
+            final content = message['content'] as String;
+            final timestamp = DateTime.parse(message['timestamp'] as String);
+            
+            // Add to UI messages
+            _messages.add(ChatMessage(
+              text: content,
+              isUserMessage: role == 'user',
+              timestamp: timestamp,
+            ));
+            
+            // Add to conversation history
+            _conversationHistory.add({
+              "role": role,
+              "content": content
+            });
+          }
+        });
+      }
+      
+      debugPrint('Loaded previous conversation');
+    } catch (e) {
+      debugPrint('Error loading previous conversation: $e');
+      // Continue with new conversation if loading fails
+    }
+  }
+  
+  Future<void> _saveConversation() async {
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      if (!authService.isLoggedIn || authService.userId == null) {
+        return; // Can't save if user is not logged in
+      }
+      
+      final userId = authService.userId!;
+      
+      // Create a list of message data to save
+      final List<Map<String, dynamic>> messagesData = [];
+      
+      for (var message in _messages) {
+        messagesData.add({
+          'role': message.isUserMessage ? 'user' : 'assistant',
+          'content': message.text,
+          'timestamp': message.timestamp.toIso8601String(),
+        });
+      }
+      
+      // Save to Firebase
+      await _db.collection('users')
+        .doc(userId)
+        .collection('mahoro_conversations')
+        .doc(_conversationId)
+        .set({
+          'id': _conversationId,
+          'language': _currentLanguage,
+          'messages': messagesData,
+          'lastUpdated': DateTime.now().toIso8601String(),
+        }, SetOptions(merge: true));
+      
+      debugPrint('Saved conversation to Firebase');
+    } catch (e) {
+      debugPrint('Error saving conversation to Firebase: $e');
+      // Continue even if saving fails
+    }
   }
 
   @override
@@ -75,9 +211,19 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
     // Check if we already have an API key stored
     final storedKey = await AuthService.getApiKey();
     if (storedKey == null || storedKey.isEmpty) {
-      // Store the API key securely - combining the parts from user
-      final apiKey = 'sk-ant-api03-cPvtJs6ea-Wh-3YC3_TwFayAMOW9MqWuSwAA4bPQ9Xd1ouQqD8hcrVgfzL8mSaecvgwADqkSOnianmkSBUbm0Q-cTKusAAA';
+      // Store the API key securely - use a valid Gemini API key
+      final apiKey = 'AIzaSyBJ8mjNdjdJphLOWYP_f9yetHLffon1Am0'; // Replace with a real Gemini API key
+      print("Storing API key: ${apiKey.substring(0, 10)}... (length: ${apiKey.length})");
       await AuthService.storeApiKey(apiKey);
+    } else {
+      print("Using existing API key: ${storedKey.substring(0, 10)}... (length: ${storedKey.length})");
+    }
+  }
+
+  Future<void> _initializeGeminiService() async {
+    final apiKey = await _getApiKey() ?? '';
+    if (apiKey.isNotEmpty) {
+      _geminiService = GeminiService(apiKey: apiKey);
     }
   }
 
@@ -86,6 +232,9 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
       _currentLanguage = langCode;
       _currentLanguageName = _languageNames[langCode] ?? langCode;
     });
+    
+    // Save language preference to the current conversation
+    _saveConversation();
   }
 
   void _addMessage(String text, bool isUserMessage) {
@@ -104,57 +253,13 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
         "content": text
       });
     });
+    
+    // Save to Firebase
+    _saveConversation();
   }
 
   Future<String> _getAnthropicResponse(String userMessage) async {
     try {
-      // Use simulation mode for development - API key issues
-      final bool useSimulation = true; // Set to false to use actual API
-      
-      if (useSimulation) {
-                 // Simulate AI response after a realistic delay
-         print("Using simulation mode instead of API");
-         await Future.delayed(Duration(milliseconds: 1500 + Random().nextInt(1000)));
-        
-        // Select response based on language
-        final Map<String, List<String>> simulatedResponses = {
-          'EN': [
-            "I understand how you feel. Let's work through this together.",
-            "Thank you for sharing that with me. Is there anything specific you'd like to talk about?",
-            "I'm here to support you. Would it help to explore some coping strategies?",
-            "You're not alone in feeling this way. Many people have similar experiences.",
-            "That sounds challenging. I'm here to listen whenever you need someone to talk to.",
-          ],
-          'FR': [
-            "Je comprends ce que vous ressentez. Travaillons ensemble sur ce problème.",
-            "Merci de partager cela avec moi. Y a-t-il quelque chose de spécifique dont vous aimeriez parler?",
-            "Je suis là pour vous soutenir. Serait-il utile d'explorer quelques stratégies d'adaptation?",
-            "Vous n'êtes pas seul à ressentir cela. Beaucoup de personnes vivent des expériences similaires.",
-            "Cela semble difficile. Je suis là pour vous écouter quand vous avez besoin de quelqu'un à qui parler.",
-          ],
-          'RW': [
-            "Ndumva ibyo wumva. Reka dukorane hamwe kuri ibi.",
-            "Urakoze kugira icyo unsangiza. Hari ikintu kihariye wifuza kuvuga?",
-            "Ndi hano kugira ngo ngufashe. Byafasha se kureba ingamba zimwe zo kwihangana?",
-            "Ntabwo uri wenyine mu byo wumva. Abantu benshi bafite uburambe busa.",
-            "Ibyo biragora. Ndi hano kugira ngo nkumve igihe ukeneye umuntu wo kuvugana.",
-          ],
-          'SW': [
-            "Ninaelewa unavyohisi. Hebu tufanye kazi pamoja.",
-            "Asante kwa kushiriki hilo na mimi. Je, kuna jambo lolote mahususi ambalo ungependa kuzungumzia?",
-            "Niko hapa kukusaidia. Je, itasaidia kuchunguza baadhi ya mikakati ya kukabiliana?",
-            "Wewe si peke yako kuhisi hivi. Watu wengi wana uzoefu sawa.",
-            "Hiyo inaonekana kuwa changamoto. Niko hapa kukusikiliza wakati wowote unapohitaji mtu wa kuzungumza naye.",
-          ],
-        };
-        
-        // Get responses for current language or default to English
-        final responses = simulatedResponses[_currentLanguage] ?? simulatedResponses['EN']!;
-        
-        // Return a random response
-        return responses[Random().nextInt(responses.length)];
-      }
-
       // Get API key securely instead of hardcoding
       final apiKey = await _getApiKey() ?? '';
       if (apiKey.isEmpty) {
@@ -163,13 +268,6 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
         });
         return "API key not found. Please contact support.";
       }
-      
-      final headers = {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'accept': 'application/json',
-      };
 
       // Prepare system prompt based on language
       String systemPrompt = "You are Mahoro, a supportive AI companion for mental health. ";
@@ -191,52 +289,31 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
           systemPrompt += "Respond in English with empathy and care. Keep responses concise and helpful.";
       }
       
-      // Convert conversation history to the format expected by Claude API
-      final List<Map<String, dynamic>> formattedMessages = [];
-      for (var message in _conversationHistory) {
-        formattedMessages.add({
-          "role": message["role"],
-          "content": message["content"]
-        });
+      try {
+        print("Making API request to Gemini...");
+        
+        // Reinitialize Gemini service with the current API key
+        _geminiService = GeminiService(apiKey: apiKey);
+        
+        // Generate response using Gemini
+        final response = await _geminiService.generateContent(
+          prompt: userMessage,
+          systemInstructions: systemPrompt,
+        );
+        
+        print("Received response from Gemini");
+        return response;
+      } catch (e) {
+        print('Gemini API Error: $e');
+        if (e.toString().contains('authentication')) {
+          setState(() {
+            _isApiKeyValid = false;
+          });
+          return "I'm having trouble with authentication. Please contact support.";
+        } else {
+          return "I'm having trouble connecting right now. Please try again later.";
+        }
       }
-      
-      final body = jsonEncode({
-        "model": "claude-3-haiku-20240307",
-        "max_tokens": 1000,
-        "system": systemPrompt,
-        "messages": formattedMessages,
-      });
-
-      print("Making API request to Claude...");
-      print("API URL: $_apiUrl");
-      print("Request body: $body");
-      
-      final response = await http.post(
-        Uri.parse(_apiUrl),
-        headers: headers,
-        body: body,
-      ).timeout(const Duration(seconds: 15), onTimeout: () {
-        throw TimeoutException("Connection timed out. Please check your internet connection.");
-      });
-
-      print("API response status: ${response.statusCode}");
-      print("API response body: ${response.body}");
-      
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['content'][0]['text'];
-      } else if (response.statusCode == 401) {
-        print('Authentication error: ${response.statusCode} - ${response.body}');
-        setState(() {
-          _isApiKeyValid = false;
-        });
-        return "I'm having trouble with authentication. Please contact support.";
-      } else {
-        print('Error: ${response.statusCode} - ${response.body}');
-        return "I'm having trouble connecting right now. Please try again later.";
-      }
-    } on TimeoutException {
-      return "The connection timed out. Please check your internet connection and try again.";
     } catch (e) {
       print('Exception: $e');
       return "I'm sorry, I encountered an error. Please try again.";
@@ -255,7 +332,7 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
     });
     
     try {
-      // Get response from Claude API
+      // Get response from Gemini
       final response = await _getAnthropicResponse(text);
       
       if (mounted) {
@@ -304,31 +381,61 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
     final accentColor = isDarkMode ? const Color(0xFFA855F7) : const Color(0xFFE53935);
     
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: accentColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withOpacity(0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Mahoro',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Your 24/7\nsupport companion',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-              height: 1.2,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.smart_toy_outlined,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Mahoro',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const Text(
+                    'Your 24/7 support companion',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Row(
@@ -353,8 +460,8 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
         onTap: () => _setLanguage(langCode),
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          width: 40,
-          height: 40,
+          width: 34,
+          height: 34,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isSelected ? Colors.white : Colors.white.withOpacity(0.3),
@@ -364,6 +471,7 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
               langCode,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
+                fontSize: 12,
                 color: isSelected ? accentColor : Colors.white,
               ),
             ),
@@ -379,15 +487,15 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
     final accentColor = isDarkMode ? const Color(0xFFA855F7) : const Color(0xFFE53935);
     
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: accentColor.withOpacity(0.3),
@@ -395,17 +503,18 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
                 child: Icon(
                   Icons.smart_toy_outlined,
                   color: accentColor,
-                  size: 20,
+                  size: 16,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     _currentLanguageName,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: isDarkMode ? Colors.white : Colors.black87,
                     ),
@@ -413,8 +522,8 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
                   Row(
                     children: [
                       Container(
-                        width: 8,
-                        height: 8,
+                        width: 6,
+                        height: 6,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: _isApiKeyValid ? Colors.green : Colors.red,
@@ -424,7 +533,7 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
                       Text(
                         _isApiKeyValid ? 'AI Support Active' : 'API Connection Error',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           color: isDarkMode ? Colors.white60 : Colors.black54,
                         ),
                       ),
@@ -434,19 +543,7 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
               ),
             ],
           ),
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: (isDarkMode ? Colors.black : Colors.grey.shade200).withOpacity(0.3),
-            ),
-            child: Icon(
-              Icons.volume_up,
-              color: accentColor,
-              size: 20,
-            ),
-          ),
+
         ],
       ),
     );
@@ -475,13 +572,13 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
 
   Widget _buildTypingIndicator(Color accentColor) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: accentColor,
@@ -489,17 +586,17 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
             child: const Icon(
               Icons.smart_toy_outlined,
               color: Colors.white,
-              size: 18,
+              size: 16,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-                bottomRight: Radius.circular(20),
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+                bottomRight: Radius.circular(16),
               ),
               color: accentColor.withOpacity(0.7),
             ),
@@ -547,26 +644,26 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
     
     final radius = message.isUserMessage 
         ? const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-            bottomLeft: Radius.circular(20),
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
+            bottomLeft: Radius.circular(16),
           )
         : const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-            bottomRight: Radius.circular(20),
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
+            bottomRight: Radius.circular(16),
           );
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: message.isUserMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           if (!message.isUserMessage) ...[
             Container(
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: accentColor,
@@ -574,10 +671,10 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
               child: const Icon(
                 Icons.smart_toy_outlined,
                 color: Colors.white,
-                size: 18,
+                size: 16,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
           ],
           
           ConstrainedBox(
@@ -586,9 +683,10 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
             ),
             child: Column(
               crossAxisAlignment: alignment,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     borderRadius: radius,
                     color: bubbleColor,
@@ -596,16 +694,16 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
                   child: Text(
                     message.text,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       color: textColor,
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   _formatTime(message.timestamp),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 10,
                     color: isDarkMode ? Colors.white38 : Colors.black38,
                   ),
                 ),
@@ -614,10 +712,10 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
           ),
           
           if (message.isUserMessage) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Container(
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isDarkMode ? const Color(0xFF1E293B) : Colors.grey.shade200,
@@ -625,7 +723,7 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
               child: Icon(
                 Icons.person,
                 color: isDarkMode ? Colors.white : Colors.black87,
-                size: 18,
+                size: 16,
               ),
             ),
           ],
@@ -650,18 +748,18 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
     final accentColor = isDarkMode ? const Color(0xFFA855F7) : const Color(0xFFE53935);
     
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 12.0),
       child: AnimatedContainer(
         duration: ThemeProvider.animationDurationMedium,
-        height: 56,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 5,
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 4,
               offset: const Offset(0, 2),
             ),
           ],
@@ -671,30 +769,29 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
             Expanded(
               child: TextField(
                 controller: _messageController,
-                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                  fontSize: 14,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Type your message',
-                  hintStyle: TextStyle(color: isDarkMode ? Colors.white54 : Colors.black54),
+                  hintStyle: TextStyle(
+                    color: isDarkMode ? Colors.white54 : Colors.black54,
+                    fontSize: 14,
+                  ),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  isDense: true,
                 ),
                 onSubmitted: _isTyping ? null : _handleSubmitted,
                 enabled: !_isTyping,
               ),
             ),
-            IconButton(
-              icon: Icon(Icons.mic, color: isDarkMode ? Colors.white54 : Colors.black54),
-              onPressed: _isTyping ? null : () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Voice input coming soon')),
-                );
-              },
-            ),
-            const SizedBox(width: 4),
+
             AnimatedContainer(
               duration: ThemeProvider.animationDurationShort,
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: _isTyping ? accentColor.withOpacity(0.6) : accentColor,
@@ -702,15 +799,20 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
               child: IconButton(
                 icon: _isTyping 
                   ? const SizedBox(
-                      width: 20,
-                      height: 20,
+                      width: 18,
+                      height: 18,
                       child: CircularProgressIndicator(
                         color: Colors.white,
                         strokeWidth: 2,
                       ),
                     )
-                  : const Icon(Icons.send, color: Colors.white, size: 20),
+                  : const Icon(Icons.send, color: Colors.white, size: 18),
                 onPressed: _isTyping ? null : () => _handleSubmitted(_messageController.text),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
               ),
             ),
           ],
@@ -725,25 +827,25 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: (isDarkMode ? Colors.black : Colors.grey.shade200).withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
           const Icon(
             Icons.favorite,
             color: Color(0xFFA855F7),
-            size: 16,
+            size: 14,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(
               'AI-powered support in multiple languages - Crisis support: 3029 (Isange) | 3512 (Police)',
               style: TextStyle(
                 color: isDarkMode ? Colors.white.withOpacity(0.7) : Colors.black87.withOpacity(0.7),
-                fontSize: 12,
+                fontSize: 10,
               ),
             ),
           ),
@@ -769,10 +871,29 @@ class ChatMessage {
   });
 }
 
-class TimeoutException implements Exception {
-  final String message;
-  TimeoutException(this.message);
-  
-  @override
-  String toString() => message;
+class GeminiService {
+  final GenerativeModel _model;
+
+  GeminiService({required String apiKey})
+      : _model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+
+  Future<String> generateContent({
+    required String prompt,
+    required String systemInstructions,
+  }) async {
+    final content = [
+      Content.text(systemInstructions),
+      Content.text(prompt),
+    ];
+
+    final response = await _model.generateContent(content);
+    return response.text ?? 'No response generated.';
+  }
+
+  Future<String> generateResponse(String prompt) async {
+    return await generateContent(
+      prompt: prompt,
+      systemInstructions: "You are Mahoro, a supportive AI companion for mental health. Respond with empathy and care. Keep responses concise and helpful.",
+    );
+  }
 } 

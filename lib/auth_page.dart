@@ -3,9 +3,130 @@ import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'theme_provider.dart';
 import 'services/auth_service.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+
+// User data class to store user information
+class UserData {
+  final String id;
+  final String name;
+  final String email;
+  final String password;
+  final DateTime createdAt;
+  final bool isEmailLink;
+  Map<String, dynamic> additionalData;
+
+  UserData({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.password,
+    required this.createdAt,
+    this.isEmailLink = false,
+    this.additionalData = const {},
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'password': password,
+      'createdAt': createdAt.toIso8601String(),
+      'isEmailLink': isEmailLink,
+      'additionalData': additionalData,
+    };
+  }
+
+  factory UserData.fromJson(Map<String, dynamic> json) {
+    return UserData(
+      id: json['id'],
+      name: json['name'],
+      email: json['email'],
+      password: json['password'],
+      createdAt: DateTime.parse(json['createdAt']),
+      isEmailLink: json['isEmailLink'] ?? false,
+      additionalData: json['additionalData'] ?? {},
+    );
+  }
+}
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
+
+  // Static user storage
+  static List<UserData> users = [];
+  static const _uuid = Uuid();
+
+  // Initialize users from SharedPreferences
+  static Future<void> loadUsers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final usersJson = prefs.getString('local_users');
+    if (usersJson != null) {
+      final List<dynamic> usersList = jsonDecode(usersJson);
+      users = usersList.map((json) => UserData.fromJson(json)).toList();
+    }
+  }
+
+  // Save users to SharedPreferences
+  static Future<void> saveUsers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final usersJson = jsonEncode(users.map((user) => user.toJson()).toList());
+    await prefs.setString('local_users', usersJson);
+  }
+
+  // Add a new user
+  static Future<UserData> addUser({
+    required String name,
+    required String email,
+    required String password,
+    bool isEmailLink = false,
+    Map<String, dynamic> additionalData = const {},
+  }) async {
+    // Check if user with email already exists
+    if (users.any((user) => user.email == email)) {
+      throw Exception('Email already registered');
+    }
+
+    final newUser = UserData(
+      id: _uuid.v4(),
+      name: name,
+      email: email,
+      password: password, // In a real app, should be hashed
+      createdAt: DateTime.now(),
+      isEmailLink: isEmailLink,
+      additionalData: additionalData,
+    );
+
+    users.add(newUser);
+    await saveUsers();
+    return newUser;
+  }
+
+  // Find user by email
+  static UserData? findUserByEmail(String email) {
+    try {
+      return users.firstWhere((user) => user.email == email);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Update user data
+  static Future<void> updateUser(UserData updatedUser) async {
+    final index = users.indexWhere((user) => user.id == updatedUser.id);
+    if (index != -1) {
+      users[index] = updatedUser;
+      await saveUsers();
+    }
+  }
+
+  // Delete user
+  static Future<void> deleteUser(String userId) async {
+    users.removeWhere((user) => user.id == userId);
+    await saveUsers();
+  }
 
   @override
   State<AuthPage> createState() => _AuthPageState();
@@ -14,6 +135,7 @@ class AuthPage extends StatefulWidget {
 class _AuthPageState extends State<AuthPage>
     with SingleTickerProviderStateMixin {
   bool _isLogin = true;
+  bool _isPasswordless = false;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
@@ -24,6 +146,8 @@ class _AuthPageState extends State<AuthPage>
   bool _obscurePassword = true;
   bool _isSubmitting = false;
   String? _errorMessage;
+  bool _emailLinkSent = false;
+  final Color accentColor = const Color(0xFF8A4FFF); // Added accent color definition
 
   @override
   void initState() {
@@ -43,6 +167,9 @@ class _AuthPageState extends State<AuthPage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
     _animationController.forward();
+    
+    // Initialize local users storage
+    AuthPage.loadUsers();
   }
 
   @override
@@ -58,6 +185,17 @@ class _AuthPageState extends State<AuthPage>
     setState(() {
       _isLogin = !_isLogin;
       _errorMessage = null;
+      _emailLinkSent = false;
+      _animationController.reset();
+      _animationController.forward();
+    });
+  }
+
+  void _togglePasswordlessMode() {
+    setState(() {
+      _isPasswordless = !_isPasswordless;
+      _errorMessage = null;
+      _emailLinkSent = false;
       _animationController.reset();
       _animationController.forward();
     });
@@ -73,49 +211,112 @@ class _AuthPageState extends State<AuthPage>
       final authService = Provider.of<AuthService>(context, listen: false);
 
       try {
-        if (_isLogin) {
-          final success = await authService.login(
-            _emailController.text.trim(),
-            _passwordController.text.trim(),
-          );
+        if (_isPasswordless) {
+          // Handle passwordless email link sign-in
+          final email = _emailController.text.trim();
+          
+          // Store user in local storage if they don't exist
+          if (AuthPage.findUserByEmail(email) == null) {
+            await AuthPage.addUser(
+              name: email.split('@')[0],
+              email: email,
+              password: '',
+              isEmailLink: true,
+            );
+          }
+          
+          final result = await authService.sendSignInLinkToEmail(email);
+          
+          switch (result) {
+            case EmailLinkResult.sent:
+              setState(() {
+                _emailLinkSent = true;
+              });
+              break;
+            case EmailLinkResult.invalidEmail:
+              setState(() {
+                _errorMessage = "Please enter a valid email address.";
+              });
+              break;
+            case EmailLinkResult.error:
+              setState(() {
+                _errorMessage = "Failed to send sign-in link. Please try again.";
+              });
+              break;
+          }
+        } else if (_isLogin) {
+          // First check local storage
+          final user = AuthPage.findUserByEmail(_emailController.text.trim());
+          bool localSuccess = false;
+          
+          if (user != null && user.password == _passwordController.text.trim()) {
+            localSuccess = true;
+            // Update login state locally
+            if (mounted) {
+              _showSuccessMessage('Login successful!');
+              Navigator.of(context).pop();
+            }
+          }
+          
+          // If local login fails or no local user, try Firebase
+          if (!localSuccess) {
+            final success = await authService.login(
+              _emailController.text.trim(),
+              _passwordController.text.trim(),
+            );
 
-          if (!success) {
-            setState(() {
-              _errorMessage = "Invalid email or password. Please try again.";
-            });
-          } else if (mounted) {
-            _showSuccessMessage('Login successful!');
-            Navigator.of(context).pop();
+            if (!success) {
+              setState(() {
+                _errorMessage = "Invalid email or password. Please try again.";
+              });
+            } else if (mounted) {
+              _showSuccessMessage('Login successful!');
+              Navigator.of(context).pop();
+            }
           }
         } else {
-          // Handle registration with the new enum result
-          final result = await authService.register(
-            _nameController.text.trim(),
-            _emailController.text.trim(),
-            _passwordController.text.trim(),
-          );
+          // Handle registration
+          try {
+            // Add user to local storage
+            await AuthPage.addUser(
+              name: _nameController.text.trim(),
+              email: _emailController.text.trim(),
+              password: _passwordController.text.trim(),
+            );
+            
+            // Also register with Firebase
+            final result = await authService.register(
+              _nameController.text.trim(),
+              _emailController.text.trim(),
+              _passwordController.text.trim(),
+            );
 
-          switch (result) {
-            case RegistrationResult.success:
-              if (mounted) {
-                _showSuccessMessage('Account created successfully!');
-                Navigator.of(context).pop();
-              }
-              break;
-            case RegistrationResult.emailAlreadyExists:
-              setState(() {
-                _errorMessage = "This email is already registered. Please login instead.";
-                // Optionally switch to login mode
-                _isLogin = true;
-                _animationController.reset();
-                _animationController.forward();
-              });
-              break;
-            case RegistrationResult.error:
-              setState(() {
-                _errorMessage = "Registration failed. Please try again.";
-              });
-              break;
+            switch (result) {
+              case RegistrationResult.success:
+                if (mounted) {
+                  _showSuccessMessage('Account created successfully!');
+                  Navigator.of(context).pop();
+                }
+                break;
+              case RegistrationResult.emailAlreadyExists:
+                setState(() {
+                  _errorMessage = "This email is already registered. Please login instead.";
+                  // Optionally switch to login mode
+                  _isLogin = true;
+                  _animationController.reset();
+                  _animationController.forward();
+                });
+                break;
+              case RegistrationResult.error:
+                setState(() {
+                  _errorMessage = "Registration failed. Please try again.";
+                });
+                break;
+            }
+          } catch (e) {
+            setState(() {
+              _errorMessage = e.toString();
+            });
           }
         }
       } catch (e) {
@@ -190,42 +391,25 @@ class _AuthPageState extends State<AuthPage>
                       key: _formKey,
                       child: Column(
                         children: [
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
                           _buildHeader(isDarkMode),
-                          const SizedBox(height: 40),
-                          _buildAuthToggle(accentColor),
                           const SizedBox(height: 30),
+                          _buildAuthToggle(accentColor),
+                          const SizedBox(height: 24),
                           if (_errorMessage != null) _buildErrorMessage(),
+                          if (_emailLinkSent) _buildEmailLinkSentMessage(),
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 300),
-                            switchInCurve: Curves.easeIn,
-                            switchOutCurve: Curves.easeOut,
-                            transitionBuilder: (
-                              Widget child,
-                              Animation<double> animation,
-                            ) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: SlideTransition(
-                                  position: Tween<Offset>(
-                                    begin: const Offset(0, 0.1),
-                                    end: Offset.zero,
-                                  ).animate(animation),
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child:
-                                _isLogin
-                                    ? _buildLoginForm(accentColor, isDarkMode)
-                                    : _buildSignupForm(accentColor, isDarkMode),
+                            child: _isPasswordless
+                                ? _buildPasswordlessFields()
+                                : _isLogin
+                                    ? _buildLoginFields()
+                                    : _buildRegisterFields(),
                           ),
-                          const SizedBox(height: 20),
-                          _buildSubmitButton(accentColor),
-                          const SizedBox(height: 30),
-                          _buildPrivacyNote(isDarkMode),
-                          const SizedBox(height: 20),
-                          _buildFooter(isDarkMode),
+                          const SizedBox(height: 24),
+                          _buildSubmitButton(),
+                          const SizedBox(height: 16),
+                          _buildPasswordlessToggle(),
                         ],
                       ),
                     ),
@@ -240,27 +424,425 @@ class _AuthPageState extends State<AuthPage>
   }
 
   Widget _buildErrorMessage() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
-
     return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(isDarkMode ? 0.2 : 0.1),
+        color: Colors.red.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.red.withOpacity(0.3)),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: Colors.red[300], size: 20),
+          const Icon(Icons.error_outline, color: Colors.red, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               _errorMessage!,
-              style: TextStyle(
-                color: isDarkMode ? Colors.red[200] : Colors.red[700],
-                fontSize: 14,
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailLinkSentMessage() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.green.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Sign-in link sent!',
+                  style: TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Check your email and click the link to sign in.',
+                  style: TextStyle(color: Colors.green),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPasswordlessFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Email Address',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white70
+                : Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildEmailField(),
+      ],
+    );
+  }
+
+  Widget _buildLoginFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Email Address',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white70
+                : Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildEmailField(),
+        const SizedBox(height: 16),
+        Text(
+          'Password',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white70
+                : Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildPasswordField(),
+      ],
+    );
+  }
+
+  Widget _buildRegisterFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Full Name',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white70
+                : Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildNameField(),
+        const SizedBox(height: 16),
+        Text(
+          'Email Address',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white70
+                : Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildEmailField(),
+        const SizedBox(height: 16),
+        Text(
+          'Password',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white70
+                : Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildPasswordField(),
+      ],
+    );
+  }
+
+  Widget _buildPasswordlessToggle() {
+    return TextButton(
+      onPressed: _togglePasswordlessMode,
+      child: Text(
+        _isPasswordless
+            ? 'Use password to sign in'
+            : 'Sign in with email link (no password)',
+        style: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF8A4FFF)
+              : const Color(0xFFE53935),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmailField() {
+    return TextFormField(
+      controller: _emailController,
+      keyboardType: TextInputType.emailAddress,
+      autocorrect: false,
+      style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87),
+      decoration: InputDecoration(
+        labelText: 'Email Address',
+        labelStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+        ),
+        prefixIcon: Icon(
+          Icons.email_outlined,
+          color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black12,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black12,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38, width: 2),
+        ),
+        filled: true,
+        fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter your email';
+        }
+        if (!value.contains('@') || !value.contains('.')) {
+          return 'Please enter a valid email address';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return TextFormField(
+      controller: _passwordController,
+      obscureText: _obscurePassword,
+      style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87),
+      decoration: InputDecoration(
+        labelText: 'Password',
+        labelStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+        ),
+        prefixIcon: Icon(
+          Icons.lock_outline,
+          color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38,
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscurePassword
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38,
+          ),
+          onPressed: () {
+            setState(() {
+              _obscurePassword = !_obscurePassword;
+            });
+          },
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black12,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black12,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38, width: 2),
+        ),
+        filled: true,
+        fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter your password';
+        }
+        if (value.length < 6) {
+          return 'Password must be at least 6 characters';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildNameField() {
+    return TextFormField(
+      controller: _nameController,
+      keyboardType: TextInputType.name,
+      textCapitalization: TextCapitalization.words,
+      style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87),
+      decoration: InputDecoration(
+        labelText: 'Full Name',
+        labelStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+        ),
+        prefixIcon: Icon(
+          Icons.person_outline,
+          color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black12,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black12,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38, width: 2),
+        ),
+        filled: true,
+        fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter your name';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 55,
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submitForm,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accentColor,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: accentColor.withOpacity(0.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child:
+            _isSubmitting
+                ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+                : Text(
+                  _isLogin ? 'Login' : 'Create Account',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+      ),
+    );
+  }
+
+  Widget _buildAuthToggle(Color accentColor) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(50),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextButton(
+              onPressed: _isLogin ? null : _toggleAuthMode,
+              style: TextButton.styleFrom(
+                foregroundColor:
+                    _isLogin
+                        ? Colors.white
+                        : isDarkMode
+                        ? Colors.white70
+                        : Colors.black54,
+                backgroundColor: _isLogin ? accentColor : Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: Text(
+                'Login',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: _isLogin ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: TextButton(
+              onPressed: _isLogin ? _toggleAuthMode : null,
+              style: TextButton.styleFrom(
+                foregroundColor:
+                    !_isLogin
+                        ? Colors.white
+                        : isDarkMode
+                        ? Colors.white70
+                        : Colors.black54,
+                backgroundColor: !_isLogin ? accentColor : Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: Text(
+                'Sign Up',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: !_isLogin ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
             ),
           ),
@@ -351,387 +933,6 @@ class _AuthPageState extends State<AuthPage>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildAuthToggle(Color accentColor) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(50),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextButton(
-              onPressed: _isLogin ? null : _toggleAuthMode,
-              style: TextButton.styleFrom(
-                foregroundColor:
-                    _isLogin
-                        ? Colors.white
-                        : isDarkMode
-                        ? Colors.white70
-                        : Colors.black54,
-                backgroundColor: _isLogin ? accentColor : Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: Text(
-                'Login',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: _isLogin ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: TextButton(
-              onPressed: _isLogin ? _toggleAuthMode : null,
-              style: TextButton.styleFrom(
-                foregroundColor:
-                    !_isLogin
-                        ? Colors.white
-                        : isDarkMode
-                        ? Colors.white70
-                        : Colors.black54,
-                backgroundColor: !_isLogin ? accentColor : Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: Text(
-                'Sign Up',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: !_isLogin ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLoginForm(Color accentColor, bool isDarkMode) {
-    return Column(
-      key: const ValueKey('login_form'),
-      children: [
-        TextFormField(
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          autocorrect: false,
-          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
-          decoration: InputDecoration(
-            labelText: 'Email Address',
-            labelStyle: TextStyle(
-              color: isDarkMode ? Colors.white70 : Colors.black54,
-            ),
-            prefixIcon: Icon(
-              Icons.email_outlined,
-              color: isDarkMode ? Colors.white54 : Colors.black38,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDarkMode ? Colors.white30 : Colors.black12,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDarkMode ? Colors.white30 : Colors.black12,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: accentColor, width: 2),
-            ),
-            filled: true,
-            fillColor:
-                isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your email';
-            }
-            if (!value.contains('@') || !value.contains('.')) {
-              return 'Please enter a valid email address';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 20),
-        TextFormField(
-          controller: _passwordController,
-          obscureText: _obscurePassword,
-          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
-          decoration: InputDecoration(
-            labelText: 'Password',
-            labelStyle: TextStyle(
-              color: isDarkMode ? Colors.white70 : Colors.black54,
-            ),
-            prefixIcon: Icon(
-              Icons.lock_outline,
-              color: isDarkMode ? Colors.white54 : Colors.black38,
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscurePassword
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: isDarkMode ? Colors.white54 : Colors.black38,
-              ),
-              onPressed: () {
-                setState(() {
-                  _obscurePassword = !_obscurePassword;
-                });
-              },
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDarkMode ? Colors.white30 : Colors.black12,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDarkMode ? Colors.white30 : Colors.black12,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: accentColor, width: 2),
-            ),
-            filled: true,
-            fillColor:
-                isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your password';
-            }
-            if (value.length < 6) {
-              return 'Password must be at least 6 characters';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 10),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: () {
-              // For demo purposes, do nothing
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: accentColor,
-              padding: EdgeInsets.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-            ),
-            child: const Text(
-              'Forgot Password?',
-              style: TextStyle(fontSize: 14),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSignupForm(Color accentColor, bool isDarkMode) {
-    return Column(
-      key: const ValueKey('signup_form'),
-      children: [
-        TextFormField(
-          controller: _nameController,
-          keyboardType: TextInputType.name,
-          textCapitalization: TextCapitalization.words,
-          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
-          decoration: InputDecoration(
-            labelText: 'Full Name',
-            labelStyle: TextStyle(
-              color: isDarkMode ? Colors.white70 : Colors.black54,
-            ),
-            prefixIcon: Icon(
-              Icons.person_outline,
-              color: isDarkMode ? Colors.white54 : Colors.black38,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDarkMode ? Colors.white30 : Colors.black12,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDarkMode ? Colors.white30 : Colors.black12,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: accentColor, width: 2),
-            ),
-            filled: true,
-            fillColor:
-                isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your name';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 20),
-        TextFormField(
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          autocorrect: false,
-          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
-          decoration: InputDecoration(
-            labelText: 'Email Address',
-            labelStyle: TextStyle(
-              color: isDarkMode ? Colors.white70 : Colors.black54,
-            ),
-            prefixIcon: Icon(
-              Icons.email_outlined,
-              color: isDarkMode ? Colors.white54 : Colors.black38,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDarkMode ? Colors.white30 : Colors.black12,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDarkMode ? Colors.white30 : Colors.black12,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: accentColor, width: 2),
-            ),
-            filled: true,
-            fillColor:
-                isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your email';
-            }
-            if (!value.contains('@') || !value.contains('.')) {
-              return 'Please enter a valid email address';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 20),
-        TextFormField(
-          controller: _passwordController,
-          obscureText: _obscurePassword,
-          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
-          decoration: InputDecoration(
-            labelText: 'Password',
-            labelStyle: TextStyle(
-              color: isDarkMode ? Colors.white70 : Colors.black54,
-            ),
-            prefixIcon: Icon(
-              Icons.lock_outline,
-              color: isDarkMode ? Colors.white54 : Colors.black38,
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscurePassword
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: isDarkMode ? Colors.white54 : Colors.black38,
-              ),
-              onPressed: () {
-                setState(() {
-                  _obscurePassword = !_obscurePassword;
-                });
-              },
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDarkMode ? Colors.white30 : Colors.black12,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDarkMode ? Colors.white30 : Colors.black12,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: accentColor, width: 2),
-            ),
-            filled: true,
-            fillColor:
-                isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter a password';
-            }
-            if (value.length < 6) {
-              return 'Password must be at least 6 characters';
-            }
-            return null;
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSubmitButton(Color accentColor) {
-    return SizedBox(
-      width: double.infinity,
-      height: 55,
-      child: ElevatedButton(
-        onPressed: _isSubmitting ? null : _submitForm,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: accentColor,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: accentColor.withOpacity(0.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-        ),
-        child:
-            _isSubmitting
-                ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-                : Text(
-                  _isLogin ? 'Login' : 'Create Account',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-      ),
     );
   }
 

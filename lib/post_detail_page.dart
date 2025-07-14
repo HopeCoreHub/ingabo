@@ -62,8 +62,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
       
       if (!mounted) return;
       
+      final replies = await _forumService.getRepliesForPost(widget.post.id);
+      
+      if (!mounted) return;
+      
       setState(() {
-        _replies = _forumService.getRepliesForPost(widget.post.id);
+        _replies = replies;
         _isLoading = false;
       });
     } catch (e) {
@@ -81,9 +85,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
     }
   }
 
-  void _handleAddReply(String content) {
+  Future<void> _handleAddReply(String content) async {
     try {
-      final newReply = _forumService.addReply(widget.post.id, content);
+      final newReply = await _forumService.addReply(widget.post.id, content);
       if (mounted) {
         setState(() {
           _replies = [newReply, ..._replies];

@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // Registration result enum
 enum RegistrationResult {
@@ -12,10 +13,18 @@ enum RegistrationResult {
   error
 }
 
+// Email link result enum
+enum EmailLinkResult {
+  sent,
+  invalidEmail,
+  error
+}
+
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
   
   final Uuid _uuid = const Uuid();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   
   bool _isLoggedIn = false;
   String? _userId;
@@ -70,6 +79,11 @@ class AuthService extends ChangeNotifier {
     final List<dynamic> usersList = jsonDecode(usersJson);
     return usersList.cast<Map<String, dynamic>>();
   }
+  
+  // Public method to get users (for migration purposes)
+  Future<List<Map<String, dynamic>>> getUsers() async {
+    return await _getUsers();
+  }
 
   // Save users to SharedPreferences
   Future<void> _saveUsers(List<Map<String, dynamic>> users) async {
@@ -113,6 +127,107 @@ class AuthService extends ChangeNotifier {
       return true;
     } catch (e) {
       debugPrint('Login error: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Send sign-in link to email
+  Future<EmailLinkResult> sendSignInLinkToEmail(String email) async {
+    _isLoading = true;
+    notifyListeners();
+    
+    try {
+      // Validate email format
+      if (!email.contains('@') || !email.contains('.')) {
+        return EmailLinkResult.invalidEmail;
+      }
+      
+      // Create action code settings for Firebase email link
+      final actionCodeSettings = ActionCodeSettings(
+        url: 'https://hopecore-hub.firebaseapp.com/?email=$email',
+        // This must be true for email link sign-in
+        handleCodeInApp: true,
+        androidPackageName: 'com.example.ingabo',
+        androidInstallApp: true,
+        androidMinimumVersion: '12',
+        iOSBundleId: 'com.example.ingabo',
+      );
+      
+      // Send sign-in link to email using Firebase Auth
+      await _auth.sendSignInLinkToEmail(
+        email: email,
+        actionCodeSettings: actionCodeSettings,
+      );
+      
+      // Save the email locally to be used when the link is opened
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('pendingEmailLink', email);
+      
+      debugPrint('Email sign-in link sent successfully to $email');
+      return EmailLinkResult.sent;
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Firebase email link error: ${e.code}, ${e.message}');
+      
+      // Check specific Firebase Auth error codes
+      if (e.code == 'invalid-email') {
+        return EmailLinkResult.invalidEmail;
+      }
+      
+      return EmailLinkResult.error;
+    } catch (e) {
+      debugPrint('Email link error: $e');
+      return EmailLinkResult.error;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // New method to handle sign-in with email link when the app is opened via the link
+  Future<bool> signInWithEmailLink(String email, String link) async {
+    _isLoading = true;
+    notifyListeners();
+    
+    try {
+      // Check if the link is a sign-in link
+      if (!_auth.isSignInWithEmailLink(link)) {
+        debugPrint('Not a valid sign-in link');
+        return false;
+      }
+      
+      // Sign in with email link
+      final userCredential = await _auth.signInWithEmailLink(
+        email: email,
+        emailLink: link,
+      );
+      
+      final firebaseUser = userCredential.user;
+      if (firebaseUser == null) {
+        debugPrint('Sign in failed - no user returned');
+        return false;
+      }
+      
+      // User signed in successfully
+      _isLoggedIn = true;
+      _userId = firebaseUser.uid;
+      _username = firebaseUser.displayName ?? email.split('@')[0];
+      
+      // Save auth state
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+      await prefs.setString('userId', _userId!);
+      await prefs.setString('username', _username!);
+      
+      // Clear the pending email
+      await prefs.remove('pendingEmailLink');
+      
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error signing in with email link: $e');
       return false;
     } finally {
       _isLoading = false;

@@ -27,13 +27,16 @@ class PostCard extends StatelessWidget {
     final forumService = Provider.of<ForumService>(context, listen: false);
     final isDarkMode = themeProvider.isDarkMode;
     
-    // Check if current user has liked this post
-    final hasLiked = forumService.hasUserLikedPost(post.id);
-    
     // Get first letter of author's name for avatar
     final String firstLetter = post.authorName.isNotEmpty 
         ? post.authorName[0].toUpperCase() 
         : 'A';
+    
+    return FutureBuilder<bool>(
+      future: forumService.hasUserLikedPost(post.id),
+      builder: (context, snapshot) {
+        // Default to false if the future hasn't completed yet
+        final hasLiked = snapshot.data ?? false;
     
     return AnimatedCard(
       onTap: onTap,
@@ -107,6 +110,8 @@ class PostCard extends StatelessWidget {
           _buildActionBar(isDarkMode, hasLiked),
         ],
       ),
+        );
+      }
     );
   }
 

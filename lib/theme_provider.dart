@@ -1,175 +1,177 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  bool _isDarkMode = false;
-  bool _useSystemTheme = true;
-  static const String _darkModeKey = 'dark_mode';
-  static const String _useSystemThemeKey = 'use_system_theme';
-
-  // Animation configurations
+  bool _isDarkMode = true;
+  bool _isLoading = true;
+  
   static const Duration animationDurationShort = Duration(milliseconds: 200);
-  static const Duration animationDurationMedium = Duration(milliseconds: 350);
+  static const Duration animationDurationMedium = Duration(milliseconds: 300);
   static const Duration animationDurationLong = Duration(milliseconds: 500);
-  
-  static const Curve animationCurveDefault = Curves.easeOutCubic;
-  static const Curve animationCurveFast = Curves.easeOut;
-  static const Curve animationCurveSnappy = Curves.easeOutBack;
-  static const Curve animationCurveSmooth = Curves.fastOutSlowIn;
-  
-  // Page transition settings
   static const Duration pageTransitionDuration = Duration(milliseconds: 300);
-  static const Curve pageTransitionCurve = Curves.fastOutSlowIn;
-  
-  // Stagger intervals
+  static const Curve animationCurveDefault = Curves.easeInOut;
+  static const Curve pageTransitionCurve = Curves.easeInOutCubic;
+  static const Curve animationCurveFast = Curves.easeOut;
+  static const Curve animationCurveSnappy = Curves.elasticOut;
   static const Duration staggerInterval = Duration(milliseconds: 50);
+  
+  // Firebase instance
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   ThemeProvider() {
-    _loadPreferences();
+    _loadThemePreference();
   }
 
-  // Getters
   bool get isDarkMode => _isDarkMode;
-  bool get useSystemTheme => _useSystemTheme;
-
-  // Load theme preferences
-  Future<void> _loadPreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-    final useSystemTheme = prefs.getBool(_useSystemThemeKey) ?? true;
+  bool get isLoading => _isLoading;
+  
+  Future<void> _loadThemePreference() async {
+    _isLoading = true;
+    notifyListeners();
     
-    if (useSystemTheme) {
-      // Get system theme
-      final brightness = SchedulerBinding.instance.platformDispatcher.platformBrightness;
-      _isDarkMode = brightness == Brightness.dark;
-      _useSystemTheme = true;
-    } else {
-      _isDarkMode = prefs.getBool(_darkModeKey) ?? false;
-      _useSystemTheme = false;
-    }
-    
+    try {
+      // First try to get the theme from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      _isDarkMode = prefs.getBool('isDarkMode') ?? true;
+      
+      // Try to get the user ID from SharedPreferences
+      final userId = prefs.getString('userId');
+      
+      // If user is logged in, try to get theme from Firebase
+      if (userId != null) {
+        try {
+          final userSettings = await _db.collection('users')
+            .doc(userId)
+            .collection('settings')
+            .doc('user_settings')
+            .get();
+          
+          if (userSettings.exists && userSettings.data() != null) {
+            final settingsData = userSettings.data()!;
+            
+            if (settingsData.containsKey('appearance') &&
+                settingsData['appearance'] is Map &&
+                settingsData['appearance'].containsKey('isDarkMode')) {
+              _isDarkMode = settingsData['appearance']['isDarkMode'] as bool;
+            }
+          }
+        } catch (e) {
+          debugPrint('Error loading theme from Firebase: $e');
+          // Continue with theme from SharedPreferences
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading theme: $e');
+      _isDarkMode = true; // Default to dark mode
+    } finally {
+      _isLoading = false;
     notifyListeners();
   }
-
-  // Toggle dark mode
-  Future<void> toggleDarkMode(bool value) async {
-    _isDarkMode = value;
-    _useSystemTheme = false;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_darkModeKey, _isDarkMode);
-    await prefs.setBool(_useSystemThemeKey, _useSystemTheme);
-    notifyListeners();
-  }
-
-  // Set use system theme
-  Future<void> setUseSystemTheme(bool value) async {
-    _useSystemTheme = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_useSystemThemeKey, value);
-    
-    if (value) {
-      // Get system theme
-      final brightness = SchedulerBinding.instance.platformDispatcher.platformBrightness;
-      _isDarkMode = brightness == Brightness.dark;
-      notifyListeners();
-    }
-  }
-
-  // Get theme data
-  ThemeData getTheme(BuildContext context) {
-    return _isDarkMode ? _buildDarkTheme(context) : _buildLightTheme(context);
   }
   
-  // Build dark theme
-  ThemeData _buildDarkTheme(BuildContext context) {
-    final base = ThemeData.dark();
-    return base.copyWith(
+  Future<void> toggleDarkMode(bool value) async {
+    _isDarkMode = value;
+    notifyListeners();
+
+    try {
+      // Save to SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isDarkMode', value);
+      
+      // Try to save to Firebase if user is logged in
+      final userId = prefs.getString('userId');
+      
+      if (userId != null) {
+        try {
+          await _db.collection('users')
+            .doc(userId)
+            .collection('settings')
+            .doc('user_settings')
+            .set({
+              'appearance': {
+                'isDarkMode': value
+              }
+            }, SetOptions(merge: true));
+        } catch (e) {
+          debugPrint('Error saving theme to Firebase: $e');
+          // Continue even if saving to Firebase fails
+    }
+  }
+    } catch (e) {
+      debugPrint('Error saving theme: $e');
+    }
+  }
+  
+  ThemeData getTheme(BuildContext context) {
+    if (_isDarkMode) {
+      return ThemeData.dark().copyWith(
       scaffoldBackgroundColor: const Color(0xFF111827),
       primaryColor: const Color(0xFF8A4FFF),
-      cardColor: const Color(0xFF1E293B),
-      colorScheme: const ColorScheme.dark(
-        primary: Color(0xFF8A4FFF),
-        secondary: Color(0xFF6D28D9),
-        background: Color(0xFF111827),
-        surface: Color(0xFF1E293B),
-        onBackground: Colors.white,
-        error: Color(0xFFEF4444),
-      ),
-      dialogBackgroundColor: const Color(0xFF1E293B),
+        colorScheme: ColorScheme.dark(
+          primary: const Color(0xFF8A4FFF),
+          secondary: const Color(0xFFA855F7),
+          background: const Color(0xFF111827),
+          surface: const Color(0xFF1E293B),
+        ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF111827),
+          backgroundColor: Color(0xFF1E293B),
         elevation: 0,
       ),
-      textTheme: GoogleFonts.interTextTheme(base.textTheme),
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.android: ZoomPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        },
+        textTheme: Theme.of(context).textTheme.apply(
+          bodyColor: Colors.white,
+          displayColor: Colors.white,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF1E293B),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
       ),
-    );
-  }
-
-  // Build light theme
-  ThemeData _buildLightTheme(BuildContext context) {
-    final base = ThemeData.light();
-    return base.copyWith(
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Color(0xFF8A4FFF),
+              width: 2,
+            ),
+          ),
+        ),
+      );
+    } else {
+      return ThemeData.light().copyWith(
       scaffoldBackgroundColor: Colors.white,
       primaryColor: const Color(0xFFE53935),
-      cardColor: const Color(0xFFF1F5F9),
       colorScheme: const ColorScheme.light(
         primary: Color(0xFFE53935),
-        secondary: Color(0xFFD32F2F),
+          secondary: Color(0xFFE53935),
         background: Colors.white,
         surface: Color(0xFFF1F5F9),
-        onBackground: Colors.black,
-        error: Color(0xFFBA000D),
       ),
-      dialogBackgroundColor: Colors.white,
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      textTheme: GoogleFonts.interTextTheme(base.textTheme),
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.android: ZoomPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        },
+        textTheme: Theme.of(context).textTheme.apply(
+          bodyColor: Colors.black87,
+          displayColor: Colors.black87,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFFF1F5F9),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Color(0xFFE53935),
+              width: 2,
+            ),
+          ),
       ),
     );
   }
-
-  // Page route builder with custom transitions
-  static PageRouteBuilder<T> createAnimatedRoute<T>({
-    required Widget page, 
-    RouteSettings? settings,
-    bool fadeIn = true,
-    bool slideUp = true,
-  }) {
-    return PageRouteBuilder<T>(
-      settings: settings,
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        var begin = slideUp ? const Offset(0.0, 0.1) : Offset.zero;
-        var end = Offset.zero;
-        var curve = pageTransitionCurve;
-        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-        
-        var offsetAnimation = animation.drive(tween);
-        var fadeAnimation = fadeIn ? animation : const AlwaysStoppedAnimation(1.0);
-
-        return FadeTransition(
-          opacity: fadeAnimation,
-          child: SlideTransition(
-            position: offsetAnimation,
-            child: child,
-          ),
-        );
-      },
-      transitionDuration: pageTransitionDuration,
-      reverseTransitionDuration: pageTransitionDuration,
-    );
   }
 } 

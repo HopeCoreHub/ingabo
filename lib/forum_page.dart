@@ -115,8 +115,12 @@ class _ForumPageState extends State<ForumPage> {
       
       if (!mounted) return;
       
+      final posts = await _forumService.getPosts();
+      
+      if (!mounted) return;
+      
       setState(() {
-        _posts = _forumService.getPosts();
+        _posts = posts;
         _isLoading = false;
       });
     } catch (e) {
@@ -134,17 +138,17 @@ class _ForumPageState extends State<ForumPage> {
     }
   }
 
-  void _filterPosts() {
+  Future<void> _filterPosts() async {
     if (_searchQuery.isEmpty) {
-      _posts = _forumService.getPosts();
+      _posts = await _forumService.getPosts();
     } else {
-      _posts = _forumService.searchPosts(_searchQuery);
+      _posts = await _forumService.searchPosts(_searchQuery);
     }
   }
 
-  void _handleCreatePost(String title, String content) {
+  Future<void> _handleCreatePost(String title, String content) async {
     try {
-      final newPost = _forumService.addPost(title, content);
+      final newPost = await _forumService.addPost(title, content);
       setState(() {
         _posts = [newPost, ..._posts];
       });
@@ -167,11 +171,13 @@ class _ForumPageState extends State<ForumPage> {
     );
   }
 
-  void _handleLikePost(Post post) {
+  Future<void> _handleLikePost(Post post) async {
     try {
-      final result = _forumService.likePost(post.id);
+      final result = await _forumService.likePost(post.id);
+      final updatedPosts = await _forumService.getPosts();
+      
       setState(() {
-        _posts = _forumService.getPosts();
+        _posts = updatedPosts;
       });
       
       // Show appropriate feedback based on the result
@@ -204,12 +210,14 @@ class _ForumPageState extends State<ForumPage> {
           focusReply: focusReply,
         ),
       ),
-    ).then((_) {
+    ).then((_) async {
       // Refresh posts when returning from details page
       if (!mounted) return;
       
+      final updatedPosts = await _forumService.getPosts();
+      
       setState(() {
-        _posts = _forumService.getPosts();
+        _posts = updatedPosts;
       });
     });
   }
@@ -258,33 +266,51 @@ class _ForumPageState extends State<ForumPage> {
     return Scaffold(
       backgroundColor: isDarkMode ? const Color(0xFF111827) : Colors.white,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80),
+        preferredSize: const Size.fromHeight(70),
         child: AppBar(
           backgroundColor: isDarkMode ? const Color(0xFF111827) : Colors.white,
           elevation: 0,
           automaticallyImplyLeading: false,
           titleSpacing: 0,
           title: Padding(
-            padding: const EdgeInsets.only(left: 16.0, top: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.only(left: 16.0, top: 12.0),
+            child: Row(
               children: [
-                Text(
-                  'Forum',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.forum_outlined,
                     color: accentColor,
+                    size: 20,
                   ),
-                ).withEntranceAnimation(),
-                const SizedBox(height: 2),
-                Text(
-                  'Safe space to share',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
-                  ),
-                ).withEntranceAnimation(delay: const Duration(milliseconds: 100)),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Forum',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
+                      ),
+                    ).withEntranceAnimation(),
+                    Text(
+                      'Safe space to share',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                      ),
+                    ).withEntranceAnimation(delay: const Duration(milliseconds: 100)),
+                  ],
+                ),
               ],
             ),
           ),
@@ -296,7 +322,7 @@ class _ForumPageState extends State<ForumPage> {
             delay: const Duration(milliseconds: 200),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: _buildSearchBar().withEntranceAnimation(
               delay: const Duration(milliseconds: 300),
             ),
@@ -308,12 +334,12 @@ class _ForumPageState extends State<ForumPage> {
                     onRefresh: _loadPosts,
                     color: accentColor,
                     backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-                    displacement: 50,
+                    displacement: 40,
                     child: _posts.isEmpty
                         ? _buildEmptyState()
                         : StaggeredAnimationList(
                             itemCount: _posts.length + 1, // +1 for info card at bottom
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(12),
                             initialDelay: const Duration(milliseconds: 400),
                             itemBuilder: (context, index) {
                               if (index == _posts.length) {
@@ -321,11 +347,11 @@ class _ForumPageState extends State<ForumPage> {
                               }
                               final post = _posts[index];
                               return Padding(
-                                padding: const EdgeInsets.only(bottom: 16.0),
+                                padding: const EdgeInsets.only(bottom: 12.0),
                                 child: PostCard(
-                                post: post,
+                                  post: post,
                                   index: index,
-                                onTap: () => _navigateToPostDetail(post),
+                                  onTap: () => _navigateToPostDetail(post),
                                   onLike: () => _handleLikePost(post),
                                   onReply: () => _navigateToPostDetail(post, focusReply: true),
                                 ),
@@ -352,8 +378,8 @@ class _ForumPageState extends State<ForumPage> {
     
     return AnimatedContainer(
       duration: ThemeProvider.animationDurationMedium,
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -363,12 +389,12 @@ class _ForumPageState extends State<ForumPage> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: accentColor.withOpacity(0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -376,8 +402,8 @@ class _ForumPageState extends State<ForumPage> {
         children: [
           AnimatedContainer(
             duration: ThemeProvider.animationDurationMedium,
-            width: 50,
-            height: 50,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white.withOpacity(0.2),
@@ -392,32 +418,33 @@ class _ForumPageState extends State<ForumPage> {
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 24,
+                  fontSize: 20,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Welcome, ${authService.username}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 18,
+                    fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   isGuest 
                     ? 'You are browsing as a guest'
                     : 'Logged in as ${authService.userId}',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
-                    fontSize: 14,
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -430,12 +457,18 @@ class _ForumPageState extends State<ForumPage> {
               color: Colors.white.withOpacity(0.15),
             ),
             child: IconButton(
-            onPressed: _handleLogout,
-            icon: const Icon(
-              Icons.logout,
-              color: Colors.white,
-            ),
-            tooltip: 'Logout',
+              onPressed: _handleLogout,
+              icon: const Icon(
+                Icons.logout,
+                color: Colors.white,
+                size: 18,
+              ),
+              tooltip: 'Logout',
+              constraints: const BoxConstraints(
+                minWidth: 36,
+                minHeight: 36,
+              ),
+              padding: EdgeInsets.zero,
             ),
           ),
         ],
@@ -453,40 +486,47 @@ class _ForumPageState extends State<ForumPage> {
         children: [
           Icon(
             Icons.forum_outlined,
-            size: 70,
+            size: 60,
             color: isDarkMode ? Colors.white38 : Colors.black26,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Text(
             'No posts yet',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: isDarkMode ? Colors.white70 : Colors.black54,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             'Be the first to start a conversation',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               color: isDarkMode ? Colors.white54 : Colors.black45,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           ElevatedButton.icon(
             onPressed: _showPostCreationDialog,
             style: ElevatedButton.styleFrom(
               backgroundColor: isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
-            icon: const Icon(Icons.add, color: Colors.white),
+            icon: const Icon(
+              Icons.add, 
+              color: Colors.white,
+              size: 18,
+            ),
             label: const Text(
               'Create Post',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
             ),
           ),
         ],
@@ -500,35 +540,54 @@ class _ForumPageState extends State<ForumPage> {
     
     return AnimatedContainer(
       duration: ThemeProvider.animationDurationMedium,
-      height: 50,
+      height: 44,
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: TextField(
         controller: _searchController,
-        style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+        style: TextStyle(
+          color: isDarkMode ? Colors.white : Colors.black87,
+          fontSize: 14,
+        ),
         decoration: InputDecoration(
           hintText: 'Search posts...',
-          hintStyle: TextStyle(color: isDarkMode ? Colors.white54 : Colors.black54),
-          prefixIcon: Icon(Icons.search, color: isDarkMode ? Colors.white54 : Colors.black54),
+          hintStyle: TextStyle(
+            color: isDarkMode ? Colors.white54 : Colors.black54,
+            fontSize: 14,
+          ),
+          prefixIcon: Icon(
+            Icons.search, 
+            color: isDarkMode ? Colors.white54 : Colors.black54,
+            size: 18,
+          ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: Icon(Icons.clear, color: isDarkMode ? Colors.white54 : Colors.black54),
+                  icon: Icon(
+                    Icons.clear, 
+                    color: isDarkMode ? Colors.white54 : Colors.black54,
+                    size: 16,
+                  ),
                   onPressed: () {
                     _searchController.clear();
                   },
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
                 )
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          isDense: true,
         ),
       ),
     );
@@ -540,11 +599,11 @@ class _ForumPageState extends State<ForumPage> {
     final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
     
     return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF2D3748) : const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -552,16 +611,16 @@ class _ForumPageState extends State<ForumPage> {
           Icon(
             Icons.favorite,
             color: accentColor,
-            size: 20,
+            size: 16,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Flexible(
             child: Text(
               'This is a safe, moderated space. All posts are anonymous and supportive.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: isDarkMode ? Colors.white.withOpacity(0.8) : Colors.black87.withOpacity(0.8),
-                fontSize: 14,
+                fontSize: 12,
               ),
             ),
           ),
@@ -586,10 +645,22 @@ class _ForumPageState extends State<ForumPage> {
         child: FloatingActionButton.extended(
           onPressed: _showPostCreationDialog,
           backgroundColor: accentColor,
-          elevation: 4,
-          label: const Text('Create Post'),
-          icon: const Icon(Icons.add),
-          extendedPadding: const EdgeInsets.symmetric(horizontal: 24),
+          elevation: 3,
+          label: const Text(
+            'Create Post',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          icon: const Icon(
+            Icons.add,
+            size: 18,
+          ),
+          extendedPadding: const EdgeInsets.symmetric(horizontal: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
     ).withEntranceAnimation(

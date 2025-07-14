@@ -1,3 +1,10 @@
+plugins {
+    id("com.android.application") apply false
+    id("com.android.library") apply false
+    id("org.jetbrains.kotlin.android") apply false
+    id("com.google.gms.google-services") apply false
+}
+
 buildscript {
     repositories {
         google()
@@ -6,6 +13,7 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:7.3.0")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10")
+        classpath("com.google.gms:google-services:4.3.15")
     }
 }
 
