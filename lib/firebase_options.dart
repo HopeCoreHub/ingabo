@@ -36,6 +36,7 @@ class DefaultFirebaseOptions {
     projectId: 'hopecore-hub',
     authDomain: 'hopecore-hub.firebaseapp.com',
     storageBucket: 'hopecore-hub.firebasestorage.app',
+    databaseURL: 'https://hopecore-hub-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -44,6 +45,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '73148402495',
     projectId: 'hopecore-hub',
     storageBucket: 'hopecore-hub.firebasestorage.app',
+    databaseURL: 'https://hopecore-hub-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -52,7 +54,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '73148402495',
     projectId: 'hopecore-hub',
     storageBucket: 'hopecore-hub.firebasestorage.app',
-    iosBundleId: 'com.example.ingabo',
+    iosBundleId: 'com.ingabohopecore.hopecorehub',
+    databaseURL: 'https://hopecore-hub-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -61,7 +64,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '73148402495',
     projectId: 'hopecore-hub',
     storageBucket: 'hopecore-hub.firebasestorage.app',
-    iosBundleId: 'com.example.ingabo',
+    iosBundleId: 'com.ingabohopecore.hopecorehub',
+    databaseURL: 'https://hopecore-hub-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -71,13 +75,16 @@ class DefaultFirebaseOptions {
     projectId: 'hopecore-hub',
     authDomain: 'hopecore-hub.firebaseapp.com',
     storageBucket: 'hopecore-hub.firebasestorage.app',
+    databaseURL: 'https://hopecore-hub-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions linux = FirebaseOptions(
-    apiKey: 'AIzaSyPlaceholder',
-    appId: '1:placeholder:linux:placeholder',
-    messagingSenderId: 'placeholder',
-    projectId: 'ingabo-app',
-    storageBucket: 'ingabo-app.appspot.com',
+    apiKey: 'AIzaSyCTFtdjSnbAS7p1ZhWho0jrs80ToTgJnZw',
+    appId: '1:73148402495:web:593fcec965fd1711b2a18a',
+    messagingSenderId: '73148402495',
+    projectId: 'hopecore-hub',
+    authDomain: 'hopecore-hub.firebaseapp.com',
+    storageBucket: 'hopecore-hub.firebasestorage.app',
+    databaseURL: 'https://hopecore-hub-default-rtdb.firebaseio.com',
   );
 } 

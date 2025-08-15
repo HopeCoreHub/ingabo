@@ -9,6 +9,7 @@ class Post {
   final List<String> replies;
   final bool isAnonymous;
   final Set<String> likedBy;
+  final bool isSyncedWithCloud;  // New field to track sync status
 
   Post({
     required this.id,
@@ -21,6 +22,7 @@ class Post {
     List<String>? replies,
     this.isAnonymous = true,
     Set<String>? likedBy,
+    this.isSyncedWithCloud = false,  // Default to false (not synced)
   }) : replies = replies ?? [],
        likedBy = likedBy ?? {};
 
@@ -36,6 +38,7 @@ class Post {
       'replies': replies,
       'isAnonymous': isAnonymous,
       'likedBy': likedBy.toList(),
+      'isSyncedWithCloud': isSyncedWithCloud,
     };
   }
 
@@ -53,6 +56,7 @@ class Post {
       likedBy: json.containsKey('likedBy')
           ? Set<String>.from(json['likedBy'] as List)
           : {},
+      isSyncedWithCloud: json['isSyncedWithCloud'] as bool? ?? false,
     );
   }
 
@@ -67,6 +71,7 @@ class Post {
     List<String>? replies,
     bool? isAnonymous,
     Set<String>? likedBy,
+    bool? isSyncedWithCloud,
   }) {
     return Post(
       id: id ?? this.id,
@@ -79,6 +84,7 @@ class Post {
       replies: replies ?? this.replies,
       isAnonymous: isAnonymous ?? this.isAnonymous,
       likedBy: likedBy ?? this.likedBy,
+      isSyncedWithCloud: isSyncedWithCloud ?? this.isSyncedWithCloud,
     );
   }
 } 

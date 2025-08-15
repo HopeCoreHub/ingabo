@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ingabo/mahoro_page.dart';
 
 void main() {
   group('Mahoro Simulation Tests', () {

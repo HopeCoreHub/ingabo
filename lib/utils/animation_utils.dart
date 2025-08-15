@@ -163,8 +163,7 @@ class AnimationUtils {
 extension AnimateWidgetExtension on Widget {
   /// Adds entrance animation to a widget
   Widget withEntranceAnimation({Duration? delay}) {
-    return this
-        .animate()
+    return animate()
         .effect(delay: delay ?? Duration.zero)
         .animate(effects: AnimationUtils.standardEntranceEffects);
   }
@@ -174,16 +173,14 @@ extension AnimateWidgetExtension on Widget {
     final delay = (initialDelay ?? Duration.zero) + 
       (ThemeProvider.staggerInterval * index);
     
-    return this
-        .animate()
+    return animate()
         .effect(delay: delay)
         .animate(effects: AnimationUtils.standardEntranceEffects);
   }
 
   /// Adds tap animation to a widget
   Widget withTapAnimation() {
-    return this
-        .animate(onPlay: (controller) => controller.repeat(reverse: true))
+    return animate(onPlay: (controller) => controller.repeat(reverse: true))
         .animate(effects: AnimationUtils.tapEffects);
   }
 }

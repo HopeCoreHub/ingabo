@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Export method for App Store distribution -->
+    <key>method</key>
+    <string>app-store</string>
+    
+    <!-- Upload to App Store Connect -->
+    <key>uploadBitcode</key>
+    <false/>
+    
+    <!-- Upload symbols for crash reporting -->
+    <key>uploadSymbols</key>
+    <true/>
+    
+    <!-- Compile bitcode -->
+    <key>compileBitcode</key>
+    <false/>
+    
+    <!-- Team ID - will be automatically filled by Xcode -->
+    <key>teamID</key>
+    <string>$(DEVELOPMENT_TEAM)</string>
+    
+    <!-- Provisioning profiles - automatically managed -->
+    <key>provisioningProfiles</key>
+    <dict>
+        <!-- Bundle ID will be automatically detected -->
+        <key>$(PRODUCT_BUNDLE_IDENTIFIER)</key>
+        <string>$(PROVISIONING_PROFILE_SPECIFIER)</string>
+    </dict>
+    
+    <!-- Code signing style -->
+    <key>signingStyle</key>
+    <string>automatic</string>
+    
+    <!-- Code signing certificate -->
+    <key>signingCertificate</key>
+    <string>Apple Distribution</string>
+    
+    <!-- Strip Swift symbols -->
+    <key>stripSwiftSymbols</key>
+    <true/>
+    
+    <!-- Thinning -->
+    <key>thinning</key>
+    <string>&lt;none&gt;</string>
+    
+    <!-- Destination -->
+    <key>destination</key>
+    <string>export</string>
+    
+    <!-- Manifest options for enterprise distribution (not used for App Store) -->
+    <key>manifest</key>
+    <dict>
+        <key>appURL</key>
+        <string></string>
+        <key>displayImageURL</key>
+        <string></string>
+        <key>fullSizeImageURL</key>
+        <string></string>
+    </dict>
+</dict>
+</plist>

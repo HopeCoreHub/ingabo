@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme_provider.dart';
+import '../accessibility_provider.dart';
 import '../models/post_model.dart';
 import '../services/forum_service.dart';
+import '../utils/accessibility_utils.dart';
 import 'animated_card.dart';
+import 'accessible_container.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -24,8 +27,10 @@ class PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final forumService = Provider.of<ForumService>(context, listen: false);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     
     // Get first letter of author's name for avatar
     final String firstLetter = post.authorName.isNotEmpty 
@@ -38,40 +43,43 @@ class PostCard extends StatelessWidget {
         // Default to false if the future hasn't completed yet
         final hasLiked = snapshot.data ?? false;
     
-    return AnimatedCard(
-      onTap: onTap,
-      animationDelayIndex: index,
-      elevation: 3,
-      borderRadius: BorderRadius.circular(16),
-        child: Column(
+        final cardWidget = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                _buildAvatar(firstLetter),
+                  _buildAvatar(firstLetter, context),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        post.authorName,
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white : Colors.black87,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          post.authorName,
+                          style: TextStyle(
+                            color: AccessibilityUtils.getAccessibleColor(
+                              context, 
+                              isDarkMode ? Colors.white : Colors.black87
+                            ),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _getTimeAgo(post.createdAt),
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white54 : Colors.black54,
-                          fontSize: 12,
+                        const SizedBox(height: 2),
+                        Text(
+                          _getTimeAgo(post.createdAt),
+                          style: TextStyle(
+                            color: AccessibilityUtils.getAccessibleColor(
+                              context, 
+                              isDarkMode ? Colors.white54 : Colors.black54
+                            ),
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -81,9 +89,12 @@ class PostCard extends StatelessWidget {
               child: Text(
                 post.title,
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white : Colors.black87,
+                  color: AccessibilityUtils.getAccessibleColor(
+                    context, 
+                    isDarkMode ? Colors.white : Colors.black87
+                  ),
                   fontWeight: FontWeight.bold,
-                fontSize: 18,
+                  fontSize: 18,
                 ),
               ),
             ),
@@ -93,7 +104,10 @@ class PostCard extends StatelessWidget {
               child: Text(
                 post.content,
                 style: TextStyle(
-                color: isDarkMode ? Colors.white70 : Colors.black87,
+                  color: AccessibilityUtils.getAccessibleColor(
+                    context, 
+                    isDarkMode ? Colors.white70 : Colors.black87
+                  ),
                   fontSize: 14,
                 ),
                 maxLines: 3,
@@ -101,21 +115,52 @@ class PostCard extends StatelessWidget {
               ),
             ),
             Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-            child: Divider(
-              color: isDarkMode ? const Color(0xFF2D3748).withOpacity(0.6) : const Color(0xFFE2E8F0),
-              height: 1,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Divider(
+                color: highContrastMode 
+                  ? (isDarkMode ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.6)) 
+                  : (isDarkMode ? const Color(0xFF2D3748).withOpacity(0.6) : const Color(0xFFE2E8F0)),
+                height: 1,
+              ),
             ),
-          ),
-          _buildActionBar(isDarkMode, hasLiked),
-        ],
-      ),
+            _buildActionBar(context, isDarkMode, hasLiked, highContrastMode),
+          ],
         );
+        
+        // Return either accessible card or animated card based on high contrast mode
+        if (highContrastMode) {
+          return AccessibleCard(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: EdgeInsets.zero,
+            child: cardWidget,
+          );
+        } else {
+          return AnimatedCard(
+            onTap: onTap,
+            animationDelayIndex: index,
+            elevation: 3,
+            borderRadius: BorderRadius.circular(16),
+            child: cardWidget,
+          );
+        }
       }
     );
   }
 
-  Widget _buildAvatar(String firstLetter) {
+  Widget _buildAvatar(String firstLetter, BuildContext context) {
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final highContrastMode = accessibilityProvider.highContrastMode;
+    
+    final avatarColor = highContrastMode 
+        ? Colors.black // Use simple colors for high contrast
+        : const Color(0xFF8A4FFF);
+    
+    final borderColor = highContrastMode
+        ? Colors.white
+        : Colors.white.withOpacity(0.2);
+    
     return Hero(
       tag: 'post-avatar-${post.id}',
       child: AnimatedContainer(
@@ -124,8 +169,8 @@ class PostCard extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFF8A4FFF),
-          boxShadow: [
+          color: avatarColor,
+          boxShadow: highContrastMode ? null : [
             BoxShadow(
               color: const Color(0xFF8A4FFF).withOpacity(0.3),
               blurRadius: 6,
@@ -133,15 +178,15 @@ class PostCard extends StatelessWidget {
             ),
           ],
           border: Border.all(
-            color: Colors.white.withOpacity(0.2),
-            width: 1.5,
+            color: borderColor,
+            width: highContrastMode ? 2.0 : 1.5,
           ),
         ),
         child: Center(
           child: Text(
             firstLetter,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: highContrastMode ? Colors.white : Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
@@ -151,59 +196,77 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActionBar(bool isDarkMode, bool hasLiked) {
+  Widget _buildActionBar(BuildContext context, bool isDarkMode, bool hasLiked, bool highContrastMode) {
+    // Adjust colors for high contrast
+    final regularIconColor = AccessibilityUtils.getAccessibleColor(
+      context, 
+      isDarkMode ? Colors.white54 : Colors.black54
+    );
+    
+    final likeColor = highContrastMode ? Colors.white : Colors.red;
+    
     return Padding(
-              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
               _buildIconButton(
+                context: context,
                 icon: hasLiked ? Icons.favorite : Icons.favorite_border,
-                color: hasLiked ? Colors.red : isDarkMode ? Colors.white54 : Colors.black54,
-                        onPressed: onLike,
-                      ),
-                      const SizedBox(width: 4),
+                color: hasLiked ? likeColor : regularIconColor,
+                onPressed: onLike,
+              ),
+              const SizedBox(width: 4),
               AnimatedDefaultTextStyle(
                 duration: ThemeProvider.animationDurationShort,
-                        style: TextStyle(
-                  color: hasLiked ? Colors.red : (isDarkMode ? Colors.white54 : Colors.black54),
-                          fontSize: 14,
+                style: TextStyle(
+                  color: hasLiked ? likeColor : regularIconColor,
+                  fontSize: 14,
                   fontWeight: hasLiked ? FontWeight.bold : FontWeight.normal,
-                        ),
+                ),
                 child: Text('${post.likes}'),
-                      ),
-                      const SizedBox(width: 16),
+              ),
+              const SizedBox(width: 16),
               _buildIconButton(
+                context: context,
                 icon: Icons.chat_bubble_outline,
-                color: isDarkMode ? Colors.white54 : Colors.black54,
-                        onPressed: onReply,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${post.replies.length}',
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white54 : Colors.black54,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-          _buildReplyButton(isDarkMode),
+                color: regularIconColor,
+                onPressed: onReply,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${post.replies.length}',
+                style: TextStyle(
+                  color: regularIconColor,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          _buildReplyButton(context, isDarkMode, highContrastMode),
         ],
       ),
     );
   }
 
   Widget _buildIconButton({
+    required BuildContext context,
     required IconData icon,
     required Color color,
     required VoidCallback onPressed,
   }) {
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final highContrastMode = accessibilityProvider.highContrastMode;
+    
+    final animationDuration = highContrastMode 
+        ? const Duration(milliseconds: 100) // Reduced animation for accessibility
+        : ThemeProvider.animationDurationShort;
+    
     return AnimatedScale(
       scale: 1.0,
-      duration: ThemeProvider.animationDurationShort,
+      duration: animationDuration,
       child: IconButton(
         onPressed: onPressed,
         icon: Icon(icon, color: color),
@@ -214,36 +277,47 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildReplyButton(bool isDarkMode) {
+  Widget _buildReplyButton(BuildContext context, bool isDarkMode, bool highContrastMode) {
+    final accentColor = highContrastMode 
+        ? (isDarkMode ? Colors.white : Colors.black)
+        : const Color(0xFF8A4FFF);
+        
+    final bgColor = highContrastMode
+        ? Colors.transparent
+        : accentColor.withOpacity(0.1);
+    
     return AnimatedContainer(
       duration: ThemeProvider.animationDurationShort,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: const Color(0xFF8A4FFF).withOpacity(0.1),
+        color: bgColor,
+        border: highContrastMode 
+            ? Border.all(color: accentColor, width: 2)
+            : null,
       ),
       child: TextButton(
-                    onPressed: onReply,
-                    style: ButtonStyle(
-                      overlayColor: MaterialStateProperty.all(Colors.transparent),
-          padding: MaterialStateProperty.all(
+        onPressed: onReply,
+        style: ButtonStyle(
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
+          padding: WidgetStateProperty.all(
             const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           ),
-                    ),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.reply,
               size: 16,
-              color: const Color(0xFF8A4FFF),
+              color: accentColor,
             ),
             const SizedBox(width: 4),
-            const Text(
-                      'Reply',
-                      style: TextStyle(
-                color: Color(0xFF8A4FFF),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+            Text(
+              'Reply',
+              style: TextStyle(
+                color: accentColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
               ),
             ),
           ],
@@ -267,4 +341,4 @@ class PostCard extends StatelessWidget {
       return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     }
   }
-} 
+}

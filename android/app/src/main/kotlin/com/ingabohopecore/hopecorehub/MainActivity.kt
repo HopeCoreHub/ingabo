@@ -1,4 +1,4 @@
-package com.example.ingabo
+package com.ingabohopecore.hopecorehub
 
 import io.flutter.embedding.android.FlutterActivity
 

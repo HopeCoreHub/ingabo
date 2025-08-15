@@ -1,26 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'dart:math';
 import 'package:provider/provider.dart';
 import 'theme_provider.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter/services.dart';
+import 'accessibility_provider.dart';
 import 'services/auth_service.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
-import 'package:anthropic_sdk_dart/anthropic_sdk_dart.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'localization/app_localizations.dart';
+import 'localization/localized_text.dart';
+import 'localization/base_screen.dart';
 
-class MahoroPage extends StatefulWidget {
+class MahoroPage extends BaseScreen {
   const MahoroPage({super.key});
 
   @override
   State<MahoroPage> createState() => _MahoroPageState();
 }
 
-class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateMixin {
+class _MahoroPageState extends BaseScreenState<MahoroPage> with SingleTickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   late AnimationController _typingAnimController;
   final List<ChatMessage> _messages = [
@@ -354,12 +352,16 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildScreen(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF111827) : Colors.white,
+      backgroundColor: (highContrastMode && isDarkMode) 
+          ? Colors.black 
+          : (isDarkMode ? const Color(0xFF111827) : Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -377,22 +379,31 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
 
   Widget _buildHeader() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     final accentColor = isDarkMode ? const Color(0xFFA855F7) : const Color(0xFFE53935);
     
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: accentColor,
+        color: highContrastMode 
+            ? (isDarkMode ? Colors.black : Colors.white)
+            : accentColor,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withOpacity(0.25),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: highContrastMode
+            ? Border.all(color: isDarkMode ? Colors.white : Colors.black, width: 2.0)
+            : null,
+        boxShadow: highContrastMode 
+            ? null 
+            : [
+                BoxShadow(
+                  color: accentColor.withOpacity(0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,12 +415,16 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: highContrastMode 
+                      ? (isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.2))
+                      : Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.smart_toy_outlined,
-                  color: Colors.white,
+                  color: highContrastMode 
+                      ? (isDarkMode ? Colors.white : Colors.black)
+                      : Colors.white,
                   size: 20,
                 ),
               ),
@@ -417,19 +432,23 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Mahoro',
+                  LocalizedText(
+                    'mahoro',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: highContrastMode 
+                          ? (isDarkMode ? Colors.white : Colors.black)
+                          : Colors.white,
                     ),
                   ),
-                  const Text(
-                    'Your 24/7 support companion',
+                  LocalizedText(
+                    'yourSupportCompanion',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white,
+                      color: highContrastMode 
+                          ? (isDarkMode ? Colors.white : Colors.black87)
+                          : Colors.white,
                       height: 1.2,
                     ),
                   ),
@@ -452,6 +471,10 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
   }
 
   Widget _buildLanguageButton(String langCode, Color accentColor) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     final isSelected = _currentLanguage == langCode;
     
     return Container(
@@ -464,7 +487,14 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
           height: 34,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isSelected ? Colors.white : Colors.white.withOpacity(0.3),
+            color: highContrastMode 
+                ? (isSelected 
+                    ? (isDarkMode ? Colors.white : Colors.black)
+                    : (isDarkMode ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.3)))
+                : (isSelected ? Colors.white : Colors.white.withOpacity(0.3)),
+            border: highContrastMode && isSelected
+                ? Border.all(color: isDarkMode ? Colors.black : Colors.white, width: 2.0)
+                : null,
           ),
           child: Center(
             child: Text(
@@ -472,7 +502,11 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
-                color: isSelected ? accentColor : Colors.white,
+                color: highContrastMode 
+                    ? (isSelected 
+                        ? (isDarkMode ? Colors.black : Colors.white)
+                        : (isDarkMode ? Colors.white : Colors.black))
+                    : (isSelected ? accentColor : Colors.white),
               ),
             ),
           ),
@@ -483,7 +517,9 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
 
   Widget _buildLanguageStatus() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     final accentColor = isDarkMode ? const Color(0xFFA855F7) : const Color(0xFFE53935);
     
     return Padding(
@@ -498,11 +534,15 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
                 height: 30,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: accentColor.withOpacity(0.3),
+                  color: highContrastMode 
+                      ? (isDarkMode ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.3))
+                      : accentColor.withOpacity(0.3),
                 ),
                 child: Icon(
                   Icons.smart_toy_outlined,
-                  color: accentColor,
+                  color: highContrastMode 
+                      ? (isDarkMode ? Colors.white : Colors.black)
+                      : accentColor,
                   size: 16,
                 ),
               ),
@@ -516,7 +556,9 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: isDarkMode ? Colors.white : Colors.black87,
+                      color: highContrastMode 
+                          ? (isDarkMode ? Colors.white : Colors.black)
+                          : (isDarkMode ? Colors.white : Colors.black87),
                     ),
                   ),
                   Row(
@@ -534,7 +576,9 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
                         _isApiKeyValid ? 'AI Support Active' : 'API Connection Error',
                         style: TextStyle(
                           fontSize: 10,
-                          color: isDarkMode ? Colors.white60 : Colors.black54,
+                          color: highContrastMode 
+                              ? (isDarkMode ? Colors.white70 : Colors.black87)
+                              : (isDarkMode ? Colors.white60 : Colors.black54),
                         ),
                       ),
                     ],
@@ -551,7 +595,9 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
 
   Widget _buildChatList() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     final accentColor = isDarkMode ? const Color(0xFFA855F7) : const Color(0xFFE53935);
     
     return ListView.builder(
@@ -560,17 +606,17 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
       itemCount: _messages.length + (_isTyping ? 1 : 0),
       itemBuilder: (context, index) {
         if (_isTyping && index == 0) {
-          return _buildTypingIndicator(accentColor);
+          return _buildTypingIndicator(accentColor, highContrastMode, isDarkMode);
         }
         
         final adjustedIndex = _isTyping ? index - 1 : index;
         final message = _messages[_messages.length - 1 - adjustedIndex];
-        return _buildChatBubble(message, accentColor);
+        return _buildChatBubble(message, accentColor, highContrastMode, isDarkMode);
       },
     );
   }
 
-  Widget _buildTypingIndicator(Color accentColor) {
+  Widget _buildTypingIndicator(Color accentColor, bool highContrastMode, bool isDarkMode) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -581,11 +627,15 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
             height: 28,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: accentColor,
+              color: highContrastMode 
+                  ? (isDarkMode ? Colors.white : Colors.black)
+                  : accentColor,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.smart_toy_outlined,
-              color: Colors.white,
+              color: highContrastMode 
+                  ? (isDarkMode ? Colors.black : Colors.white)
+                  : Colors.white,
               size: 16,
             ),
           ),
@@ -598,7 +648,9 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
                 topRight: Radius.circular(16),
                 bottomRight: Radius.circular(16),
               ),
-              color: accentColor.withOpacity(0.7),
+              color: highContrastMode 
+                  ? (isDarkMode ? Colors.white.withOpacity(0.7) : Colors.black.withOpacity(0.7))
+                  : accentColor.withOpacity(0.7),
             ),
             child: AnimatedBuilder(
               animation: _typingAnimController,
@@ -614,7 +666,9 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
                       height: size,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white,
+                        color: highContrastMode 
+                            ? (isDarkMode ? Colors.black : Colors.white)
+                            : Colors.white,
                       ),
                     );
                   }),
@@ -627,20 +681,26 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildChatBubble(ChatMessage message, Color accentColor) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
+  Widget _buildChatBubble(ChatMessage message, Color accentColor, bool highContrastMode, bool isDarkMode) {
     
     final alignment = message.isUserMessage ? 
         CrossAxisAlignment.end : CrossAxisAlignment.start;
     
-    final bubbleColor = message.isUserMessage 
-        ? (isDarkMode ? const Color(0xFF1E293B) : Colors.grey.shade200)
-        : (isDarkMode ? accentColor : accentColor);
+    final bubbleColor = highContrastMode 
+        ? (message.isUserMessage 
+            ? (isDarkMode ? Colors.white : Colors.black)
+            : (isDarkMode ? Colors.black : Colors.white))
+        : (message.isUserMessage 
+            ? (isDarkMode ? const Color(0xFF1E293B) : Colors.grey.shade200)
+            : (isDarkMode ? accentColor : accentColor));
     
-    final textColor = message.isUserMessage 
-        ? (isDarkMode ? Colors.white : Colors.black87) 
-        : Colors.white;
+    final textColor = highContrastMode 
+        ? (message.isUserMessage 
+            ? (isDarkMode ? Colors.black : Colors.white)
+            : (isDarkMode ? Colors.white : Colors.black))
+        : (message.isUserMessage 
+            ? (isDarkMode ? Colors.white : Colors.black87) 
+            : Colors.white);
     
     final radius = message.isUserMessage 
         ? const BorderRadius.only(
@@ -666,11 +726,15 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
               height: 28,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: accentColor,
+                color: highContrastMode 
+                    ? (isDarkMode ? Colors.white : Colors.black)
+                    : accentColor,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.smart_toy_outlined,
-                color: Colors.white,
+                color: highContrastMode 
+                    ? (isDarkMode ? Colors.black : Colors.white)
+                    : Colors.white,
                 size: 16,
               ),
             ),
@@ -690,6 +754,9 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
                   decoration: BoxDecoration(
                     borderRadius: radius,
                     color: bubbleColor,
+                    border: highContrastMode
+                        ? Border.all(color: isDarkMode ? Colors.white : Colors.black, width: 1.0)
+                        : null,
                   ),
                   child: Text(
                     message.text,
@@ -718,11 +785,15 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
               height: 28,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isDarkMode ? const Color(0xFF1E293B) : Colors.grey.shade200,
+                color: highContrastMode 
+                    ? (isDarkMode ? Colors.white : Colors.black)
+                    : (isDarkMode ? const Color(0xFF1E293B) : Colors.grey.shade200),
               ),
               child: Icon(
                 Icons.person,
-                color: isDarkMode ? Colors.white : Colors.black87,
+                color: highContrastMode 
+                    ? (isDarkMode ? Colors.black : Colors.white)
+                    : (isDarkMode ? Colors.white : Colors.black87),
                 size: 16,
               ),
             ),
@@ -733,90 +804,85 @@ class _MahoroPageState extends State<MahoroPage> with SingleTickerProviderStateM
   }
 
   Widget _buildFooter() {
-    return Column(
-      children: [
-        _buildInputArea(),
-        _buildSupportInfo(),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildInputArea() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     final accentColor = isDarkMode ? const Color(0xFFA855F7) : const Color(0xFFE53935);
     
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 12.0),
-      child: AnimatedContainer(
-        duration: ThemeProvider.animationDurationMedium,
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: highContrastMode 
+            ? (isDarkMode ? Colors.black : Colors.white)
+            : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
+        border: highContrastMode
+            ? Border(top: BorderSide(color: isDarkMode ? Colors.white : Colors.black, width: 1.0))
+            : null,
+        boxShadow: highContrastMode 
+            ? null 
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: highContrastMode 
+                    ? (isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1))
+                    : (isDarkMode ? const Color(0xFF111827) : const Color(0xFFF1F5F9)),
+                borderRadius: BorderRadius.circular(24),
+                border: highContrastMode
+                    ? Border.all(color: isDarkMode ? Colors.white : Colors.black, width: 1.0)
+                    : null,
+              ),
               child: TextField(
                 controller: _messageController,
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white : Colors.black87,
-                  fontSize: 14,
-                ),
                 decoration: InputDecoration(
-                  hintText: 'Type your message',
+                  hintText: AppLocalizations.of(context).translate('typeMessage'),
                   hintStyle: TextStyle(
-                    color: isDarkMode ? Colors.white54 : Colors.black54,
-                    fontSize: 14,
+                    color: highContrastMode 
+                        ? (isDarkMode ? Colors.white70 : Colors.black54)
+                        : (isDarkMode ? Colors.white38 : Colors.black38),
                   ),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  isDense: true,
                 ),
-                onSubmitted: _isTyping ? null : _handleSubmitted,
-                enabled: !_isTyping,
+                style: TextStyle(
+                  color: highContrastMode 
+                      ? (isDarkMode ? Colors.white : Colors.black)
+                      : (isDarkMode ? Colors.white : Colors.black87),
+                ),
+                onSubmitted: _handleSubmitted,
               ),
             ),
-
-            AnimatedContainer(
-              duration: ThemeProvider.animationDurationShort,
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _isTyping ? accentColor.withOpacity(0.6) : accentColor,
-              ),
-              child: IconButton(
-                icon: _isTyping 
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Icon(Icons.send, color: Colors.white, size: 18),
-                onPressed: _isTyping ? null : () => _handleSubmitted(_messageController.text),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
-                ),
-              ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: highContrastMode 
+                  ? (isDarkMode ? Colors.white : Colors.black)
+                  : accentColor,
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
+            child: IconButton(
+              onPressed: () => _handleSubmitted(_messageController.text),
+              icon: Icon(
+                Icons.send_rounded,
+                color: highContrastMode 
+                    ? (isDarkMode ? Colors.black : Colors.white)
+                    : Colors.white,
+              ),
+              tooltip: AppLocalizations.of(context).translate('send'),
+            ),
+          ),
+        ],
       ),
     );
   }

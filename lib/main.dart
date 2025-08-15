@@ -7,8 +7,15 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:animated_emoji/animated_emoji.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'firebase_options.dart';
 import 'theme_provider.dart';
+import 'theme_style_provider.dart';
+import 'language_provider.dart';
+import 'accessibility_provider.dart';
+import 'data_performance_provider.dart';
+import 'notification_provider.dart';
 import 'forum_page.dart';
 import 'mahoro_page.dart';
 import 'muganga_page.dart';
@@ -17,6 +24,16 @@ import 'auth_page.dart';
 import 'services/auth_service.dart';
 import 'services/forum_service.dart';
 import 'services/firebase_service.dart';
+import 'services/firebase_realtime_service.dart';
+import 'services/speech_service.dart';
+import 'services/offline_service.dart';
+import 'localization/app_localizations.dart';
+import 'localization/localization_wrapper.dart';
+import 'localization/localized_text.dart';
+import 'localization/base_screen.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'admin_setup_page.dart';
+import 'utils/accessibility_utils.dart';
 
 void main() async {
   // Ensure Flutter is initialized
@@ -33,6 +50,8 @@ void main() async {
       );
       debugPrint('Firebase initialized directly in main.dart');
       
+      debugPrint('Firebase initialized with database URL from configuration');
+      
       // Initialize App Check after Firebase is initialized
       await FirebaseAppCheck.instance.activate(
         // Use debug provider for development
@@ -45,8 +64,12 @@ void main() async {
       debugPrint('Firebase was already initialized');
     }
     
-    // Also initialize via service for additional setup
-    await FirebaseService.initializeFirebase();
+      // Initialize Firebase services
+  await FirebaseService.initializeFirebase();
+  
+  // Initialize Realtime Database for forum posts
+  final realtimeDB = FirebaseRealtimeService();
+  debugPrint('Firebase Realtime Database initialized for forum posts');
   } catch (e) {
     debugPrint('Error initializing Firebase in main.dart: $e');
     // Continue with app startup even if Firebase fails
@@ -57,6 +80,11 @@ void main() async {
   // Create forum service and set auth service
   final forumService = ForumService();
   forumService.setAuthService(authService);
+  // Create speech service
+  final speechService = SpeechService();
+  await speechService.initialize();
+  // Create offline service
+  final offlineService = OfflineService();
   
   debugPrint('Starting application...');
   
@@ -64,9 +92,15 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => AccessibilityProvider()),
+        ChangeNotifierProvider(create: (_) => DataPerformanceProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider.value(value: authService),
         Provider.value(value: forumService),
         Provider(create: (_) => FirebaseService()),
+        Provider.value(value: speechService),
+        Provider.value(value: offlineService),
       ],
       child: const MyApp(),
     ),
@@ -79,27 +113,52 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'HopeCore Hub',
-      theme: themeProvider.getTheme(context),
-      home: Consumer<AuthService>(
-        builder: (context, authService, child) {
-          // Show loading indicator while checking auth state
-          if (authService.isLoading) {
-            return Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
+    // Create theme style provider
+    final themeStyleProvider = ThemeStyleProvider(
+      themeProvider: themeProvider,
+      accessibilityProvider: accessibilityProvider,
+    );
+    
+    return LocalizationWrapper(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'HopeCore Hub',
+        theme: themeStyleProvider.getThemeWithAccessibility(context),
+        routes: {
+          '/admin_setup': (context) => const AdminSetupPage(),
+        },
+        home: Consumer<AuthService>(
+          builder: (context, authService, child) {
+            // Show loading indicator while checking auth state
+            if (authService.isLoading) {
+              return Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+            
+            // Force the app to respond to auth state changes
+            // If logged in, show main app, otherwise show auth page or guest mode
+            if (authService.isLoggedIn) {
+              debugPrint('User is logged in as ${authService.username}');
+              return const MainNavigationWrapper(
+                selectedIndex: 0,
+                child: HopeCoreHub(),
+              );
+            } else {
+              // Show guest mode - we could also redirect to auth page here
+              debugPrint('User is in guest mode');
+              return const MainNavigationWrapper(
+                selectedIndex: 0,
+                child: HopeCoreHub(),
+              );
+            }
           }
-          
-          return const MainNavigationWrapper(
-            selectedIndex: 0,
-            child: HopeCoreHub(),
-          );
-        }
+        ),
       ),
     );
   }
@@ -270,17 +329,23 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> with Sing
                 height: kBottomNavigationBarHeight + 8,
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isDarkMode ? const Color(0xFF111827) : const Color(0xFFF1F5F9),
+                  color: AccessibilityUtils.getAccessibleSurfaceColor(context),
                   borderRadius: BorderRadius.circular(16),
+                  border: AccessibilityUtils.isHighContrastEnabled(context) 
+                      ? Border.all(
+                          color: AccessibilityUtils.getAccessibleBorderColor(context),
+                          width: 3.0, // Thicker border for navigation
+                        )
+                      : null,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildNavItem(0, Icons.home_outlined, 'Home'),
-                    _buildNavItem(1, Icons.chat_bubble_outline, 'Forum'),
-                    _buildNavItem(2, Icons.smart_toy_outlined, 'Mahoro'),
-                    _buildNavItem(3, Icons.favorite_border, 'Muganga'),
-                    _buildNavItem(4, Icons.settings_outlined, 'Settings'),
+                    _buildNavItem(0, Icons.home_outlined, 'home'),
+                    _buildNavItem(1, Icons.chat_bubble_outline, 'forum'),
+                    _buildNavItem(2, Icons.smart_toy_outlined, 'mahoro'),
+                    _buildNavItem(3, Icons.favorite_border, 'muganga'),
+                    _buildNavItem(4, Icons.settings_outlined, 'settings'),
                   ],
                 ),
               ),
@@ -294,9 +359,15 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> with Sing
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = _selectedIndex == index;
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     final selectedColor = const Color(0xFF8A4FFF);
     final unselectedColor = isDarkMode ? Colors.white54 : Colors.black54;
+    
+    // High contrast colors
+    final highContrastSelectedColor = isDarkMode ? Colors.white : Colors.black;
+    final highContrastUnselectedColor = isDarkMode ? Colors.white70 : Colors.black54;
     
     // Calculate animation delay based on index
     final delay = Duration(milliseconds: 50 * index);
@@ -324,7 +395,9 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> with Sing
                   transformAlignment: Alignment.center,
                   child: Icon(
                     icon,
-                    color: isSelected ? selectedColor : unselectedColor,
+                    color: highContrastMode
+                        ? (isSelected ? highContrastSelectedColor : highContrastUnselectedColor)
+                        : (isSelected ? selectedColor : unselectedColor),
                     size: 22,
                   ),
                 ),
@@ -332,11 +405,13 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> with Sing
                 AnimatedDefaultTextStyle(
                   duration: ThemeProvider.animationDurationShort,
                   style: TextStyle(
-                    color: isSelected ? selectedColor : unselectedColor,
+                    color: highContrastMode
+                        ? (isSelected ? highContrastSelectedColor : highContrastUnselectedColor)
+                        : (isSelected ? selectedColor : unselectedColor),
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                     fontSize: 11,
                   ),
-                  child: Text(label),
+                  child: LocalizedText(label),
                 ),
                 const SizedBox(height: 2),
                 AnimatedContainer(
@@ -344,27 +419,29 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> with Sing
                   width: isSelected ? 20 : 0,
                   height: 2,
                   decoration: BoxDecoration(
-                    color: selectedColor,
+                    color: highContrastMode
+                        ? highContrastSelectedColor
+                        : selectedColor,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ],
             ),
-              ),
-            ),
           ),
+        ),
+      ),
     );
   }
 }
 
-class HopeCoreHub extends StatefulWidget {
+class HopeCoreHub extends BaseScreen {
   const HopeCoreHub({super.key});
 
   @override
   State<HopeCoreHub> createState() => _HopeCoreHubState();
 }
 
-class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStateMixin {
+class _HopeCoreHubState extends BaseScreenState<HopeCoreHub> with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   late AnimationController _animationController;
   final ScrollController _scrollController = ScrollController();
@@ -393,10 +470,41 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
         _selectedIndex = index;
       });
     } else {
-      // No need to navigate - the navigation wrapper handles this now
-      setState(() {
-        _selectedIndex = index;
-      });
+      // Navigate to the appropriate page
+      Widget page;
+      switch (index) {
+        case 1:
+          page = const ForumPage();
+          break;
+        case 2:
+          page = const MahoroPage();
+          break;
+        case 3:
+          page = const MugangaPage();
+          break;
+        case 4:
+          page = const SettingsPage();
+          break;
+        default:
+          page = const HopeCoreHub();
+      }
+
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => 
+            MainNavigationWrapper(
+              selectedIndex: index,
+              child: page,
+            ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 300),
+        ),
+      );
     }
   }
 
@@ -411,17 +519,25 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
   }
 
   Widget _buildUserGreeting() {
-    final authService = Provider.of<AuthService>(context);
+    final authService = Provider.of<AuthService>(context, listen: true);
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     
-    if (!authService.isLoggedIn) {
-      return const SizedBox.shrink();
-    }
+    // Ensure we're checking the actual auth state
+    debugPrint('Auth state in greeting: isLoggedIn=${authService.isLoggedIn}, username=${authService.username}');
     
-    final username = authService.username ?? 'User';
+    // Attempt to reload auth state when user is in guest mode but shouldn't be
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!authService.isLoading) {
+        authService.reloadAuthState();
+      }
+    });
+    
+    final username = authService.username ?? 'Guest';
     final String firstLetter = username[0].toUpperCase();
-    final bool isGuest = username == 'Guest';
+    final bool isGuest = username == 'Guest' || !authService.isLoggedIn;
 
     final primaryColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
     
@@ -429,21 +545,31 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(0),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDarkMode 
-            ? [const Color(0xFF1E293B), const Color(0xFF172033)]
-            : [const Color(0xFFF8FAFC), const Color(0xFFF1F5F9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: highContrastMode 
+            ? null 
+            : LinearGradient(
+                colors: isDarkMode 
+                  ? [const Color(0xFF1E293B), const Color(0xFF172033)]
+                  : [const Color(0xFFF8FAFC), const Color(0xFFF1F5F9)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        color: highContrastMode 
+            ? (isDarkMode ? Colors.black : Colors.white)
+            : null,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: highContrastMode
+            ? Border.all(color: isDarkMode ? Colors.white : Colors.black, width: 2.0)
+            : null,
+        boxShadow: highContrastMode 
+            ? null 
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
@@ -521,39 +647,98 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                       children: [
                         Row(
                           children: [
-                            Text(
-                              'Welcome, ',
+                            LocalizedText(
+                              'welcomeBack',
                               style: TextStyle(
-                                color: isDarkMode ? Colors.white70 : Colors.black54,
+                                color: highContrastMode 
+                                    ? (isDarkMode ? Colors.white70 : Colors.black54)
+                                    : (isDarkMode ? Colors.white70 : Colors.black54),
                                 fontWeight: FontWeight.w500,
                                 fontSize: 14,
                               ),
                             ),
+                            const SizedBox(width: 4),
                             Text(
                               username,
                               style: TextStyle(
-                                color: isDarkMode ? Colors.white : Colors.black87,
+                                color: highContrastMode 
+                                    ? (isDarkMode ? Colors.white : Colors.black)
+                                    : (isDarkMode ? Colors.white : Colors.black87),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
                             ),
+                            if (isGuest) 
+                              Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () => _showLoginPrompt(),
+                                    child: Container(
+                                      margin: const EdgeInsets.only(left: 8),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: Colors.red.withOpacity(0.3),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Guest Mode',
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  InkWell(
+                                    onTap: () {
+                                      final authService = Provider.of<AuthService>(context, listen: false);
+                                      authService.reloadAuthState();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Refreshing login status...'),
+                                          duration: Duration(seconds: 1),
+                                          backgroundColor: primaryColor,
+                                        )
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(4.0),
+                                      child: Icon(
+                                        Icons.refresh,
+                                        size: 14,
+                                        color: primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                           decoration: BoxDecoration(
-                            color: isDarkMode 
-                              ? primaryColor.withOpacity(0.2) 
-                              : primaryColor.withOpacity(0.1),
+                            color: highContrastMode 
+                                ? (isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1))
+                                : (isDarkMode 
+                                    ? primaryColor.withOpacity(0.2) 
+                                    : primaryColor.withOpacity(0.1)),
                             borderRadius: BorderRadius.circular(30),
                           ),
                           child: Text(
                             isGuest 
-                              ? 'Guest mode'
+                              ? 'Log in to access all features'
                               : 'How are you today?',
                             style: TextStyle(
-                              color: primaryColor,
+                              color: highContrastMode 
+                                  ? (isDarkMode ? Colors.white : Colors.black)
+                                  : primaryColor,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
@@ -569,9 +754,11 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                     height: 36,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isDarkMode 
-                        ? Colors.white.withOpacity(0.1) 
-                        : Colors.black.withOpacity(0.05),
+                      color: highContrastMode 
+                          ? (isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1))
+                          : (isDarkMode 
+                              ? Colors.white.withOpacity(0.1) 
+                              : Colors.black.withOpacity(0.05)),
                     ),
                     child: IconButton(
                       onPressed: () {
@@ -581,7 +768,9 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                       },
                       icon: Icon(
                         Icons.settings_outlined,
-                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                        color: highContrastMode 
+                            ? (isDarkMode ? Colors.white : Colors.black)
+                            : (isDarkMode ? Colors.white70 : Colors.black54),
                         size: 18,
                       ),
                       padding: EdgeInsets.zero,
@@ -595,14 +784,114 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
       ),
     );
   }
-
-  @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+  
+  // Show login prompt dialog when user clicks on Guest Mode indicator
+  void _showLoginPrompt() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDarkMode = themeProvider.isDarkMode;
     
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8A4FFF).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.person_outline,
+                    color: const Color(0xFF8A4FFF),
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Guest Mode',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'You\'re currently using the app as a guest. Sign in or create an account to access all features and save your progress.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => const AuthPage()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8A4FFF),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Login / Register',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'Continue as Guest',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white60 : Colors.black54,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget buildScreen(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
+    
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF111827) : Colors.white,
+      backgroundColor: highContrastMode 
+          ? (isDarkMode ? Colors.black : Colors.white)
+          : (isDarkMode ? const Color(0xFF111827) : Colors.white),
       body: SafeArea(
         child: ScrollConfiguration(
           behavior: CustomScrollBehavior(),
@@ -687,107 +976,54 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
 
   Widget _buildHeader() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     
     return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDarkMode 
-            ? [const Color(0xFF111827), const Color(0xFF1E293B)]
-            : [const Color(0xFFF9FAFB), const Color(0xFFE5E7EB)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
+        gradient: highContrastMode
+            ? null // No gradients in high contrast mode
+            : LinearGradient(
+                colors: isDarkMode 
+                  ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                  : [const Color(0xFFF8FAFC), const Color(0xFFF1F5F9)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        color: highContrastMode
+            ? (isDarkMode ? Colors.black : Colors.white)
+            : null,
+        borderRadius: BorderRadius.circular(16),
+        border: highContrastMode
+            ? Border.all(color: isDarkMode ? Colors.white : Colors.black, width: 2.0)
+            : null,
+        boxShadow: highContrastMode
+            ? null // No shadows in high contrast mode
+            : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 15,
-            spreadRadius: 1,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-      child: Column(
+      child: Stack(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Profile button
-              Hero(
-                tag: 'profile_button',
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const MainNavigationWrapper(
-                          selectedIndex: 0,
-                          child: AuthPage(),
-                        ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDarkMode ? const Color(0xFFE5E7EB) : const Color(0xFF1E293B),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 10,
-                          spreadRadius: 0,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.person_outline,
-                      color: isDarkMode ? const Color(0xFF111827) : Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                ),
+          Positioned(
+            right: -20,
+            bottom: -20,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: (isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935))
+                  .withOpacity(0.1),
               ),
-              
-              // Theme toggle
-              Hero(
-                tag: 'theme_toggle',
-                child: GestureDetector(
-                  onTap: () {
-                    themeProvider.toggleDarkMode(!themeProvider.isDarkMode);
-                  },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDarkMode ? const Color(0xFF0F172A) : Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 10,
-                          spreadRadius: 0,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      isDarkMode ? Icons.wb_sunny_outlined : Icons.brightness_2_outlined,
-                      color: isDarkMode ? Colors.white70 : Colors.black54,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-          
-          const SizedBox(height: 12),
-          
-          // Logo and title
           Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -819,37 +1055,50 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ShaderMask(
-                      shaderCallback: (Rect bounds) {
-                        return LinearGradient(
-                          colors: isDarkMode 
-                            ? [const Color(0xFF8A4FFF), const Color(0xFF6D28D9)]
-                            : [const Color(0xFFE53935), const Color(0xFFD32F2F)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ).createShader(bounds);
-                      },
-                      child: Text(
-                        'HopeCore Hub',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                    highContrastMode
+                        ? Text(
+                            'HopeCore Hub',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                          )
+                        : ShaderMask(
+                            shaderCallback: (Rect bounds) {
+                              return LinearGradient(
+                                colors: isDarkMode 
+                                  ? [const Color(0xFF8A4FFF), const Color(0xFF6D28D9)]
+                                  : [const Color(0xFFE53935), const Color(0xFFD32F2F)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ).createShader(bounds);
+                            },
+                            child: const Text(
+                              'HopeCore Hub',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? const Color(0xFF0F172A).withOpacity(0.7) : Colors.white.withOpacity(0.9),
+                        color: highContrastMode 
+                            ? (isDarkMode ? Colors.black.withOpacity(0.7) : Colors.white.withOpacity(0.9))
+                            : (isDarkMode ? const Color(0xFF0F172A).withOpacity(0.7) : Colors.white.withOpacity(0.9)),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        'Your safe space for healing',
+                      child: LocalizedText(
+                        'yourSafeSpaceForHealing',
                         style: TextStyle(
                           fontSize: 11,
                           letterSpacing: 0.3,
-                          color: isDarkMode ? Colors.white70 : Colors.black54,
+                          color: highContrastMode 
+                              ? (isDarkMode ? Colors.white70 : Colors.black87)
+                              : Colors.white70,
                         ),
                       ),
                     ),
@@ -865,7 +1114,9 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
 
   Widget _buildEmergencyButton() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     
     return AnimatedBuilder(
       animation: _animationController,
@@ -881,13 +1132,21 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
           scale: pulseAnimation.value,
           child: Container(
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE53935), Color(0xFFC62828)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+              gradient: highContrastMode
+                  ? null // No gradients in high contrast mode
+                  : const LinearGradient(
+                      colors: [Color(0xFFE53935), Color(0xFFC62828)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+              color: highContrastMode ? Colors.red : null,
               borderRadius: BorderRadius.circular(14),
-              boxShadow: [
+              border: highContrastMode
+                  ? Border.all(color: Colors.white, width: 3.0) // More prominent border for emergency buttons
+                  : null,
+              boxShadow: highContrastMode
+                  ? null // No shadows in high contrast mode
+                  : [
                 BoxShadow(
                   color: const Color(0xFFE53935).withOpacity(0.3),
                   blurRadius: 12,
@@ -912,15 +1171,15 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                     builder: (BuildContext context) {
                       return AlertDialog(
                         backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-                        title: Text(
-                          'Emergency Call',
+                        title: LocalizedText(
+                          'emergencyCall',
                           style: TextStyle(
                             color: isDarkMode ? Colors.white : Colors.black,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        content: Text(
-                          'Would you like to call emergency services now?',
+                        content: LocalizedText(
+                          'wouldYouLikeToCallEmergencyServicesNow',
                           style: TextStyle(
                             color: isDarkMode ? Colors.white70 : Colors.black87,
                           ),
@@ -930,8 +1189,8 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
-                            child: Text(
-                              'Cancel',
+                            child: LocalizedText(
+                              'cancel',
                               style: TextStyle(
                                 color: isDarkMode ? Colors.white60 : Colors.black54,
                               ),
@@ -942,8 +1201,8 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                               Navigator.of(context).pop();
                               _makePhoneCall('112'); // Rwanda emergency number
                             },
-                            child: Text(
-                              'Call Now',
+                            child: LocalizedText(
+                              'callNow',
                               style: TextStyle(
                                 color: Colors.red,
                                 fontWeight: FontWeight.bold,
@@ -964,12 +1223,12 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                         width: 38,
                         height: 38,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: highContrastMode ? Colors.white : Colors.white.withOpacity(0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.phone, 
-                          color: Colors.white, 
+                          color: highContrastMode ? Colors.red : Colors.white, 
                           size: 20,
                         ),
                       ),
@@ -978,18 +1237,18 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            'SOS - Emergency Help',
+                          LocalizedText(
+                            'emergencyHelp',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: highContrastMode ? Colors.white : Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Text(
-                            'Get immediate support',
+                          LocalizedText(
+                            'getImmediateSupport',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
+                              color: highContrastMode ? Colors.white70 : Colors.white70,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                             ),
@@ -1001,12 +1260,12 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: highContrastMode ? Colors.white : Colors.white.withOpacity(0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.arrow_forward, 
-                          color: Colors.white, 
+                          color: highContrastMode ? Colors.red : Colors.white, 
                           size: 16,
                         ),
                       ),
@@ -1023,34 +1282,44 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
 
   Widget _buildQuickAccessSection() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            ShaderMask(
-              shaderCallback: (Rect bounds) {
-                return LinearGradient(
-                  colors: isDarkMode 
-                    ? [const Color(0xFF8A4FFF), const Color(0xFF6D28D9)]
-                    : [const Color(0xFFE53935), const Color(0xFFD32F2F)],
-                ).createShader(bounds);
-              },
-              child: Icon(
-                Icons.bolt,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
+            highContrastMode
+                ? Icon(
+                    Icons.bolt,
+                    color: isDarkMode ? Colors.white : Colors.black,
+                    size: 20,
+                  )
+                : ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return LinearGradient(
+                        colors: isDarkMode 
+                          ? [const Color(0xFF8A4FFF), const Color(0xFF6D28D9)]
+                          : [const Color(0xFFE53935), const Color(0xFFD32F2F)],
+                      ).createShader(bounds);
+                    },
+                    child: Icon(
+                      Icons.bolt,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
             const SizedBox(width: 8),
             Text(
               'Quick Access',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : Colors.black87,
+                color: highContrastMode 
+                    ? (isDarkMode ? Colors.white : Colors.black)
+                    : (isDarkMode ? Colors.white : Colors.black87),
               ),
             ),
           ],
@@ -1137,7 +1406,55 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
     required String subtitle,
   }) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
+    
+    // High contrast mode styling
+    Color backgroundColor;
+    Color textColor;
+    Color iconColor;
+    Color iconBackgroundColor;
+    List<BoxShadow>? boxShadow;
+    Gradient? gradient;
+    Border? border;
+    
+    if (highContrastMode) {
+      // High contrast mode: Use clear, strong colors with better visual hierarchy
+      backgroundColor = AccessibilityUtils.getAccessibleSurfaceColor(context);
+      textColor = AccessibilityUtils.getAccessibleColor(context, Colors.white);
+      iconColor = isDarkMode ? Colors.black : Colors.white; // High contrast icon color
+      iconBackgroundColor = isDarkMode ? Colors.white : Colors.black; // Strong icon background
+      boxShadow = null; // No shadows in high contrast mode
+      gradient = null; // No gradients in high contrast mode
+      border = Border.all(
+        color: AccessibilityUtils.getAccessibleBorderColor(context),
+        width: 3.0, // Slightly thicker for better visibility
+      );
+    } else {
+      // Normal mode: Use original gradient styling
+      backgroundColor = color;
+      textColor = Colors.white;
+      iconColor = Colors.white;
+      iconBackgroundColor = Colors.white.withOpacity(0.2);
+      boxShadow = [
+        BoxShadow(
+          color: color.withOpacity(0.25),
+          blurRadius: 10,
+          spreadRadius: 0,
+          offset: const Offset(0, 4),
+        ),
+      ];
+      gradient = LinearGradient(
+        colors: [
+          color,
+          Color.lerp(color, isDarkMode ? Colors.black : Colors.white, 0.3)!,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      border = null;
+    }
     
     return GestureDetector(
       onTap: () {
@@ -1186,25 +1503,13 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
       },
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              color,
-              Color.lerp(color, isDarkMode ? Colors.black : Colors.white, 0.3)!,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: gradient == null ? backgroundColor : null,
+          gradient: gradient,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.25),
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: boxShadow,
+          border: border,
         ),
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(highContrastMode ? 16 : 14), // More padding in high contrast for better visual breathing
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -1213,31 +1518,37 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
+                color: iconBackgroundColor,
+                borderRadius: BorderRadius.circular(highContrastMode ? 8 : 10),
+                border: highContrastMode ? Border.all(
+                  color: AccessibilityUtils.getAccessibleBorderColor(context),
+                  width: 2.0, // Thicker border for icon container
+                ) : null,
               ),
               child: Icon(
                 icon,
-                color: Colors.white,
-                size: 22,
+                color: iconColor,
+                size: highContrastMode ? 24 : 22, // Slightly larger icons in high contrast
               ),
             ),
             const Spacer(),
             Text(
               title,
-              style: const TextStyle(
+              style: AccessibilityUtils.getTextStyle(
+                context,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: textColor,
               ),
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: highContrastMode ? 4 : 2), // More spacing in high contrast mode
             Text(
               subtitle,
-              style: TextStyle(
+              style: AccessibilityUtils.getTextStyle(
+                context,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: Colors.white.withOpacity(0.8),
+                color: highContrastMode ? textColor : textColor.withOpacity(0.8),
               ),
             ),
           ],
@@ -1248,28 +1559,40 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
 
   Widget _buildFeelingsSection() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     final primaryColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
     
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDarkMode 
-            ? [const Color(0xFF2A3B53), const Color(0xFF1E293B)]
-            : [const Color(0xFFFFEFEF), const Color(0xFFFAF0F0)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
+        gradient: highContrastMode
+            ? null // No gradients in high contrast mode
+            : LinearGradient(
+                colors: isDarkMode 
+                  ? [const Color(0xFF2A3B53), const Color(0xFF1E293B)]
+                  : [const Color(0xFFFFEFEF), const Color(0xFFFAF0F0)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        color: highContrastMode
+            ? (isDarkMode ? Colors.black : Colors.white)
+            : null,
+        borderRadius: BorderRadius.circular(20),
+        border: highContrastMode
+            ? Border.all(color: isDarkMode ? Colors.white : Colors.black, width: 2.0)
+            : null,
+        boxShadow: highContrastMode
+            ? null // No shadows in high contrast mode
+            : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -1277,45 +1600,83 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
           Row(
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDarkMode 
-                      ? [const Color(0xFF8A4FFF), const Color(0xFF6D28D9)]
-                      : [const Color(0xFFE53935), const Color(0xFFD32F2F)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
+                  gradient: highContrastMode
+                      ? null
+                      : LinearGradient(
+                          colors: isDarkMode 
+                            ? [const Color(0xFF8A4FFF), const Color(0xFF6D28D9)]
+                            : [const Color(0xFFE53935), const Color(0xFFD32F2F)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                  color: highContrastMode
+                      ? (isDarkMode ? Colors.white : Colors.black)
+                      : null,
+                  borderRadius: BorderRadius.circular(12),
+                  border: highContrastMode
+                      ? Border.all(color: isDarkMode ? Colors.black : Colors.white, width: 2.0)
+                      : null,
+                  boxShadow: highContrastMode
+                      ? null
+                      : [
+                    BoxShadow(
+                      color: isDarkMode 
+                        ? const Color(0xFF8A4FFF).withOpacity(0.3)
+                        : const Color(0xFFE53935).withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.favorite,
-                  color: Colors.white,
-                  size: 18,
+                  color: highContrastMode
+                      ? (isDarkMode ? Colors.black : Colors.white)
+                      : Colors.white,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 10),
-              Text(
-                'How are you feeling today?',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
-                ),
-              ),
+              const SizedBox(width: 12),
+              // In high contrast mode, use standard text instead of animated text
+              highContrastMode
+                  ? Text(
+                      AppLocalizations.of(context).translate('howAreYouFeelingToday'),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                    )
+                  : AnimatedTextKit(
+                      animatedTexts: [
+                        TypewriterAnimatedText(
+                          AppLocalizations.of(context).translate('howAreYouFeelingToday'),
+                          textStyle: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                          speed: const Duration(milliseconds: 100),
+                        ),
+                      ],
+                      totalRepeatCount: 1,
+                      displayFullTextOnTap: true,
+                    ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildEmotionButton('😀', 'Great', 0.1, isDarkMode),
-                _buildEmotionButton('😊', 'Good', 0.2, isDarkMode),
-                _buildEmotionButton('😐', 'Okay', 0.3, isDarkMode),
-                _buildEmotionButton('😔', 'Sad', 0.4, isDarkMode),
-                _buildEmotionButton('😣', 'Bad', 0.5, isDarkMode),
+                _buildEmotionButton('great', 0.1, isDarkMode, highContrastMode),
+                _buildEmotionButton('good', 0.2, isDarkMode, highContrastMode),
+                _buildEmotionButton('okay', 0.3, isDarkMode, highContrastMode),
+                _buildEmotionButton('sad', 0.4, isDarkMode, highContrastMode),
+                _buildEmotionButton('bad', 0.5, isDarkMode, highContrastMode),
               ],
             ),
           ),
@@ -1324,109 +1685,566 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildEmotionButton(String emotion, String label, double delay, bool isDarkMode) {
+  Widget _buildEmotionButton(String emotionKey, double delay, bool isDarkMode, bool highContrastMode) {
     final primaryColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+    final localizations = AppLocalizations.of(context);
+    final emotionLabel = localizations.translate(emotionKey);
+    
+    // Map emotion keys to emoji characters
+    String getEmojiCharacter(String key) {
+      switch (key) {
+        case 'great':
+          return '😀';
+        case 'good':
+          return '😊';
+        case 'okay':
+          return '😐';
+        case 'sad':
+          return '😔';
+        case 'bad':
+          return '😣';
+        default:
+          return '😊';
+      }
+    }
+    
+    // Get short text label for high contrast mode
+    String getEmotionShortLabel(String key) {
+      switch (key) {
+        case 'great':
+          return 'Great';
+        case 'good':
+          return 'Good';
+        case 'okay':
+          return 'Okay';
+        case 'sad':
+          return 'Sad';
+        case 'bad':
+          return 'Bad';
+        default:
+          return 'Good';
+      }
+    }
     
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
         final delayedAnimation = _animationController.drive(
-          CurveTween(curve: Interval(0.4 + delay, 1.0, curve: Curves.easeOutBack)),
+          CurveTween(curve: Interval(0.4 + delay, 1.0, curve: Curves.elasticOut)),
         );
         
         // Ensure opacity is between 0.0 and 1.0
         final opacityValue = delayedAnimation.value.clamp(0.0, 1.0);
         
-        return Transform.scale(
-          scale: 0.7 + (0.3 * delayedAnimation.value),
-          child: Opacity(
-            opacity: opacityValue,
-            child: GestureDetector(
-              onTap: () => _playEmotionSelectAnimation(emotion),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-                          isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDarkMode 
-                            ? Colors.black.withOpacity(0.15) 
-                            : primaryColor.withOpacity(0.1),
-                          blurRadius: 8,
-                          spreadRadius: 0,
-                          offset: const Offset(0, 3),
+        return TweenAnimationBuilder(
+          tween: Tween<double>(begin: 0.8, end: 1.0),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          builder: (context, scale, child) {
+            return Transform.scale(
+              scale: 0.7 + (0.3 * delayedAnimation.value),
+              child: Opacity(
+                opacity: opacityValue,
+                child: GestureDetector(
+                  onTap: () => _playEmotionSelectAnimation(emotionKey),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: highContrastMode
+                              ? null
+                              : LinearGradient(
+                                  colors: [
+                                    isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                                    isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                          color: highContrastMode
+                              ? (isDarkMode ? Colors.black : Colors.white)
+                              : null,
+                          borderRadius: BorderRadius.circular(16),
+                          border: highContrastMode
+                              ? Border.all(
+                                  color: isDarkMode ? Colors.white : Colors.black,
+                                  width: 2.0,
+                                )
+                              : null,
+                          boxShadow: highContrastMode
+                              ? null
+                              : [
+                            BoxShadow(
+                              color: isDarkMode 
+                                ? Colors.black.withOpacity(0.25) 
+                                : primaryColor.withOpacity(0.15),
+                              blurRadius: 10,
+                              spreadRadius: 0,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        emotion,
-                        style: const TextStyle(
-                          fontSize: 24,
+                        child: Center(
+                          child: highContrastMode
+                              // In high contrast mode, use text labels instead of emoji
+                              ? Center(
+                                  child: Text(
+                                    getEmotionShortLabel(emotionKey),
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDarkMode ? Colors.white : Colors.black,
+                                    ),
+                                  ),
+                                )
+                              : TweenAnimationBuilder<double>(
+                                  tween: Tween<double>(begin: 0.8, end: 1.0),
+                                  duration: const Duration(milliseconds: 800),
+                                  curve: Curves.elasticOut,
+                                  builder: (context, value, child) {
+                                    return Transform.scale(
+                                      scale: value,
+                                      child: Text(
+                                        getEmojiCharacter(emotionKey),
+                                        style: const TextStyle(
+                                          fontSize: 32,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 6),
+                      Text(
+                        emotionLabel,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: highContrastMode ? FontWeight.bold : FontWeight.w500,
+                          color: highContrastMode
+                              ? (isDarkMode ? Colors.white : Colors.black)
+                              : (isDarkMode ? Colors.white70 : Colors.black87),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: isDarkMode ? Colors.white70 : Colors.black87,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       }
     );
   }
-
+  
+  void _playEmotionSelectAnimation(String emotionKey) {
+    HapticFeedback.lightImpact();
+    
+    // Show emotion selection dialog instead of just a snackbar
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+    final localizations = AppLocalizations.of(context);
+    final emotionLabel = localizations.translate(emotionKey);
+    
+    // Map emotion keys to emoji characters
+    String getEmojiCharacter(String key) {
+      switch (key) {
+        case 'great':
+          return '😀';
+        case 'good':
+          return '😊';
+        case 'okay':
+          return '😐';
+        case 'sad':
+          return '😔';
+        case 'bad':
+          return '😣';
+        default:
+          return '😊';
+      }
+    }
+    
+    // Get appropriate color for each emotion
+    Color getEmotionColor(String key) {
+      switch (key) {
+        case 'great':
+          return const Color(0xFF4CAF50); // Green
+        case 'good':
+          return const Color(0xFF8BC34A); // Light Green
+        case 'okay':
+          return const Color(0xFFFFC107); // Amber
+        case 'sad':
+          return const Color(0xFFFF9800); // Orange
+        case 'bad':
+          return const Color(0xFFF44336); // Red
+        default:
+          return accentColor;
+      }
+    }
+    
+    // Get appropriate icon for each emotion
+    IconData getEmotionIcon(String key) {
+      switch (key) {
+        case 'great':
+          return Icons.sentiment_very_satisfied;
+        case 'good':
+          return Icons.sentiment_satisfied;
+        case 'okay':
+          return Icons.sentiment_neutral;
+        case 'sad':
+          return Icons.sentiment_dissatisfied;
+        case 'bad':
+          return Icons.sentiment_very_dissatisfied;
+        default:
+          return Icons.sentiment_neutral;
+      }
+    }
+    
+    final emotionColor = getEmotionColor(emotionKey);
+    
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black87.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      pageBuilder: (context, animation1, animation2) => Container(), // This is needed but not used
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        // Create curved animations
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeInBack,
+        );
+        
+        return ScaleTransition(
+          scale: Tween<double>(begin: 0.8, end: 1.0).animate(curvedAnimation),
+          child: FadeTransition(
+            opacity: Tween<double>(begin: 0.0, end: 1.0).animate(curvedAnimation),
+            child: Dialog(
+              backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+              elevation: 12,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Stack(
+                  children: [
+                    // Background decorations
+                    Positioned(
+                      top: -50,
+                      right: -50,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: emotionColor.withOpacity(0.1),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -60,
+                      left: -30,
+                      child: Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: emotionColor.withOpacity(0.15),
+                        ),
+                      ),
+                    ),
+                    
+                    // Main content
+                    Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Close button
+                          Align(
+                            alignment: Alignment.topRight,
+                            child: IconButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: (isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.05)),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.close,
+                                  color: isDarkMode ? Colors.white60 : Colors.black54,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                          
+                          // Enhanced animated emoji
+                          SizedBox(
+                            height: 120,
+                            child: Center(
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // Pulsing background
+                                  TweenAnimationBuilder<double>(
+                                    tween: Tween<double>(begin: 0.8, end: 1.2),
+                                    duration: const Duration(milliseconds: 2000),
+                                    curve: Curves.easeInOut,
+                                    builder: (context, value, child) {
+                                      return Opacity(
+                                        opacity: 0.2,
+                                        child: Transform.scale(
+                                          scale: value,
+                                          child: Container(
+                                            width: 100,
+                                            height: 100,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: emotionColor,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  
+                                  // Icon behind emoji
+                                  TweenAnimationBuilder<double>(
+                                    tween: Tween<double>(begin: 0.0, end: 1.0),
+                                    duration: const Duration(milliseconds: 600),
+                                    curve: Curves.easeOut,
+                                    builder: (context, value, child) {
+                                      return Opacity(
+                                        opacity: value * 0.15,
+                                        child: Transform.scale(
+                                          scale: 2.5,
+                                          child: Icon(
+                                            getEmotionIcon(emotionKey),
+                                            color: emotionColor,
+                                            size: 40,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  
+                                  // Emoji with bounce effect
+                                  TweenAnimationBuilder<double>(
+                                    tween: Tween<double>(begin: 0.5, end: 1.2),
+                                    duration: const Duration(milliseconds: 1000),
+                                    curve: Curves.elasticOut,
+                                    builder: (context, value, child) {
+                                      return Transform.scale(
+                                        scale: value,
+                                        child: Text(
+                                          getEmojiCharacter(emotionKey),
+                                          style: const TextStyle(
+                                            fontSize: 70,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          
+                          const SizedBox(height: 16),
+                          
+                          // Title with animation
+                          AnimatedTextKit(
+                            animatedTexts: [
+                              TypewriterAnimatedText(
+                                'How can we support you today?',
+                                textStyle: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDarkMode ? Colors.white : Colors.black87,
+                                ),
+                                speed: const Duration(milliseconds: 80),
+                              ),
+                            ],
+                            totalRepeatCount: 1,
+                            displayFullTextOnTap: true,
+                          ),
+                          
+                          const SizedBox(height: 16),
+                          
+                          // Message
+                          Text(
+                            _getEmotionMessage(emotionKey),
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: isDarkMode ? Colors.white70 : Colors.black54,
+                              height: 1.4,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          
+                          const SizedBox(height: 24),
+                          
+                          // Action buttons with ripple effect
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TweenAnimationBuilder<double>(
+                                  tween: Tween<double>(begin: 0.0, end: 1.0),
+                                  duration: const Duration(milliseconds: 600),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (context, value, child) {
+                                    return Transform.translate(
+                                      offset: Offset(0, 20 * (1 - value)),
+                                      child: Opacity(
+                                        opacity: value,
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                            _navigateToPage(2); // Navigate to Mahoro
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: emotionColor,
+                                            foregroundColor: Colors.white,
+                                            elevation: 4,
+                                            shadowColor: emotionColor.withOpacity(0.4),
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Talk to Mahoro',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TweenAnimationBuilder<double>(
+                                  tween: Tween<double>(begin: 0.0, end: 1.0),
+                                  duration: const Duration(milliseconds: 800), // Longer duration to create delay effect
+                                  curve: const Interval(0.25, 1.0, curve: Curves.easeOutCubic), // Start at 25% to create delay
+                                  builder: (context, value, child) {
+                                    return Transform.translate(
+                                      offset: Offset(0, 20 * (1 - value)),
+                                      child: Opacity(
+                                        opacity: value,
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                            _navigateToPage(1); // Navigate to Forum
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.05),
+                                            foregroundColor: isDarkMode ? Colors.white : Colors.black87,
+                                            elevation: 0,
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Join Forum',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
+  String _getEmotionMessage(String emotionKey) {
+    switch (emotionKey) {
+      case 'great':
+        return "It's great to see you're feeling good! Would you like to share your positive experiences or learn ways to maintain this mood?";
+      case 'good':
+        return "Sometimes we all feel a bit neutral. Would you like to talk about what's on your mind or explore ways to boost your mood?";
+      case 'okay':
+        return "Sometimes we all feel a bit neutral. Would you like to talk about what's on your mind or explore ways to boost your mood?";
+      case 'sad':
+        return "I'm sorry you're feeling down. Remember that it's okay to not be okay, and talking about it can help. Would you like some support?";
+      case 'bad':
+        return "I can see you're having a difficult time. Please remember you're not alone, and there are resources available to help you through this.";
+      default:
+        return "Thank you for sharing how you're feeling. Would you like to talk more about it?";
+    }
+  }
+  
   Widget _buildResourcesSection() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            ShaderMask(
-              shaderCallback: (Rect bounds) {
-                return LinearGradient(
-                  colors: isDarkMode 
-                    ? [const Color(0xFF8A4FFF), const Color(0xFF6D28D9)]
-                    : [const Color(0xFFE53935), const Color(0xFFD32F2F)],
-                ).createShader(bounds);
-              },
-              child: Icon(
-                Icons.category,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
+            highContrastMode 
+                ? Icon(
+                    Icons.category,
+                    color: AccessibilityUtils.getAccessibleColor(context, Colors.white, isPrimary: true),
+                    size: 22,
+                  )
+                : ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return LinearGradient(
+                        colors: isDarkMode 
+                          ? [const Color(0xFF8A4FFF), const Color(0xFF6D28D9)]
+                          : [const Color(0xFFE53935), const Color(0xFFD32F2F)],
+                      ).createShader(bounds);
+                    },
+                    child: Icon(
+                      Icons.category,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
             const SizedBox(width: 8),
-            Text(
-              'Resources',
-              style: TextStyle(
+            LocalizedText(
+              'resources',
+              style: AccessibilityUtils.getTextStyle(
+                context,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : Colors.black87,
+                color: highContrastMode 
+                    ? AccessibilityUtils.getAccessibleColor(context, Colors.white)
+                    : (isDarkMode ? Colors.white : Colors.black87),
               ),
             ),
           ],
@@ -1435,32 +2253,32 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
         _buildAnimatedResourceItem(
           color: Colors.red,
           icon: Icons.favorite,
-          title: 'Self-Care Tips',
-          subtitle: 'Daily wellness practices',
+          title: 'selfCareTips',
+          subtitle: 'dailyWellnessPractices',
           delay: 0.1,
         ),
         const SizedBox(height: 10),
         _buildAnimatedResourceItem(
           color: Colors.blue,
           icon: Icons.shield_outlined,
-          title: 'Safety Planning',
-          subtitle: 'Personal safety resources',
+          title: 'safetyPlanning',
+          subtitle: 'personalSafetyResources',
           delay: 0.2,
         ),
         const SizedBox(height: 10),
         _buildAnimatedResourceItem(
           color: Colors.green,
           icon: Icons.call,
-          title: 'Crisis Support',
-          subtitle: '24/7 helpline numbers',
+          title: 'crisisSupport',
+          subtitle: 'helplineNumbers',
           delay: 0.3,
         ),
         const SizedBox(height: 10),
         _buildAnimatedResourceItem(
           color: Colors.purple,
           icon: Icons.menu_book,
-          title: 'Educational Content',
-          subtitle: 'Learn about healing',
+          title: 'educationalContent',
+          subtitle: 'learnAboutHealing',
           delay: 0.4,
         ),
       ],
@@ -1507,34 +2325,39 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
     required String subtitle,
   }) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
+    final localizations = AppLocalizations.of(context);
     
     return GestureDetector(
-      onTap: () => _playItemPressAnimation(title),
+      onTap: () {
+        // Get translated title for the popup
+        String translatedTitle = localizations.translate(title);
+        _playItemPressAnimation(translatedTitle);
+      },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-              isDarkMode ? const Color(0xFF172033) : const Color(0xFFF9FAFB),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.15),
-              blurRadius: 8,
-              spreadRadius: 0,
-              offset: const Offset(0, 3),
-            ),
-          ],
-          border: Border.all(
-            color: color.withOpacity(0.08),
-            width: 1,
-          ),
+          color: highContrastMode 
+              ? AccessibilityUtils.getAccessibleSurfaceColor(context)
+              : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
+          borderRadius: BorderRadius.circular(12),
+          border: highContrastMode 
+              ? Border.all(
+                  color: AccessibilityUtils.getAccessibleBorderColor(context),
+                  width: 2.0,
+                )
+              : null,
+          boxShadow: highContrastMode 
+              ? null // No shadows in high contrast mode
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
         ),
         child: Row(
           children: [
@@ -1542,56 +2365,61 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [color, color.withOpacity(0.8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: highContrastMode 
+                    ? (isDarkMode ? Colors.white : Colors.black)
+                    : color.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(10),
+                border: highContrastMode 
+                    ? Border.all(
+                        color: AccessibilityUtils.getAccessibleBorderColor(context),
+                        width: 1.5,
+                      )
+                    : null,
               ),
               child: Icon(
                 icon,
-                color: Colors.white,
-                size: 20,
+                color: highContrastMode 
+                    ? (isDarkMode ? Colors.black : Colors.white)
+                    : color,
+                size: 22,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  LocalizedText(
                     title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: isDarkMode ? Colors.white : Colors.black87,
+                    style: AccessibilityUtils.getTextStyle(
+                      context,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: highContrastMode 
+                          ? (isDarkMode ? Colors.white : Colors.black)
+                          : (isDarkMode ? Colors.white : Colors.black87),
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
+                  LocalizedText(
                     subtitle,
-                    style: TextStyle(
+                    style: AccessibilityUtils.getTextStyle(
+                      context,
                       fontSize: 12,
-                      color: isDarkMode ? Colors.white60 : Colors.black54,
+                      color: highContrastMode 
+                          ? (isDarkMode ? Colors.white70 : Colors.black87)
+                          : (isDarkMode ? Colors.white60 : Colors.black54),
                     ),
                   ),
                 ],
               ),
             ),
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.arrow_forward_ios,
-                color: color,
-                size: 14,
-              ),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: highContrastMode 
+                  ? AccessibilityUtils.getAccessibleColor(context, Colors.white54)
+                  : (isDarkMode ? Colors.white54 : Colors.black45),
+              size: highContrastMode ? 16 : 14,
             ),
           ],
         ),
@@ -1601,7 +2429,9 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
 
   Widget _buildDailyAffirmationSection() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     final primaryColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
     
     return Container(
@@ -1609,23 +2439,36 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        gradient: LinearGradient(
-          colors: isDarkMode 
-            ? [const Color(0xFF2A205D), const Color(0xFF362C72)]
-            : [const Color(0xFFFFE1E0), const Color(0xFFFFF0F0)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDarkMode 
-              ? const Color(0xFF2A205D).withOpacity(0.4) 
-              : primaryColor.withOpacity(0.15),
-            blurRadius: 12,
-            spreadRadius: 0,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        gradient: highContrastMode 
+            ? null // No gradients in high contrast mode
+            : LinearGradient(
+                colors: isDarkMode 
+                  ? [const Color(0xFF2A205D), const Color(0xFF362C72)]
+                  : [const Color(0xFFFFE1E0), const Color(0xFFFFF0F0)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        color: highContrastMode 
+            ? AccessibilityUtils.getAccessibleSurfaceColor(context)
+            : null,
+        border: highContrastMode 
+            ? Border.all(
+                color: AccessibilityUtils.getAccessibleBorderColor(context),
+                                        width: 2.0,
+              )
+            : null,
+        boxShadow: highContrastMode 
+            ? null // No shadows in high contrast mode
+            : [
+                BoxShadow(
+                  color: isDarkMode 
+                    ? const Color(0xFF2A205D).withOpacity(0.4) 
+                    : primaryColor.withOpacity(0.15),
+                  blurRadius: 12,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 6),
+                ),
+              ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
@@ -1666,12 +2509,22 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                     width: 45,
                     height: 45,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: highContrastMode 
+                          ? (isDarkMode ? Colors.white : Colors.black)
+                          : Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
+                      border: highContrastMode 
+                          ? Border.all(
+                              color: AccessibilityUtils.getAccessibleBorderColor(context),
+                              width: 2.0,
+                            )
+                          : null,
                     ),
                     child: Icon(
                       Icons.format_quote,
-                      color: isDarkMode ? Colors.white : primaryColor,
+                      color: highContrastMode 
+                          ? (isDarkMode ? Colors.black : Colors.white)
+                          : (isDarkMode ? Colors.white : primaryColor),
                       size: 22,
                     ),
                   ),
@@ -1683,34 +2536,51 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                       children: [
                         Text(
                           'Daily Affirmation',
-                          style: TextStyle(
+                          style: AccessibilityUtils.getTextStyle(
+                            context,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : primaryColor,
+                            color: highContrastMode 
+                                ? (isDarkMode ? Colors.white : Colors.black)
+                                : (isDarkMode ? Colors.white : primaryColor),
                           ),
                         ),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(isDarkMode ? 0.1 : 0.8),
+                            color: highContrastMode 
+                                ? AccessibilityUtils.getAccessibleSurfaceColor(context)
+                                : Colors.white.withOpacity(isDarkMode ? 0.1 : 0.8),
                             borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.03),
-                                blurRadius: 6,
-                                spreadRadius: 0,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                            border: highContrastMode 
+                                ? Border.all(
+                                    color: AccessibilityUtils.getAccessibleBorderColor(context),
+                                    width: 2.0,
+                                  )
+                                : null,
+                            boxShadow: highContrastMode 
+                                ? null // No shadows in high contrast mode
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 6,
+                                      spreadRadius: 0,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                           ),
                           child: Text(
                             '"You are stronger than you know, braver than you feel, and more loved than you imagine."',
-                            style: TextStyle(
+                            style: AccessibilityUtils.getTextStyle(
+                              context,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
+                              color: highContrastMode 
+                                  ? (isDarkMode ? Colors.white : Colors.black)
+                                  : (isDarkMode ? Colors.white : Colors.black87),
+                            ).copyWith(
                               fontStyle: FontStyle.italic,
-                              color: isDarkMode ? Colors.white : Colors.black87,
                               height: 1.4,
                             ),
                             textAlign: TextAlign.start,
@@ -1730,25 +2600,40 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
 
   Widget _buildEmergencyContactsSection() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
     
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [const Color(0xFF9B1C1C), const Color(0xFF771D1D)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: highContrastMode 
+            ? null // No gradients in high contrast mode
+            : LinearGradient(
+                colors: [const Color(0xFF9B1C1C), const Color(0xFF771D1D)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        color: highContrastMode 
+            ? AccessibilityUtils.getAccessibleSurfaceColor(context)
+            : null,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF9B1C1C).withOpacity(0.3),
-            blurRadius: 12,
-            spreadRadius: 0,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: highContrastMode 
+            ? Border.all(
+                color: AccessibilityUtils.getAccessibleBorderColor(context),
+                width: 2.0,
+              )
+            : null,
+        boxShadow: highContrastMode 
+            ? null // No shadows in high contrast mode
+            : [
+                BoxShadow(
+                  color: const Color(0xFF9B1C1C).withOpacity(0.3),
+                  blurRadius: 12,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 6),
+                ),
+              ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
@@ -1792,22 +2677,29 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: highContrastMode 
+                              ? (isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.2))
+                              : Colors.white.withOpacity(0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.phone_enabled,
-                          color: Colors.white,
+                          color: highContrastMode 
+                              ? (isDarkMode ? Colors.black : Colors.white)
+                              : Colors.white,
                           size: 18,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text(
+                      Text(
                         'Emergency Contacts',
-                        style: TextStyle(
+                        style: AccessibilityUtils.getTextStyle(
+                          context,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: highContrastMode 
+                              ? (isDarkMode ? Colors.white : Colors.black)
+                              : Colors.white,
                         ),
                       ),
                     ],
@@ -1817,7 +2709,9 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
+                      color: highContrastMode 
+                          ? (isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1))
+                          : Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
@@ -1852,7 +2746,9 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withOpacity(0.8),
+                      color: highContrastMode 
+                          ? (isDarkMode ? Colors.white.withOpacity(0.8) : Colors.black.withOpacity(0.8))
+                          : Colors.white.withOpacity(0.8),
                     ),
                   ),
                 ],
@@ -1865,26 +2761,42 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
   }
 
   Widget _buildDivider() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
+    
     return Container(
       height: 1,
       width: double.infinity,
-      color: Colors.white.withOpacity(0.1),
+      color: highContrastMode 
+          ? (isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1))
+          : Colors.white.withOpacity(0.1),
     );
   }
   
   Widget _buildEmergencyContact(String label, String number, IconData icon) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
+    
     return Row(
       children: [
         Container(
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: highContrastMode 
+                ? (isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1))
+                : Colors.white.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
             icon,
-            color: Colors.white,
+            color: highContrastMode 
+                ? (isDarkMode ? Colors.white : Colors.black)
+                : Colors.white,
             size: 16,
           ),
         ),
@@ -1897,16 +2809,20 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.white.withOpacity(0.8),
+                color: highContrastMode 
+                    ? (isDarkMode ? Colors.white.withOpacity(0.8) : Colors.black.withOpacity(0.8))
+                    : Colors.white.withOpacity(0.8),
               ),
             ),
             const SizedBox(height: 1),
             Text(
               number,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: highContrastMode 
+                    ? (isDarkMode ? Colors.white : Colors.black)
+                    : Colors.white,
               ),
             ),
           ],
@@ -1918,12 +2834,16 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: highContrastMode 
+                  ? (isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.2))
+                  : Colors.white.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.call,
-              color: Colors.white,
+              color: highContrastMode 
+                  ? (isDarkMode ? Colors.white : Colors.black)
+                  : Colors.white,
               size: 16,
             ),
           ),
@@ -2190,131 +3110,30 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
     );
   }
   
-  void _playEmotionSelectAnimation(String emotion) {
-    HapticFeedback.lightImpact();
-    
-    // Show emotion selection dialog instead of just a snackbar
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                      color: isDarkMode ? Colors.white60 : Colors.black54,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-                Text(
-                  emotion,
-                  style: const TextStyle(
-                    fontSize: 48,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'How can we support you today?',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black87,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  _getEmotionMessage(emotion),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      
-                      // Navigate to Mahoro for support
-                      Navigator.of(context).pushReplacement(
-                        PageRouteBuilder(
-                          pageBuilder: (context, animation, secondaryAnimation) => 
-                            MainNavigationWrapper(
-                              selectedIndex: 2,
-                              child: const MahoroPage(),
-                            ),
-                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                            return FadeTransition(
-                              opacity: animation,
-                              child: child,
-                            );
-                          },
-                          transitionDuration: const Duration(milliseconds: 300),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: accentColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(
-                      'Talk to Mahoro',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-  
-  String _getEmotionMessage(String emotion) {
-    switch (emotion) {
-      case '😀':
-        return "It's great to see you're feeling good! Would you like to share your positive experiences or learn ways to maintain this mood?";
-      case '😐':
-        return "Sometimes we all feel a bit neutral. Would you like to talk about what's on your mind or explore ways to boost your mood?";
-      case '😔':
-        return "I'm sorry you're feeling down. Remember that it's okay to not be okay, and talking about it can help. Would you like some support?";
-      case '😣':
-        return "I can see you're having a difficult time. Please remember you're not alone, and there are resources available to help you through this.";
-      default:
-        return "Thank you for sharing how you're feeling. Would you like to talk more about it?";
-    }
-  }
-  
   void _playItemPressAnimation(String resourceTitle) {
     HapticFeedback.lightImpact();
+    
+    // Map translated titles to their respective cases for the switch statement
+    String switchTitle = resourceTitle;
+    
+    // Handle different languages by mapping to English titles for the switch
+    if (resourceTitle == 'Conseils d\'Auto-Soins' || 
+        resourceTitle == 'Vidokezo vya Kujitunza' || 
+        resourceTitle == 'Inama zo Kwita ku Buzima') {
+      switchTitle = 'Self-Care Tips';
+    } else if (resourceTitle == 'Planification de Sécurité' || 
+               resourceTitle == 'Mpango wa Usalama' || 
+               resourceTitle == 'Gahunda yo Kurinda Umutekano') {
+      switchTitle = 'Safety Planning';
+    } else if (resourceTitle == 'Soutien en Crise' || 
+               resourceTitle == 'Msaada wa Dharura' || 
+               resourceTitle == 'Gufasha mu Bihe Bikomeye') {
+      switchTitle = 'Crisis Support';
+    } else if (resourceTitle == 'Contenu Éducatif' || 
+               resourceTitle == 'Maudhui ya Elimu' || 
+               resourceTitle == 'Ibigisha') {
+      switchTitle = 'Educational Content';
+    }
     
     // Navigate to appropriate page based on the title
     if (resourceTitle == 'Forum') {
@@ -2330,68 +3149,186 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
       final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
       final isDarkMode = themeProvider.isDarkMode;
       
-      showDialog(
+      // Get the resource color for animations and styling
+      final resourceColor = _getResourceColor(switchTitle);
+      
+      showGeneralDialog(
         context: context,
-        builder: (BuildContext context) {
-          return Dialog(
-            backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        barrierDismissible: true,
+        barrierLabel: 'Dismiss',
+        barrierColor: Colors.black87.withOpacity(0.6),
+        transitionDuration: const Duration(milliseconds: 400),
+        pageBuilder: (context, animation1, animation2) => Container(), // This is needed but not used
+        transitionBuilder: (context, animation, secondaryAnimation, child) {
+          // Create curved animations
+          final curvedAnimation = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutBack,
+            reverseCurve: Curves.easeInBack,
+          );
+          
+          return ScaleTransition(
+            scale: Tween<double>(begin: 0.8, end: 1.0).animate(curvedAnimation),
+            child: FadeTransition(
+              opacity: Tween<double>(begin: 0.0, end: 1.0).animate(curvedAnimation),
+              child: Dialog(
+                backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                elevation: 12,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Stack(
                     children: [
-                      Expanded(
-                        child: Text(
-                          resourceTitle,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : Colors.black87,
+                      // Gradient background decoration
+                      Positioned(
+                        top: -50,
+                        right: -50,
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: resourceColor.withOpacity(0.1),
                           ),
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close),
-                        color: isDarkMode ? Colors.white60 : Colors.black54,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
+                      Positioned(
+                        bottom: -60,
+                        left: -30,
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: resourceColor.withOpacity(0.15),
+                          ),
+                        ),
+                      ),
+                      
+                      // Main content
+                      Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Header with icon and title
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: resourceColor.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    _getResourceIcon(switchTitle),
+                                    color: resourceColor,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Text(
+                                    resourceTitle,
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDarkMode ? Colors.white : Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  icon: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: (isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.05)),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.close,
+                                      color: isDarkMode ? Colors.white60 : Colors.black54,
+                                      size: 18,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            // Divider
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Divider(
+                                color: resourceColor.withOpacity(0.2),
+                                thickness: 1,
+                              ),
+                            ),
+                            
+                            // Content with animation
+                            AnimatedBuilder(
+                              animation: animation,
+                              builder: (context, child) {
+                                // Staggered animation for list items
+                                return Opacity(
+                                  opacity: animation.value,
+                                  child: child,
+                                );
+                              },
+                              child: _buildResourceContent(switchTitle, isDarkMode, resourceColor),
+                            ),
+                            
+                            const SizedBox(height: 24),
+                            
+                            // Button with animation
+                            AnimatedBuilder(
+                              animation: animation,
+                              builder: (context, child) {
+                                // Animation for button - appears after content
+                                final buttonAnimation = CurvedAnimation(
+                                  parent: animation,
+                                  curve: const Interval(0.6, 1.0, curve: Curves.elasticOut),
+                                );
+                                
+                                return Transform.scale(
+                                  scale: buttonAnimation.value,
+                                  child: child,
+                                );
+                              },
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: resourceColor,
+                                    foregroundColor: Colors.white,
+                                    elevation: 4,
+                                    shadowColor: resourceColor.withOpacity(0.4),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Got it',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  _buildResourceContent(resourceTitle, isDarkMode),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _getResourceColor(resourceTitle),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Got it',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           );
@@ -2400,51 +3337,66 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
     }
   }
   
-  Widget _buildResourceContent(String resourceTitle, bool isDarkMode) {
+  IconData _getResourceIcon(String resourceTitle) {
+    switch (resourceTitle) {
+      case 'Self-Care Tips':
+        return Icons.favorite;
+      case 'Safety Planning':
+        return Icons.shield_outlined;
+      case 'Crisis Support':
+        return Icons.call;
+      case 'Educational Content':
+        return Icons.menu_book;
+      default:
+        return Icons.info_outline;
+    }
+  }
+  
+  Widget _buildResourceContent(String resourceTitle, bool isDarkMode, Color resourceColor) {
     // Customize content based on resource title
     switch (resourceTitle) {
       case 'Self-Care Tips':
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildResourceListItem(text: 'Practice deep breathing for 5 minutes', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Stay hydrated throughout the day', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Get at least 7-8 hours of sleep', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Take short breaks during work', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Connect with supportive friends and family', isDarkMode: isDarkMode),
+            _buildResourceListItem(text: 'Practice deep breathing for 5 minutes', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 0),
+            _buildResourceListItem(text: 'Stay hydrated throughout the day', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 1),
+            _buildResourceListItem(text: 'Get at least 7-8 hours of sleep', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 2),
+            _buildResourceListItem(text: 'Take short breaks during work', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 3),
+            _buildResourceListItem(text: 'Connect with supportive friends and family', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 4),
           ],
         );
       case 'Safety Planning':
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildResourceListItem(text: 'Identify safe locations you can go to', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Save emergency contact numbers', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Keep important documents accessible', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Create a code word with trusted friends', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Know the locations of local resources', isDarkMode: isDarkMode),
+            _buildResourceListItem(text: 'Identify safe locations you can go to', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 0),
+            _buildResourceListItem(text: 'Save emergency contact numbers', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 1),
+            _buildResourceListItem(text: 'Keep important documents accessible', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 2),
+            _buildResourceListItem(text: 'Create a code word with trusted friends', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 3),
+            _buildResourceListItem(text: 'Know the locations of local resources', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 4),
           ],
         );
       case 'Crisis Support':
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildResourceListItem(text: 'Isange One Stop Center: 3029', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Rwanda National Police: 112', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'RIB Hotline: 3512', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Mental Health Helpline: 114', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'HopeCore Team: +250780332779', isDarkMode: isDarkMode),
+            _buildResourceListItem(text: 'Isange One Stop Center: 3029', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 0),
+            _buildResourceListItem(text: 'Rwanda National Police: 112', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 1),
+            _buildResourceListItem(text: 'RIB Hotline: 3512', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 2),
+            _buildResourceListItem(text: 'Mental Health Helpline: 114', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 3),
+            _buildResourceListItem(text: 'HopeCore Team: +250780332779', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 4),
           ],
         );
       case 'Educational Content':
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildResourceListItem(text: 'Understanding trauma responses', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Recognizing healthy relationships', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Building resilience skills', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Managing anxiety and stress', isDarkMode: isDarkMode),
-            _buildResourceListItem(text: 'Supporting others in need', isDarkMode: isDarkMode),
+            _buildResourceListItem(text: 'Understanding trauma responses', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 0),
+            _buildResourceListItem(text: 'Recognizing healthy relationships', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 1),
+            _buildResourceListItem(text: 'Building resilience skills', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 2),
+            _buildResourceListItem(text: 'Managing anxiety and stress', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 3),
+            _buildResourceListItem(text: 'Supporting others in need', isDarkMode: isDarkMode, resourceColor: resourceColor, index: 4),
           ],
         );
       default:
@@ -2458,28 +3410,64 @@ class _HopeCoreHubState extends State<HopeCoreHub> with SingleTickerProviderStat
     }
   }
   
-  Widget _buildResourceListItem({required String text, required bool isDarkMode}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.check_circle,
-            color: const Color(0xFF8A4FFF),
-            size: 18,
+  Widget _buildResourceListItem({
+    required String text, 
+    required bool isDarkMode, 
+    required Color resourceColor,
+    required int index,
+  }) {
+    return TweenAnimationBuilder(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 400 + (index * 100)),
+      curve: Curves.easeOutCubic,
+      builder: (context, double value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(20 * (1 - value), 0),
+            child: child,
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 14,
-                color: isDarkMode ? Colors.white : Colors.black87,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14.0),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: resourceColor.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: resourceColor.withOpacity(0.15),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: resourceColor.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check,
+                color: resourceColor,
+                size: 14,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,10 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../firebase_options.dart';
 import 'auth_service.dart';
-import 'dart:convert';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();

@@ -1,0 +1,12 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": true,
+    "posts": {
+      ".indexOn": ["createdAt", "authorId"]
+    },
+    "replies": {
+      ".indexOn": ["postId", "createdAt"]
+    }
+  }
+} 

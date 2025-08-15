@@ -7,6 +7,9 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+// Import main.dart to access MainNavigationWrapper and HopeCoreHub
+import 'main.dart';
+
 // User data class to store user information
 class UserData {
   final String id;
@@ -251,10 +254,16 @@ class _AuthPageState extends State<AuthPage>
           
           if (user != null && user.password == _passwordController.text.trim()) {
             localSuccess = true;
-            // Update login state locally
+            // Update login state locally and in AuthService
             if (mounted) {
+              // Make sure auth service is updated
+              final authService = Provider.of<AuthService>(context, listen: false);
+              // Force authentication state update
+              authService.updateAuthState(true, user.id, user.name);
+              
               _showSuccessMessage('Login successful!');
-              Navigator.of(context).pop();
+              // Navigate to home page with bottom navigation
+              _navigateToHome();
             }
           }
           
@@ -270,8 +279,15 @@ class _AuthPageState extends State<AuthPage>
                 _errorMessage = "Invalid email or password. Please try again.";
               });
             } else if (mounted) {
+              // Force a reload to ensure we get the latest auth state
+              await authService.checkEmailVerified();
+              
+              // Wait a bit for state to update
+              await Future.delayed(Duration(milliseconds: 100));
+              
               _showSuccessMessage('Login successful!');
-              Navigator.of(context).pop();
+              // Navigate to home page with bottom navigation
+              _navigateToHome();
             }
           }
         } else {
@@ -294,8 +310,14 @@ class _AuthPageState extends State<AuthPage>
             switch (result) {
               case RegistrationResult.success:
                 if (mounted) {
-                  _showSuccessMessage('Account created successfully!');
-                  Navigator.of(context).pop();
+                  // Show verification message if the account was created with Firebase
+                  if (!authService.isEmailVerified) {
+                    _showVerificationDialog();
+                  } else {
+                    _showSuccessMessage('Account created successfully!');
+                    // Navigate to home page with bottom navigation
+                    _navigateToHome();
+                  }
                 }
                 break;
               case RegistrationResult.emailAlreadyExists:
@@ -351,6 +373,162 @@ class _AuthPageState extends State<AuthPage>
         }
       }
     }
+  }
+
+  // Function to navigate to home with bottom navigation bar
+  void _navigateToHome() {
+    // Replace the entire navigation stack with the home page wrapped in MainNavigationWrapper
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const MainNavigationWrapper(
+          selectedIndex: 0,
+          child: HopeCoreHub(),
+        ),
+      ),
+      (route) => false, // Remove all previous routes
+    );
+  }
+  
+  // Show dialog for email verification after registration
+  void _showVerificationDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8A4FFF).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.email_outlined,
+                    color: const Color(0xFF8A4FFF),
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Verify Your Email',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'A verification link has been sent to your email address. Please check your inbox and click the link to verify your account.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Didn\'t receive an email?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () async {
+                    final authService = Provider.of<AuthService>(context, listen: false);
+                    final result = await authService.sendEmailVerification();
+                    
+                    if (result['success']) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Verification email sent again!'),
+                          backgroundColor: const Color(0xFF8A4FFF),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(result['error'] ?? 'Failed to send verification email'),
+                          backgroundColor: Colors.red,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      
+                      // If it's a rate limiting error, show additional guidance
+                      if (result['code'] == 'too-many-requests') {
+                        // Wait a moment before showing the second message
+                        await Future.delayed(Duration(milliseconds: 300));
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Please check your email for an existing verification link or try again later'),
+                            backgroundColor: Colors.orange,
+                            behavior: SnackBarBehavior.floating,
+                            duration: Duration(seconds: 6),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: Text(
+                    'Resend Verification Email',
+                    style: TextStyle(
+                      color: const Color(0xFF8A4FFF),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      // Navigate to home page with bottom navigation
+                      _navigateToHome();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8A4FFF),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Continue',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showSuccessMessage(String message) {

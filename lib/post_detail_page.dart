@@ -204,6 +204,51 @@ class _PostDetailPageState extends State<PostDetailPage> {
     );
   }
 
+  // Add method to show sync status (cloud or local)
+  Widget _buildSyncStatus(bool isDarkMode) {
+    return Tooltip(
+      message: widget.post.isSyncedWithCloud ? 'Saved to cloud' : 'Saved locally',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: widget.post.isSyncedWithCloud 
+              ? Colors.green.withOpacity(0.2) 
+              : Colors.orange.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: widget.post.isSyncedWithCloud 
+                ? Colors.green.withOpacity(0.3) 
+                : Colors.orange.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              widget.post.isSyncedWithCloud ? Icons.cloud_done : Icons.cloud_off,
+              size: 14,
+              color: widget.post.isSyncedWithCloud 
+                  ? Colors.green 
+                  : Colors.orange,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              widget.post.isSyncedWithCloud ? 'Online' : 'Local',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: widget.post.isSyncedWithCloud 
+                    ? Colors.green 
+                    : Colors.orange,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -260,7 +305,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     ),
                   )
                 else
-                  ..._replies.map((reply) => _buildReplyCard(reply)).toList(),
+                  ..._replies.map((reply) => _buildReplyCard(reply)),
                 const SizedBox(height: 100), // Space for bottom navbar
               ],
             ),
@@ -310,27 +355,30 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.post.authorName,
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white : Colors.black87,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.post.authorName,
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : Colors.black87,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _getTimeAgo(widget.post.createdAt),
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white54 : Colors.black54,
-                        fontSize: 12,
+                      const SizedBox(height: 2),
+                      Text(
+                        _getTimeAgo(widget.post.createdAt),
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white54 : Colors.black54,
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                _buildSyncStatus(isDarkMode),
               ],
             ),
           ),

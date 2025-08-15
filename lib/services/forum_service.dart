@@ -1,10 +1,10 @@
-import 'dart:math';
 import 'package:uuid/uuid.dart';
 import '../models/post_model.dart';
 import '../models/reply_model.dart';
 import 'auth_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'firebase_realtime_service.dart';
 
 // Define like result enum at the top level
 enum LikeResult {
@@ -19,46 +19,72 @@ class ForumService {
   final uuid = const Uuid();
   AuthService? _authService;
   
-  // Firebase instance
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  // Use Realtime Database service
+  final FirebaseRealtimeService _realtimeDB = FirebaseRealtimeService();
   
   factory ForumService() {
     return _instance;
   }
 
   ForumService._internal() {
-    // Add some sample posts if needed or load from Firebase
-    _loadPostsFromFirebase();
+    // Always add some guaranteed posts directly to the in-memory cache
+    _addInitialPosts();
+    
+    // Then try to load from Firebase Realtime Database
+    _loadPostsFromRealtimeDB();
   }
   
-  // Load posts from Firebase
-  Future<void> _loadPostsFromFirebase() async {
+  // Add initial posts directly to the cache to ensure content is always available
+  void _addInitialPosts() {
+    debugPrint('Adding initial posts to ensure content availability');
+    
+    // Create some initial posts that will always be available
+    final initialPost = Post(
+      id: 'initial-post-1',
+      title: 'Welcome to the Forum',
+      content: 'This space is for community support and discussion. Feel free to share your thoughts and experiences.',
+      authorId: 'system',
+      authorName: 'HopeCore Team',
+      createdAt: DateTime.now().subtract(const Duration(days: 7)),
+      likes: 5,
+      replies: [],
+      isAnonymous: false,
+      likedBy: {'system'},
+    );
+    
+    // Add to local cache
+    _posts.add(initialPost);
+    
+    debugPrint('Added initial posts to cache');
+  }
+  
+  // Load posts from Firebase Realtime Database
+  Future<void> _loadPostsFromRealtimeDB() async {
     try {
-      // Clear local cache
-      _posts.clear();
-      _replies.clear();
+      debugPrint('Loading posts from Realtime Database');
       
-      // Get posts from Firestore
-      final postsSnapshot = await _db.collection('posts').get();
+      // Get posts from Realtime Database
+      final posts = await _realtimeDB.getAllPosts();
       
-      for (var doc in postsSnapshot.docs) {
-        final postData = doc.data();
-        _posts.add(Post.fromJson(postData));
+      if (posts.isNotEmpty) {
+        // Clear existing posts and add the new ones
+        _posts.clear();
+        _posts.addAll(posts);
+        debugPrint('Loaded ${posts.length} posts from Realtime Database');
+      } else {
+        debugPrint('No posts found in Realtime Database, creating sample posts');
+        await _realtimeDB.createSamplePosts();
+        
+        // Try loading again
+        final samplePosts = await _realtimeDB.getAllPosts();
+        if (samplePosts.isNotEmpty) {
+          _posts.clear();
+          _posts.addAll(samplePosts);
+          debugPrint('Loaded ${samplePosts.length} sample posts from Realtime Database');
+        }
       }
-      
-      // Get replies from Firestore
-      final repliesSnapshot = await _db.collection('replies').get();
-      
-      for (var doc in repliesSnapshot.docs) {
-        final replyData = doc.data();
-        _replies.add(Reply.fromJson(replyData));
-      }
-      
-      debugPrint('Loaded ${_posts.length} posts and ${_replies.length} replies from Firebase');
     } catch (e) {
-      debugPrint('Error loading posts from Firebase: $e');
-      // If Firebase fails, add sample posts as fallback
-      _addSamplePosts();
+      debugPrint('Error loading posts from Realtime Database: $e');
     }
   }
 
@@ -83,15 +109,112 @@ class ForumService {
   }
 
   Future<List<Post>> getPosts() async {
-    // Refresh posts from Firebase if needed
-    if (_posts.isEmpty) {
-      await _loadPostsFromFirebase();
+    // Always refresh posts from Firebase to ensure latest data
+    try {
+      debugPrint('Getting posts from Realtime Database');
+      await _loadPostsFromRealtimeDB();
+      
+      // Double check if posts are still empty after loading
+      if (_posts.isEmpty) {
+        debugPrint('Posts still empty after loading, adding hardcoded samples');
+        _addHardcodedSamplePosts();
+      }
+    } catch (e) {
+      debugPrint('Error in getPosts(): $e');
+      if (_posts.isEmpty) {
+        debugPrint('Adding hardcoded samples due to error');
+        _addHardcodedSamplePosts();
+      }
     }
     
     // Return a sorted copy of posts (newest first)
     final sortedPosts = [..._posts];
     sortedPosts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    debugPrint('Returning ${sortedPosts.length} posts');
     return sortedPosts;
+  }
+  
+  // Add hardcoded sample posts directly without trying to save to Firebase
+  void _addHardcodedSamplePosts() {
+    if (_posts.isNotEmpty) return; // Don't add samples if we already have posts
+    
+    debugPrint('Adding hardcoded sample posts');
+    
+    final samplePost1 = Post(
+      id: 'sample-post-1',
+      title: 'Welcome to the HopeCore Forum',
+      content: 'This is a safe space for sharing experiences and supporting each other. Feel free to join the conversation!',
+      authorId: 'system',
+      authorName: 'HopeCore Team',
+      createdAt: DateTime.now().subtract(const Duration(days: 5)),
+      likes: 15,
+      likedBy: {'user1', 'user2', 'user3'},
+    );
+    
+    final samplePost2 = Post(
+      id: 'sample-post-2',
+      title: 'Tips for Managing Anxiety',
+      content: 'I\'ve found that deep breathing exercises, regular physical activity, and limiting caffeine really help with anxiety. What works for you?',
+      authorId: 'sample_user_1',
+      authorName: 'Anonymous',
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      likes: 8,
+      likedBy: {'user4', 'user5'},
+    );
+    
+    final samplePost3 = Post(
+      id: 'sample-post-3',
+      title: 'Seeking Support for Difficult Times',
+      content: 'I\'m going through a really tough period right now. Has anyone used any of the support resources in the app and found them helpful?',
+      authorId: 'sample_user_2',
+      authorName: 'Anonymous',
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      likes: 12,
+      likedBy: {'user6', 'user7', 'user8'},
+    );
+    
+    _posts.add(samplePost1);
+    _posts.add(samplePost2);
+    _posts.add(samplePost3);
+    
+    // Add replies to the posts
+    final reply1 = Reply(
+      id: 'sample-reply-1',
+      postId: samplePost2.id,
+      content: 'Meditation has been life-changing for me. I use the Calm app for guided sessions.',
+      authorId: 'sample_user_3',
+      authorName: 'Anonymous',
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      likes: 5,
+    );
+    
+    final reply2 = Reply(
+      id: 'sample-reply-2',
+      postId: samplePost3.id,
+      content: 'The Mahoro AI assistant helped me a lot when I needed someone to talk to at 2am. It\'s surprisingly good!',
+      authorId: 'sample_user_4',
+      authorName: 'Anonymous',
+      createdAt: DateTime.now().subtract(const Duration(hours: 12)),
+      likes: 7,
+    );
+    
+    _replies.add(reply1);
+    _replies.add(reply2);
+    
+    // Update the posts' replies lists
+    final post2Index = _posts.indexWhere((post) => post.id == samplePost2.id);
+    if (post2Index != -1) {
+      final post = _posts[post2Index];
+      _posts[post2Index] = post.copyWith(replies: [...post.replies, reply1.id]);
+    }
+    
+    final post3Index = _posts.indexWhere((post) => post.id == samplePost3.id);
+    if (post3Index != -1) {
+      final post = _posts[post3Index];
+      _posts[post3Index] = post.copyWith(replies: [...post.replies, reply2.id]);
+    }
+    
+    debugPrint('Added ${_posts.length} hardcoded sample posts');
   }
 
   Future<List<Post>> searchPosts(String query) async {
@@ -102,31 +225,16 @@ class ForumService {
     final lowercaseQuery = query.toLowerCase();
     
     try {
-      // Try to search in Firebase first
-      final querySnapshot = await _db.collection('posts')
-        .where('title', isGreaterThanOrEqualTo: lowercaseQuery)
-        .where('title', isLessThanOrEqualTo: lowercaseQuery + '\uf8ff')
-        .get();
-        
-      List<Post> results = querySnapshot.docs.map((doc) => Post.fromJson(doc.data())).toList();
+      // Get all posts and filter locally
+      final allPosts = await getPosts();
       
-      // Also search in content
-      final contentQuerySnapshot = await _db.collection('posts')
-        .where('content', isGreaterThanOrEqualTo: lowercaseQuery)
-        .where('content', isLessThanOrEqualTo: lowercaseQuery + '\uf8ff')
-        .get();
-        
-      // Add content results but avoid duplicates
-      for (var doc in contentQuerySnapshot.docs) {
-        final post = Post.fromJson(doc.data());
-        if (!results.any((p) => p.id == post.id)) {
-          results.add(post);
-        }
-      }
-      
-      return results;
+      return allPosts.where((post) {
+        return post.title.toLowerCase().contains(lowercaseQuery) || 
+               post.content.toLowerCase().contains(lowercaseQuery);
+      }).toList();
     } catch (e) {
-      debugPrint('Error searching posts in Firebase: $e');
+      debugPrint('Error searching posts: $e');
+      
       // Fall back to local search
       final posts = await getPosts();
       return posts.where((post) {
@@ -153,48 +261,76 @@ class ForumService {
       likes: 0,
       replies: [],
       isAnonymous: true,
+      isSyncedWithCloud: false, // Initially not synced
     );
     
     try {
-      // Save to Firebase
-      await _db.collection('posts').doc(newPostId).set(newPost.toJson());
+      // Check for connectivity first
+      final connectivity = await Connectivity().checkConnectivity();
+      final isOnline = connectivity != ConnectivityResult.none;
       
-      // Add to local cache
-      _posts.add(newPost);
+      if (!isOnline) {
+        debugPrint('📵 Device is offline, saving post locally only');
+        _posts.add(newPost);
+        return newPost; // Return with isSyncedWithCloud = false
+      }
       
-      return newPost;
+      // Save to Realtime Database
+      final savedPost = await _realtimeDB.addPost(newPost);
+      
+      if (savedPost != null) {
+        // Add to local cache with synced flag set to true
+        final syncedPost = savedPost.copyWith(isSyncedWithCloud: true);
+        
+        // Find and replace in cache if already exists, otherwise add
+        final index = _posts.indexWhere((p) => p.id == syncedPost.id);
+        if (index >= 0) {
+          _posts[index] = syncedPost;
+        } else {
+          _posts.add(syncedPost);
+        }
+        
+        return syncedPost;
+      } else {
+        // Add to local cache with synced flag set to false
+        _posts.add(newPost);
+        return newPost; // Return with isSyncedWithCloud = false
+      }
     } catch (e) {
-      debugPrint('Error adding post to Firebase: $e');
-      // Add to local cache anyway
+      debugPrint('Error adding post to Realtime Database: $e');
+      
+      // Add to local cache with synced flag set to false
       _posts.add(newPost);
-      return newPost;
+      return newPost; // Return with isSyncedWithCloud = false
     }
   }
 
   Future<List<Reply>> getRepliesForPost(String postId) async {
     try {
-      // Get replies from Firebase
-      final querySnapshot = await _db.collection('replies')
-        .where('postId', isEqualTo: postId)
-        .get();
+      // Get replies from Realtime Database
+      final replies = await _realtimeDB.getRepliesForPost(postId);
       
-      final postReplies = querySnapshot.docs.map((doc) => Reply.fromJson(doc.data())).toList();
-      
-      // Update local cache
-      for (var reply in postReplies) {
-        final index = _replies.indexWhere((r) => r.id == reply.id);
-        if (index != -1) {
-          _replies[index] = reply;
-        } else {
-          _replies.add(reply);
+      if (replies.isNotEmpty) {
+        // Update local cache
+        for (var reply in replies) {
+          final index = _replies.indexWhere((r) => r.id == reply.id);
+          if (index != -1) {
+            _replies[index] = reply;
+          } else {
+            _replies.add(reply);
+          }
         }
+        
+        return replies;
       }
       
-      // Sort replies (newest first)
+      // Fall back to local cache
+      final postReplies = _replies.where((reply) => reply.postId == postId).toList();
       postReplies.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return postReplies;
     } catch (e) {
-      debugPrint('Error getting replies from Firebase: $e');
+      debugPrint('Error getting replies from Realtime Database: $e');
+      
       // Fall back to local cache
       final postReplies = _replies.where((reply) => reply.postId == postId).toList();
       postReplies.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -219,34 +355,38 @@ class ForumService {
     );
     
     try {
-      // Save to Firebase
-      await _db.collection('replies').doc(newReplyId).set(newReply.toJson());
+      // Save to Realtime Database
+      final savedReply = await _realtimeDB.addReply(newReply);
       
-      // Add to local cache
-      _replies.add(newReply);
-      
-      // Update the post's replies list in Firebase
-      final postRef = _db.collection('posts').doc(postId);
-      await _db.runTransaction((transaction) async {
-        final postDoc = await transaction.get(postRef);
-        if (postDoc.exists) {
-          final post = Post.fromJson(postDoc.data()!);
-          final updatedReplies = [...post.replies, newReply.id];
-          transaction.update(postRef, {'replies': updatedReplies});
+      if (savedReply != null) {
+        // Add to local cache
+        _replies.add(savedReply);
+        
+        // Update the post's replies list in local cache
+        final postIndex = _posts.indexWhere((post) => post.id == postId);
+        if (postIndex != -1) {
+          final post = _posts[postIndex];
+          final updatedReplies = [...post.replies, savedReply.id];
+          _posts[postIndex] = post.copyWith(replies: updatedReplies);
         }
-      });
-      
-      // Update the post's replies list in local cache
-      final postIndex = _posts.indexWhere((post) => post.id == postId);
-      if (postIndex != -1) {
-        final post = _posts[postIndex];
-        final updatedReplies = [...post.replies, newReply.id];
-        _posts[postIndex] = post.copyWith(replies: updatedReplies);
+        
+        return savedReply;
+      } else {
+        // Add to local cache anyway
+        _replies.add(newReply);
+        
+        // Update the post's replies list in local cache
+        final postIndex = _posts.indexWhere((post) => post.id == postId);
+        if (postIndex != -1) {
+          final post = _posts[postIndex];
+          final updatedReplies = [...post.replies, newReply.id];
+          _posts[postIndex] = post.copyWith(replies: updatedReplies);
+        }
+        
+        return newReply;
       }
-      
-      return newReply;
     } catch (e) {
-      debugPrint('Error adding reply to Firebase: $e');
+      debugPrint('Error adding reply to Realtime Database: $e');
       
       // Add to local cache anyway
       _replies.add(newReply);
@@ -270,205 +410,71 @@ class ForumService {
     
     final userId = getCurrentUserId();
     
+    // Check local cache first for offline handling
+    final postIndex = _posts.indexWhere((post) => post.id == postId);
+    if (postIndex != -1) {
+      final post = _posts[postIndex];
+      
+      // Check if user already liked this post
+      if (post.likedBy.contains(userId)) {
+        return LikeResult.alreadyLiked;
+      }
+      
+      // Update local cache immediately for responsive UI
+      final updatedLikedBy = {...post.likedBy, userId};
+      _posts[postIndex] = post.copyWith(
+        likes: post.likes + 1,
+        likedBy: updatedLikedBy,
+      );
+    }
+    
+    // Try to update Realtime Database
     try {
-      // Check if user already liked this post in Firebase
-      final postRef = _db.collection('posts').doc(postId);
-      
-      final result = await _db.runTransaction((transaction) async {
-        final postDoc = await transaction.get(postRef);
-        
-        if (!postDoc.exists) {
-          return LikeResult.success; // Post not found
-        }
-        
-        final post = Post.fromJson(postDoc.data()!);
-        
-        // Check if user already liked this post
-        if (post.likedBy.contains(userId)) {
-          return LikeResult.alreadyLiked;
-        }
-        
-        // Add user to likedBy set and increment likes count
-        final updatedLikedBy = [...post.likedBy, userId];
-        
-        transaction.update(postRef, {
-          'likes': post.likes + 1,
-          'likedBy': updatedLikedBy,
-        });
-        
-        return LikeResult.success;
-      });
-      
-      // Update local cache
-      final postIndex = _posts.indexWhere((post) => post.id == postId);
-      if (postIndex != -1) {
-        final post = _posts[postIndex];
-        if (!post.likedBy.contains(userId)) {
-          final updatedLikedBy = {...post.likedBy, userId};
-          _posts[postIndex] = post.copyWith(
-            likes: post.likes + 1,
-            likedBy: updatedLikedBy,
-          );
-        }
-      }
-      
-      return result;
-    } catch (e) {
-      debugPrint('Error liking post in Firebase: $e');
-      
-      // Fall back to local cache
-      final postIndex = _posts.indexWhere((post) => post.id == postId);
-      
-      if (postIndex != -1) {
-        final post = _posts[postIndex];
-        
-        // Check if user already liked this post
-        if (post.likedBy.contains(userId)) {
-          return LikeResult.alreadyLiked;
-        }
-        
-        // Add user to likedBy set and increment likes count
-        final updatedLikedBy = {...post.likedBy, userId};
-        _posts[postIndex] = post.copyWith(
-          likes: post.likes + 1,
-          likedBy: updatedLikedBy,
-        );
-      }
-      
+      await _realtimeDB.likePost(postId, userId);
+      debugPrint('Post liked successfully in Realtime Database');
       return LikeResult.success;
+    } catch (e) {
+      debugPrint('Error liking post: $e');
+      return LikeResult.success; // Return success since local update was done
     }
   }
 
   Future<bool> hasUserLikedPost(String postId) async {
     final userId = getCurrentUserId();
     
-    try {
-      // Check in Firebase
-      final postDoc = await _db.collection('posts').doc(postId).get();
-      
-      if (postDoc.exists) {
-        final post = Post.fromJson(postDoc.data()!);
-        return post.likedBy.contains(userId);
-      }
-      
-      return false;
-    } catch (e) {
-      debugPrint('Error checking if user liked post in Firebase: $e');
-      
-      // Fall back to local cache
-      final postIndex = _posts.indexWhere((post) => post.id == postId);
-      
-      if (postIndex != -1) {
-        return _posts[postIndex].likedBy.contains(userId);
-      }
-      
-      return false;
+    // Check local cache first
+    final postIndex = _posts.indexWhere((post) => post.id == postId);
+    if (postIndex != -1) {
+      return _posts[postIndex].likedBy.contains(userId);
     }
+    
+    return false;
   }
-
+  
   Future<void> likeReply(String replyId) async {
     if (!isLoggedIn()) {
       throw Exception('User must be logged in to like a reply');
     }
     
     try {
-      // Update likes count in Firebase
-      final replyRef = _db.collection('replies').doc(replyId);
-      
-      await _db.runTransaction((transaction) async {
-        final replyDoc = await transaction.get(replyRef);
-        
-        if (replyDoc.exists) {
-          final reply = Reply.fromJson(replyDoc.data()!);
-          transaction.update(replyRef, {'likes': reply.likes + 1});
-        }
-      });
+      // Update likes in Realtime Database
+      await _realtimeDB.likeReply(replyId);
       
       // Update local cache
       final replyIndex = _replies.indexWhere((reply) => reply.id == replyId);
       if (replyIndex != -1) {
-        _replies[replyIndex].likes += 1;
+        final reply = _replies[replyIndex];
+        _replies[replyIndex] = reply.copyWith(likes: reply.likes + 1);
       }
     } catch (e) {
-      debugPrint('Error liking reply in Firebase: $e');
+      debugPrint('Error liking reply: $e');
       
-      // Update local cache anyway
+      // Update local cache anyway for responsive UI
       final replyIndex = _replies.indexWhere((reply) => reply.id == replyId);
       if (replyIndex != -1) {
-        _replies[replyIndex].likes += 1;
+        final reply = _replies[replyIndex];
+        _replies[replyIndex] = reply.copyWith(likes: reply.likes + 1);
       }
-    }
-  }
-
-  void _addSamplePosts() {
-    if (_posts.isNotEmpty) return; // Don't add samples if we already have posts
-    
-    final samplePost1 = Post(
-      id: uuid.v4(),
-      title: 'Welcome to the Forum',
-      content: 'Hello everybody :) i hope that y\'all are taking care of yourselves.',
-      authorId: 'sample_user_1',
-      authorName: 'Anonymous',
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
-      likedBy: {},
-    );
-    
-    final samplePost2 = Post(
-      id: uuid.v4(),
-      title: 'Seeking advice',
-      content: 'I\'ve been feeling overwhelmed lately with everything going on. Does anyone have tips for managing stress?',
-      authorId: 'sample_user_2',
-      authorName: 'Anonymous',
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      likedBy: {},
-    );
-    
-    _posts.add(samplePost1);
-    _posts.add(samplePost2);
-    
-    // Add a reply to the second post
-    final reply = Reply(
-      id: uuid.v4(),
-      postId: samplePost2.id,
-      content: 'Taking short breaks and practicing mindfulness has really helped me. Hope you feel better soon!',
-      authorId: 'sample_user_3',
-      authorName: 'Anonymous',
-      createdAt: DateTime.now().subtract(const Duration(hours: 12)),
-    );
-    
-    _replies.add(reply);
-    
-    // Update the post's replies list
-    final postIndex = _posts.indexWhere((post) => post.id == samplePost2.id);
-    if (postIndex != -1) {
-      final post = _posts[postIndex];
-      _posts[postIndex] = post.copyWith(replies: [...post.replies, reply.id]);
-    }
-    
-    // Try to save sample data to Firebase
-    _saveSampleDataToFirebase(samplePost1, samplePost2, reply);
-  }
-  
-  Future<void> _saveSampleDataToFirebase(Post post1, Post post2, Reply reply) async {
-    try {
-      // Check if posts collection is empty before adding samples
-      final postsCount = await _db.collection('posts').count().get();
-      
-      if (postsCount.count == 0) {
-        // Save sample posts to Firebase
-        await _db.collection('posts').doc(post1.id).set(post1.toJson());
-        await _db.collection('posts').doc(post2.id).set(post2.toJson());
-        
-        // Save sample reply to Firebase
-        await _db.collection('replies').doc(reply.id).set(reply.toJson());
-        
-        debugPrint('Saved sample data to Firebase');
-      } else {
-        debugPrint('Posts already exist in Firebase, skipping sample data creation');
-      }
-    } catch (e) {
-      debugPrint('Error saving sample data to Firebase: $e');
-      // Continue with local samples if Firebase fails
     }
   }
 } 

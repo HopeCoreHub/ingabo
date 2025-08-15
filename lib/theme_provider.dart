@@ -111,7 +111,6 @@ class ThemeProvider extends ChangeNotifier {
         colorScheme: ColorScheme.dark(
           primary: const Color(0xFF8A4FFF),
           secondary: const Color(0xFFA855F7),
-          background: const Color(0xFF111827),
           surface: const Color(0xFF1E293B),
         ),
       appBarTheme: const AppBarTheme(
@@ -145,7 +144,6 @@ class ThemeProvider extends ChangeNotifier {
       colorScheme: const ColorScheme.light(
         primary: Color(0xFFE53935),
           secondary: Color(0xFFE53935),
-        background: Colors.white,
         surface: Color(0xFFF1F5F9),
       ),
       appBarTheme: const AppBarTheme(

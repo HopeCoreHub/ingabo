@@ -1,1 +1,28 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"hopecore-hub","appId":"1:73148402495:android:47dde8627289a6dab2a18a","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"hopecore-hub","configurations":{"android":"1:73148402495:android:47dde8627289a6dab2a18a","ios":"1:73148402495:ios:9db65c6487d5620db2a18a","macos":"1:73148402495:ios:9db65c6487d5620db2a18a","web":"1:73148402495:web:b3cfb82ee2c63ad8b2a18a","windows":"1:73148402495:web:593fcec965fd1711b2a18a"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "hopecore-hub",
+          "appId": "1:73148402495:android:47dde8627289a6dab2a18a",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "hopecore-hub",
+          "configurations": {
+            "android": "1:73148402495:android:47dde8627289a6dab2a18a",
+            "ios": "1:73148402495:ios:9db65c6487d5620db2a18a",
+            "macos": "1:73148402495:ios:9db65c6487d5620db2a18a",
+            "web": "1:73148402495:web:b3cfb82ee2c63ad8b2a18a",
+            "windows": "1:73148402495:web:593fcec965fd1711b2a18a"
+          }
+        }
+      }
+    }
+  },
+  "database": {
+    "rules": "database.rules.json"
+  }
+}
