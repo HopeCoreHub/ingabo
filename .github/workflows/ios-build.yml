@@ -89,7 +89,7 @@ jobs:
     - name: Upload IPA as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ios-ipa-${{ env.VERSION }}+${{ env.BUILD_NUMBER }}
+        name: ios-ipa-${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         path: build/ios/ipa/*.ipa
         retention-days: 30
         
