@@ -22,7 +22,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.ingabohopecore.hopecorehub"
     compileSdk = flutter.compileSdkVersion
-    // Use the locally installed Flutter NDK version
+    // Force use of available NDK version
     ndkVersion = "26.3.11579264"
 
     compileOptions {

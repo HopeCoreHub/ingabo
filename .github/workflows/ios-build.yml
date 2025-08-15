@@ -64,7 +64,7 @@ jobs:
         fi
         
     - name: Download Apple Provisioning Profiles
-      if: ${{ secrets.IOS_DIST_SIGNING_KEY != '' }}
+      if: ${{ secrets.IOS_DIST_SIGNING_KEY }}
       uses: Apple-Actions/download-provisioning-profiles@v1
       with:
         bundle-id: ${{ secrets.IOS_BUNDLE_ID }}
