@@ -33,6 +33,7 @@ import 'localization/localized_text.dart';
 import 'localization/base_screen.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'admin_setup_page.dart';
+import 'dashboard_page.dart';
 import 'utils/accessibility_utils.dart';
 
 void main() async {
@@ -216,16 +217,16 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> with Sing
     Widget page;
     switch (index) {
       case 0:
-        page = const HopeCoreHub();
+        page = const DashboardPage();
         break;
       case 1:
-        page = const ForumPage();
+        page = const HopeCoreHub();
         break;
       case 2:
-        page = const MahoroPage();
+        page = const ForumPage();
         break;
       case 3:
-        page = const MugangaPage();
+        page = const MahoroPage();
         break;
       case 4:
         page = const SettingsPage();
@@ -341,10 +342,10 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> with Sing
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildNavItem(0, Icons.home_outlined, 'home'),
-                    _buildNavItem(1, Icons.chat_bubble_outline, 'forum'),
-                    _buildNavItem(2, Icons.smart_toy_outlined, 'mahoro'),
-                    _buildNavItem(3, Icons.favorite_border, 'muganga'),
+                    _buildNavItem(0, Icons.dashboard_outlined, 'dashboard'),
+                    _buildNavItem(1, Icons.home_outlined, 'home'),
+                    _buildNavItem(2, Icons.chat_bubble_outline, 'forum'),
+                    _buildNavItem(3, Icons.smart_toy_outlined, 'mahoro'),
                     _buildNavItem(4, Icons.settings_outlined, 'settings'),
                   ],
                 ),
@@ -464,7 +465,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub> with SingleTickerPr
   }
 
   void _navigateToPage(int index) {
-    if (index == 0) {
+    if (index == 1) {
       // Stay on home page
       setState(() {
         _selectedIndex = index;
@@ -473,14 +474,14 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub> with SingleTickerPr
       // Navigate to the appropriate page
       Widget page;
       switch (index) {
-        case 1:
-          page = const ForumPage();
+        case 0:
+          page = const DashboardPage();
           break;
         case 2:
-          page = const MahoroPage();
+          page = const ForumPage();
           break;
         case 3:
-          page = const MugangaPage();
+          page = const MahoroPage();
           break;
         case 4:
           page = const SettingsPage();
@@ -2109,7 +2110,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub> with SingleTickerPr
                                         child: ElevatedButton(
                                           onPressed: () {
                                             Navigator.of(context).pop();
-                                            _navigateToPage(2); // Navigate to Mahoro
+                                            _navigateToPage(3); // Navigate to Mahoro
                                           },
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: emotionColor,
@@ -2148,7 +2149,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub> with SingleTickerPr
                                         child: ElevatedButton(
                                           onPressed: () {
                                             Navigator.of(context).pop();
-                                            _navigateToPage(1); // Navigate to Forum
+                                            _navigateToPage(2); // Navigate to Forum
                                           },
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.05),
@@ -3137,11 +3138,11 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub> with SingleTickerPr
     
     // Navigate to appropriate page based on the title
     if (resourceTitle == 'Forum') {
-      _navigateToPage(1);
-    } else if (resourceTitle == 'Mahoro') {
       _navigateToPage(2);
-    } else if (resourceTitle == 'Muganga') {
+    } else if (resourceTitle == 'Mahoro') {
       _navigateToPage(3);
+    } else if (resourceTitle == 'Muganga') {
+      _navigateToPage(3); // Note: Muganga was removed from nav, keeping Mahoro
     } else if (resourceTitle == 'Settings') {
       _navigateToPage(4);
     } else {
