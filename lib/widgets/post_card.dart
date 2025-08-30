@@ -7,6 +7,8 @@ import '../services/forum_service.dart';
 import '../utils/accessibility_utils.dart';
 import 'animated_card.dart';
 import 'accessible_container.dart';
+import '../services/content_reporting_service.dart';
+import 'content_report_dialog.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -243,6 +245,13 @@ class PostCard extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
+              const SizedBox(width: 12),
+              _buildIconButton(
+                context: context,
+                icon: Icons.flag_outlined,
+                color: regularIconColor,
+                onPressed: () => _showReportDialog(context),
+              ),
             ],
           ),
           _buildReplyButton(context, isDarkMode, highContrastMode),
@@ -324,6 +333,36 @@ class PostCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _showReportDialog(BuildContext context) async {
+    // Get a preview of the post content
+    final preview = post.content.length > 100 
+        ? '${post.content.substring(0, 100)}...'
+        : post.content;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => ContentReportDialog(
+        contentId: post.id,
+        contentType: ContentType.forumPost,
+        contentPreview: preview,
+      ),
+    );
+
+    if (result == true) {
+      // Show confirmation
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Thank you for reporting this post. We will review it promptly.'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   String _getTimeAgo(DateTime dateTime) {

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:animated_emoji/animated_emoji.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'firebase_options.dart';
@@ -35,6 +35,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'admin_setup_page.dart';
 import 'dashboard_page.dart';
 import 'utils/accessibility_utils.dart';
+import 'widgets/ai_content_policy_notice.dart';
 
 void main() async {
   // Ensure Flutter is initialized
@@ -43,48 +44,100 @@ void main() async {
   debugPrint('Starting application initialization...');
   
   try {
-    // Initialize Firebase directly
-    debugPrint('Initializing Firebase directly...');
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-      debugPrint('Firebase initialized directly in main.dart');
+    // Enhanced Firebase initialization with web-specific handling
+    debugPrint('Initializing Firebase...');
+    
+    if (kIsWeb) {
+      // Web-specific Firebase initialization with retry logic
+      debugPrint('Initializing Firebase for web platform...');
       
-      debugPrint('Firebase initialized with database URL from configuration');
+      // Add delay to ensure Firebase JS SDK is fully loaded
+      await Future.delayed(const Duration(milliseconds: 300));
       
-      // Initialize App Check after Firebase is initialized
-      await FirebaseAppCheck.instance.activate(
-        // Use debug provider for development
-        androidProvider: AndroidProvider.debug,
-        appleProvider: AppleProvider.debug,
-        webProvider: ReCaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'),
-      );
-      debugPrint('Firebase App Check initialized');
+      // Retry logic for Firebase initialization
+      bool firebaseInitialized = false;
+      int retryCount = 0;
+      const maxRetries = 5;
+      
+      while (!firebaseInitialized && retryCount < maxRetries) {
+        try {
+          if (Firebase.apps.isEmpty) {
+            await Firebase.initializeApp(
+              options: DefaultFirebaseOptions.currentPlatform,
+            );
+            firebaseInitialized = true;
+            debugPrint('Firebase initialized successfully for web (attempt ${retryCount + 1})');
+          } else {
+            firebaseInitialized = true;
+            debugPrint('Firebase was already initialized for web');
+          }
+        } catch (e) {
+          retryCount++;
+          debugPrint('Firebase initialization attempt $retryCount failed: $e');
+          if (retryCount < maxRetries) {
+            debugPrint('Retrying Firebase initialization in ${retryCount * 200}ms...');
+            await Future.delayed(Duration(milliseconds: retryCount * 200));
+          }
+        }
+      }
+      
+      if (!firebaseInitialized) {
+        debugPrint('Warning: Failed to initialize Firebase after $maxRetries attempts');
+      }
     } else {
-      debugPrint('Firebase was already initialized');
+      // Mobile/Desktop platform initialization
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+        debugPrint('Firebase initialized for mobile/desktop platform');
+      } else {
+        debugPrint('Firebase was already initialized for mobile/desktop');
+      }
     }
     
-      // Initialize Firebase services
-  await FirebaseService.initializeFirebase();
-  
-  // Initialize Realtime Database for forum posts
-  final realtimeDB = FirebaseRealtimeService();
-  debugPrint('Firebase Realtime Database initialized for forum posts');
+    debugPrint('Firebase initialized with database URL from configuration');
+    
+    // Initialize Firebase services with error handling
+    try {
+      await FirebaseService.initializeFirebase();
+      debugPrint('Firebase Service initialized successfully');
+    } catch (e) {
+      debugPrint('Warning: Firebase Service initialization failed: $e');
+      // Continue without Firebase Service
+    }
+    
+    // Initialize Realtime Database for forum posts
+    try {
+      final realtimeDB = FirebaseRealtimeService();
+      debugPrint('Firebase Realtime Database initialized for forum posts');
+    } catch (e) {
+      debugPrint('Warning: Firebase Realtime Database initialization failed: $e');
+      // Continue without Realtime Database
+    }
+    
   } catch (e) {
-    debugPrint('Error initializing Firebase in main.dart: $e');
-    // Continue with app startup even if Firebase fails
+    debugPrint('Error initializing Firebase: $e');
+    if (kIsWeb) {
+      debugPrint('Web Firebase initialization failed. The app will continue with limited functionality.');
+    }
+    // Continue with app startup even if Firebase fails completely
   }
   
-  // Create auth service instance first
+  // Create service instances with error handling
   final authService = AuthService();
-  // Create forum service and set auth service
   final forumService = ForumService();
   forumService.setAuthService(authService);
-  // Create speech service
+  
+  // Initialize speech service with error handling
   final speechService = SpeechService();
-  await speechService.initialize();
-  // Create offline service
+  try {
+    await speechService.initialize();
+    debugPrint('Speech service initialized successfully');
+  } catch (e) {
+    debugPrint('Warning: Speech service initialization failed: $e');
+  }
+  
   final offlineService = OfflineService();
   
   debugPrint('Starting application...');
@@ -455,6 +508,11 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub> with SingleTickerPr
       duration: const Duration(milliseconds: 1200),
     );
     _animationController.forward();
+    
+    // Show content policy notice on first launch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AiContentPolicyNotice.showIfNeeded(context);
+    });
   }
 
   @override

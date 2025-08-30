@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
 import 'theme_provider.dart';
-import 'services/auth_service.dart';
+
 import 'localization/base_screen.dart';
+import 'pages/content_moderation_page.dart';
 
 class AdminPage extends BaseStatelessScreen {
   const AdminPage({super.key});
@@ -15,7 +16,7 @@ class AdminPage extends BaseStatelessScreen {
     final accentColor = isDarkMode ? const Color(0xFF9667FF) : const Color(0xFFE53935);
     
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         backgroundColor: isDarkMode ? const Color(0xFF111827) : Colors.white,
         appBar: AppBar(
@@ -27,6 +28,7 @@ class AdminPage extends BaseStatelessScreen {
             tabs: const [
               Tab(text: 'Pending Subscriptions'),
               Tab(text: 'All Subscriptions'),
+              Tab(text: 'Content Reports'),
             ],
           ),
           actions: [
@@ -46,6 +48,8 @@ class AdminPage extends BaseStatelessScreen {
             SubscriptionList(statusFilter: 'pending'),
             // All subscriptions
             SubscriptionList(statusFilter: null),
+            // Content moderation
+            ContentModerationPage(),
           ],
         ),
       ),

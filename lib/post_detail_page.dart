@@ -6,6 +6,8 @@ import 'models/reply_model.dart';
 import 'services/forum_service.dart';
 import 'services/auth_service.dart';
 import 'widgets/reply_dialog.dart';
+import 'services/content_reporting_service.dart';
+import 'widgets/content_report_dialog.dart';
 
 class PostDetailPage extends StatefulWidget {
   final Post post;
@@ -145,7 +147,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
     
     // Get first letter of username for avatar
     final String firstLetter = (authService.username ?? 'A')[0].toUpperCase();
-    final bool isGuest = authService.username == 'Guest';
     
     return Container(
       margin: const EdgeInsets.all(16),
@@ -440,6 +441,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     fontSize: 14,
                   ),
                 ),
+                const SizedBox(width: 12),
+                IconButton(
+                  onPressed: () => _showPostReportDialog(),
+                  icon: const Icon(Icons.flag_outlined),
+                  color: isDarkMode ? Colors.white54 : Colors.black54,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Report this post',
+                ),
               ],
             ),
           ),
@@ -542,12 +552,81 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     fontSize: 12,
                   ),
                 ),
+                const SizedBox(width: 12),
+                IconButton(
+                  onPressed: () => _showReplyReportDialog(reply),
+                  icon: const Icon(Icons.flag_outlined, size: 16),
+                  color: isDarkMode ? Colors.white54 : Colors.black54,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Report this reply',
+                ),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _showPostReportDialog() async {
+    // Get a preview of the post content
+    final preview = widget.post.content.length > 100 
+        ? '${widget.post.content.substring(0, 100)}...'
+        : widget.post.content;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => ContentReportDialog(
+        contentId: widget.post.id,
+        contentType: ContentType.forumPost,
+        contentPreview: preview,
+      ),
+    );
+
+    if (result == true) {
+      // Show confirmation
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Thank you for reporting this post. We will review it promptly.'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showReplyReportDialog(Reply reply) async {
+    // Get a preview of the reply content
+    final preview = reply.content.length > 100 
+        ? '${reply.content.substring(0, 100)}...'
+        : reply.content;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => ContentReportDialog(
+        contentId: reply.id,
+        contentType: ContentType.forumReply,
+        contentPreview: preview,
+      ),
+    );
+
+    if (result == true) {
+      // Show confirmation
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Thank you for reporting this reply. We will review it promptly.'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   String _getTimeAgo(DateTime dateTime) {

@@ -10,6 +10,8 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'localization/app_localizations.dart';
 import 'localization/localized_text.dart';
 import 'localization/base_screen.dart';
+import 'services/content_reporting_service.dart';
+import 'widgets/content_report_dialog.dart';
 
 class MahoroPage extends BaseScreen {
   const MahoroPage({super.key});
@@ -758,12 +760,51 @@ class _MahoroPageState extends BaseScreenState<MahoroPage> with SingleTickerProv
                         ? Border.all(color: isDarkMode ? Colors.white : Colors.black, width: 1.0)
                         : null,
                   ),
-                  child: Text(
-                    message.text,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: textColor,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        message.text,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: textColor,
+                        ),
+                      ),
+                      // Add report button for AI messages
+                      if (!message.isUserMessage) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            InkWell(
+                              onTap: () => _showReportDialog(message),
+                              borderRadius: BorderRadius.circular(4),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.flag_outlined,
+                                      size: 12,
+                                      color: Colors.white.withOpacity(0.6),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Report',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.white.withOpacity(0.6),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -923,18 +964,52 @@ class _MahoroPageState extends BaseScreenState<MahoroPage> with SingleTickerProv
   String _formatTime(DateTime timestamp) {
     return '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}:${timestamp.second.toString().padLeft(2, '0')}';
   }
+
+  Future<void> _showReportDialog(ChatMessage message) async {
+    if (message.isUserMessage || message.id == null) return;
+    
+    // Get a preview of the message (first 100 characters)
+    final preview = message.text.length > 100 
+        ? '${message.text.substring(0, 100)}...'
+        : message.text;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => ContentReportDialog(
+        contentId: message.id!,
+        contentType: ContentType.aiMessage,
+        contentPreview: preview,
+      ),
+    );
+
+    if (result == true) {
+      // Show confirmation that report was submitted
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Thank you for reporting this content. We will review it promptly.'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
 }
 
 class ChatMessage {
   final String text;
   final bool isUserMessage;
   final DateTime timestamp;
+  final String? id; // Add unique ID for reporting
 
   ChatMessage({
     required this.text,
     required this.isUserMessage,
     required this.timestamp,
-  });
+    String? id,
+  }) : id = id ?? const Uuid().v4();
 }
 
 class GeminiService {

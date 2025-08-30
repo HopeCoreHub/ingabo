@@ -11,8 +11,8 @@ class OfflineService {
   
   // Check if device is online
   Future<bool> isOnline() async {
-    final connectivityResult = await Connectivity().checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
+    final connectivityResults = await Connectivity().checkConnectivity();
+    return !connectivityResults.contains(ConnectivityResult.none);
   }
   
   // Cache forum posts

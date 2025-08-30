@@ -61,30 +61,39 @@ class ForumService {
   // Load posts from Firebase Realtime Database
   Future<void> _loadPostsFromRealtimeDB() async {
     try {
-      debugPrint('Loading posts from Realtime Database');
+      debugPrint('🔗 _loadPostsFromRealtimeDB() called');
+      debugPrint('🔧 Realtime DB instance: $_realtimeDB');
       
       // Get posts from Realtime Database
+      debugPrint('📡 Calling _realtimeDB.getAllPosts()...');
       final posts = await _realtimeDB.getAllPosts();
+      debugPrint('✅ getAllPosts() returned ${posts.length} posts');
       
       if (posts.isNotEmpty) {
         // Clear existing posts and add the new ones
+        debugPrint('🔄 Clearing existing posts and adding new ones');
         _posts.clear();
         _posts.addAll(posts);
-        debugPrint('Loaded ${posts.length} posts from Realtime Database');
+        debugPrint('✅ Loaded ${posts.length} posts from Realtime Database');
       } else {
-        debugPrint('No posts found in Realtime Database, creating sample posts');
+        debugPrint('⚠️ No posts found in Realtime Database, creating sample posts');
         await _realtimeDB.createSamplePosts();
+        debugPrint('✅ Sample posts created, trying to load again...');
         
         // Try loading again
         final samplePosts = await _realtimeDB.getAllPosts();
+        debugPrint('📡 Second getAllPosts() returned ${samplePosts.length} posts');
         if (samplePosts.isNotEmpty) {
           _posts.clear();
           _posts.addAll(samplePosts);
-          debugPrint('Loaded ${samplePosts.length} sample posts from Realtime Database');
+          debugPrint('✅ Loaded ${samplePosts.length} sample posts from Realtime Database');
+        } else {
+          debugPrint('❌ Still no posts after creating samples');
         }
       }
     } catch (e) {
-      debugPrint('Error loading posts from Realtime Database: $e');
+      debugPrint('❌ Error loading posts from Realtime Database: $e');
+      debugPrint('❌ Stack trace: ${StackTrace.current}');
     }
   }
 
@@ -109,28 +118,34 @@ class ForumService {
   }
 
   Future<List<Post>> getPosts() async {
+    debugPrint('🚀 ForumService.getPosts() called');
+    debugPrint('🗄️ Current _posts cache size: ${_posts.length}');
+    
     // Always refresh posts from Firebase to ensure latest data
     try {
-      debugPrint('Getting posts from Realtime Database');
+      debugPrint('🔄 Getting posts from Realtime Database');
       await _loadPostsFromRealtimeDB();
+      debugPrint('✅ Finished loading from Realtime Database, cache size: ${_posts.length}');
       
       // Double check if posts are still empty after loading
       if (_posts.isEmpty) {
-        debugPrint('Posts still empty after loading, adding hardcoded samples');
+        debugPrint('⚠️ Posts still empty after loading, adding hardcoded samples');
         _addHardcodedSamplePosts();
+        debugPrint('✅ Added hardcoded samples, cache size: ${_posts.length}');
       }
     } catch (e) {
-      debugPrint('Error in getPosts(): $e');
+      debugPrint('❌ Error in getPosts(): $e');
       if (_posts.isEmpty) {
-        debugPrint('Adding hardcoded samples due to error');
+        debugPrint('⚠️ Adding hardcoded samples due to error');
         _addHardcodedSamplePosts();
+        debugPrint('✅ Added hardcoded samples after error, cache size: ${_posts.length}');
       }
     }
     
     // Return a sorted copy of posts (newest first)
     final sortedPosts = [..._posts];
     sortedPosts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    debugPrint('Returning ${sortedPosts.length} posts');
+    debugPrint('📤 Returning ${sortedPosts.length} posts to caller');
     return sortedPosts;
   }
   
@@ -266,8 +281,8 @@ class ForumService {
     
     try {
       // Check for connectivity first
-      final connectivity = await Connectivity().checkConnectivity();
-      final isOnline = connectivity != ConnectivityResult.none;
+      final connectivityResults = await Connectivity().checkConnectivity();
+      final isOnline = !connectivityResults.contains(ConnectivityResult.none);
       
       if (!isOnline) {
         debugPrint('📵 Device is offline, saving post locally only');

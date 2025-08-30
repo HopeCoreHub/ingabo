@@ -38,10 +38,18 @@ class AuthService extends ChangeNotifier {
 
   AuthService._internal() {
     _loadAuthState();
-    // Listen for Firebase auth state changes
-    _auth.authStateChanges().listen((User? user) {
-      _syncFirebaseAuthState(user);
-    });
+    // Listen for Firebase auth state changes with error handling
+    try {
+      _auth.authStateChanges().listen((User? user) {
+        _syncFirebaseAuthState(user);
+      }, onError: (error) {
+        debugPrint('Firebase auth state change error: $error');
+        // Continue with local auth if Firebase fails
+      });
+    } catch (e) {
+      debugPrint('Error setting up Firebase auth state listener: $e');
+      // Continue with local auth if Firebase fails
+    }
   }
 
   bool get isLoggedIn => _isLoggedIn;

@@ -7,6 +7,16 @@
     },
     "replies": {
       ".indexOn": ["postId", "createdAt"]
+    },
+    "content_reports": {
+      ".indexOn": ["contentId", "reportedBy", "status", "reportedAt"]
+    },
+    "users": {
+      "$uid": {
+        "reports": {
+          ".indexOn": ["reportedAt", "status"]
+        }
+      }
     }
   }
 } 

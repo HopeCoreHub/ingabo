@@ -276,10 +276,7 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
                             text = const Text('', style: style);
                             break;
                         }
-                        return SideTitleWidget(
-                          axisSide: meta.axisSide,
-                          child: text,
-                        );
+                        return text;
                       },
                     ),
                   ),
@@ -513,3 +510,4 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
     );
   }
 }
+

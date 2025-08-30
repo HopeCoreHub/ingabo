@@ -18,7 +18,8 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="ingabo - Mental Health and Wellness Hub">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -29,10 +30,208 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>ingabo</title>
+  <title>ingabo - HopeCore Hub</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Loading indicator -->
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      font-family: 'Roboto', sans-serif;
+    }
+    
+    .loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #ffffff;
+      z-index: 9999;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e3f2fd;
+      border-top: 4px solid #1976d2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      margin-top: 20px;
+      color: #333;
+      font-size: 16px;
+    }
+    
+    .hide-loading {
+      display: none !important;
+    }
+  </style>
+
+  <!-- Firebase SDK - Updated to v10.12.2 for better compatibility -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  
+  <!-- Firebase configuration and initialization -->
+  <script>
+    // Initialize Firebase globals immediately
+    function initializeFirebaseGlobals() {
+      if (typeof firebase !== 'undefined') {
+        // Make firebase available globally
+        window.firebase = firebase;
+        
+        // Ensure dart global exists
+        if (typeof window.dart === 'undefined') {
+          window.dart = { global: {} };
+        }
+        if (typeof window.dart.global === 'undefined') {
+          window.dart.global = {};
+        }
+        
+        // Set up firebase_core for Flutter
+        window.dart.global.firebase_core = {
+          getApps: () => firebase.apps || [],
+          getApp: (name) => name ? firebase.app(name) : firebase.app(),
+          initializeApp: (options, name) => firebase.initializeApp(options, name),
+          deleteApp: (app) => app.delete(),
+          Firebase: firebase
+        };
+        
+        console.log('Firebase loaded successfully');
+        console.log('dart.global.firebase_core initialized:', window.dart.global.firebase_core);
+        return true;
+      }
+      return false;
+    }
+
+    // Try to initialize immediately
+    if (!initializeFirebaseGlobals()) {
+      // If not available, wait for Firebase to load
+      function waitForFirebase() {
+        return new Promise((resolve) => {
+          const checkFirebase = () => {
+            if (initializeFirebaseGlobals()) {
+              resolve();
+            } else {
+              setTimeout(checkFirebase, 50);
+            }
+          };
+          checkFirebase();
+        });
+      }
+
+      // Wait for DOM and Firebase
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => waitForFirebase());
+      } else {
+        waitForFirebase();
+      }
+    }
+
+    // Enhanced error handling and debugging
+    window.addEventListener('error', function(e) {
+      console.error('Global error:', e.error);
+      
+      // Hide loading if there's an error
+      const loadingContainer = document.getElementById('loading-container');
+      if (loadingContainer) {
+        loadingContainer.classList.add('hide-loading');
+      }
+    });
+
+    // Service Worker handling - clear old service workers
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+
+    // Suppress development warnings
+    if (typeof window !== 'undefined' && window.location.href.includes('localhost')) {
+      const originalWarn = console.warn;
+      console.warn = function(...args) {
+        if (args.some(arg => typeof arg === 'string' && 
+            (arg.includes('registerExtension') || 
+             arg.includes('DevTools') ||
+             arg.includes('Source map error')))) {
+          return;
+        }
+        originalWarn.apply(console, args);
+      };
+      
+      const originalError = console.error;
+      console.error = function(...args) {
+        if (args.some(arg => typeof arg === 'string' && arg.includes('Source map error'))) {
+          return;
+        }
+        originalError.apply(console, args);
+      };
+    }
+  </script>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <!-- Loading indicator -->
+  <div id="loading-container" class="loading-container">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading ingabo...</div>
+  </div>
+
+  <!-- Flutter app -->
+  <div id="app"></div>
+  
+  <script>
+    // Enhanced Flutter bootstrap loading
+    function loadFlutterBootstrap() {
+      const script = document.createElement('script');
+      script.src = 'flutter_bootstrap.js';
+      script.async = true;
+      
+      script.onload = function() {
+        console.log('Flutter bootstrap loaded successfully');
+        // Hide loading indicator after Flutter loads
+        setTimeout(() => {
+          const loadingContainer = document.getElementById('loading-container');
+          if (loadingContainer) {
+            loadingContainer.classList.add('hide-loading');
+          }
+        }, 2000);
+      };
+      
+      script.onerror = function(e) {
+        console.error('Failed to load Flutter bootstrap:', e);
+        const loadingContainer = document.getElementById('loading-container');
+        if (loadingContainer) {
+          loadingContainer.innerHTML = '<div style="color: red; text-align: center;">Failed to load application. Please refresh the page.</div>';
+        }
+      };
+      
+      document.head.appendChild(script);
+    }
+
+    // Load Flutter bootstrap after DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadFlutterBootstrap);
+    } else {
+      loadFlutterBootstrap();
+    }
+  </script>
 </body>
 </html>

@@ -109,32 +109,38 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
   Future<void> _loadPosts() async {
     if (!mounted) return;
     
+    debugPrint('🔄 _loadPosts() called - setting loading state to true');
     setState(() {
       _isLoading = true;
     });
 
     try {
-      debugPrint('Loading posts in ForumPage');
+      debugPrint('📱 Loading posts in ForumPage');
+      debugPrint('🔧 Forum service instance: $_forumService');
       
       // Simulate network delay
       await Future.delayed(const Duration(milliseconds: 500));
       
       if (!mounted) return;
       
+      debugPrint('📡 Calling _forumService.getPosts()...');
       final posts = await _forumService.getPosts();
       
-      debugPrint('Loaded ${posts.length} posts in ForumPage');
+      debugPrint('✅ Loaded ${posts.length} posts in ForumPage');
       
       if (!mounted) return;
       
+      debugPrint('🔄 Setting posts in state and loading to false');
       setState(() {
         _posts = posts;
         _isLoading = false;
       });
       
+      debugPrint('📊 Final posts count in UI: ${_posts.length}');
+      
       // If posts are still empty after trying to load them
       if (_posts.isEmpty) {
-        debugPrint('Posts list is still empty after loading');
+        debugPrint('⚠️ Posts list is still empty after loading - creating fallback post');
         
         // Create some fallback posts directly
         final hardcodedPost = Post(
@@ -152,6 +158,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
         setState(() {
           _posts = [hardcodedPost];
         });
+        debugPrint('✅ Added fallback post - final count: ${_posts.length}');
       }
     } catch (e) {
       debugPrint('Error loading posts in ForumPage: ${e.toString()}');

@@ -138,6 +138,8 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
               const SizedBox(height: 12),
               _buildPrivacySecuritySection(),
               const SizedBox(height: 12),
+              _buildContentPolicySection(),
+              const SizedBox(height: 12),
               if (_isAdmin) ...[
                 _buildAdminSection(),
                 const SizedBox(height: 12),
@@ -1924,6 +1926,117 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildContentPolicySection() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('Content Policy & Reporting', Icons.policy),
+        _buildSectionCard([
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.blue,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'AI-Generated Content Policy',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'This app contains AI-generated content from our Mahoro AI companion. You can report any content that violates our community guidelines by using the flag button (🏴) available on AI messages and forum posts.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white70 : Colors.black87,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Report Categories:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...[ 
+                  '• Inappropriate content',
+                  '• Harmful or dangerous information',
+                  '• Spam or unwanted content',
+                  '• Misinformation',
+                  '• Harassment or bullying',
+                  '• Other concerns',
+                ].map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    item,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDarkMode ? Colors.white60 : Colors.black54,
+                    ),
+                  ),
+                )),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.green.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.security,
+                        color: Colors.green,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'All reports are reviewed by our moderation team within 24 hours.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDarkMode ? Colors.white70 : Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ]),
+      ],
     );
   }
 
