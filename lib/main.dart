@@ -195,20 +195,24 @@ class MyApp extends StatelessWidget {
               );
             }
             
+            // Determine initial index based on admin status
+            final isAdminUser = authService.isAdmin();
+            final initialIndex = isAdminUser ? 1 : 0; // Home page index
+            
             // Force the app to respond to auth state changes
             // If logged in, show main app, otherwise show auth page or guest mode
             if (authService.isLoggedIn) {
               debugPrint('User is logged in as ${authService.username}');
-              return const MainNavigationWrapper(
-                selectedIndex: 0,
-                child: HopeCoreHub(),
+              return MainNavigationWrapper(
+                selectedIndex: initialIndex,
+                child: const HopeCoreHub(),
               );
             } else {
               // Show guest mode - we could also redirect to auth page here
               debugPrint('User is in guest mode');
-              return const MainNavigationWrapper(
-                selectedIndex: 0,
-                child: HopeCoreHub(),
+              return MainNavigationWrapper(
+                selectedIndex: initialIndex,
+                child: const HopeCoreHub(),
               );
             }
           }
@@ -263,29 +267,55 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> with Sing
   void _navigateToPage(int index) {
     if (_selectedIndex == index) return;
     
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final isAdminUser = authService.isAdmin();
+    
     setState(() {
       _selectedIndex = index;
     });
 
     Widget page;
-    switch (index) {
-      case 0:
-        page = const DashboardPage();
-        break;
-      case 1:
-        page = const HopeCoreHub();
-        break;
-      case 2:
-        page = const ForumPage();
-        break;
-      case 3:
-        page = const MahoroPage();
-        break;
-      case 4:
-        page = const SettingsPage();
-        break;
-      default:
-        page = const HopeCoreHub();
+    
+    // Handle navigation based on whether user is admin or not
+    if (isAdminUser) {
+      // Admin user navigation (includes dashboard)
+      switch (index) {
+        case 0:
+          page = const DashboardPage();
+          break;
+        case 1:
+          page = const HopeCoreHub();
+          break;
+        case 2:
+          page = const ForumPage();
+          break;
+        case 3:
+          page = const MahoroPage();
+          break;
+        case 4:
+          page = const SettingsPage();
+          break;
+        default:
+          page = const HopeCoreHub();
+      }
+    } else {
+      // Regular user navigation (no dashboard)
+      switch (index) {
+        case 0:
+          page = const HopeCoreHub();
+          break;
+        case 1:
+          page = const ForumPage();
+          break;
+        case 2:
+          page = const MahoroPage();
+          break;
+        case 3:
+          page = const SettingsPage();
+          break;
+        default:
+          page = const HopeCoreHub();
+      }
     }
 
     Navigator.of(context).pushReplacement(
@@ -394,13 +424,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> with Sing
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(0, Icons.dashboard_outlined, 'dashboard'),
-                    _buildNavItem(1, Icons.home_outlined, 'home'),
-                    _buildNavItem(2, Icons.chat_bubble_outline, 'forum'),
-                    _buildNavItem(3, Icons.smart_toy_outlined, 'mahoro'),
-                    _buildNavItem(4, Icons.settings_outlined, 'settings'),
-                  ],
+                  children: _buildNavItems(),
                 ),
               ),
             ),
@@ -408,6 +432,33 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> with Sing
         );
       },
     );
+  }
+  
+  List<Widget> _buildNavItems() {
+    final authService = Provider.of<AuthService>(context);
+    final isAdminUser = authService.isAdmin();
+    
+    List<Widget> navItems = [];
+    
+    // Only show dashboard for admin users
+    if (isAdminUser) {
+      navItems.add(_buildNavItem(0, Icons.dashboard_outlined, 'dashboard'));
+    }
+    
+    // Add other navigation items with adjusted indices
+    int homeIndex = isAdminUser ? 1 : 0;
+    int forumIndex = isAdminUser ? 2 : 1;
+    int mahoroIndex = isAdminUser ? 3 : 2;
+    int settingsIndex = isAdminUser ? 4 : 3;
+    
+    navItems.addAll([
+      _buildNavItem(homeIndex, Icons.home_outlined, 'home'),
+      _buildNavItem(forumIndex, Icons.chat_bubble_outline, 'forum'),
+      _buildNavItem(mahoroIndex, Icons.smart_toy_outlined, 'mahoro'),
+      _buildNavItem(settingsIndex, Icons.settings_outlined, 'settings'),
+    ]);
+    
+    return navItems;
   }
   
   Widget _buildNavItem(int index, IconData icon, String label) {
@@ -523,7 +574,13 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub> with SingleTickerPr
   }
 
   void _navigateToPage(int index) {
-    if (index == 1) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final isAdminUser = authService.isAdmin();
+    
+    // Determine actual home index based on admin status
+    int homeIndex = isAdminUser ? 1 : 0;
+    
+    if (index == homeIndex) {
       // Stay on home page
       setState(() {
         _selectedIndex = index;
@@ -531,21 +588,40 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub> with SingleTickerPr
     } else {
       // Navigate to the appropriate page
       Widget page;
-      switch (index) {
-        case 0:
-          page = const DashboardPage();
-          break;
-        case 2:
-          page = const ForumPage();
-          break;
-        case 3:
-          page = const MahoroPage();
-          break;
-        case 4:
-          page = const SettingsPage();
-          break;
-        default:
-          page = const HopeCoreHub();
+      
+      if (isAdminUser) {
+        // Admin user navigation
+        switch (index) {
+          case 0:
+            page = const DashboardPage();
+            break;
+          case 2:
+            page = const ForumPage();
+            break;
+          case 3:
+            page = const MahoroPage();
+            break;
+          case 4:
+            page = const SettingsPage();
+            break;
+          default:
+            page = const HopeCoreHub();
+        }
+      } else {
+        // Regular user navigation
+        switch (index) {
+          case 1:
+            page = const ForumPage();
+            break;
+          case 2:
+            page = const MahoroPage();
+            break;
+          case 3:
+            page = const SettingsPage();
+            break;
+          default:
+            page = const HopeCoreHub();
+        }
       }
 
       Navigator.of(context).pushReplacement(

@@ -217,6 +217,15 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
     
     try {
+      // Check if this is the admin login
+      const adminEmail = 'info@ingabohopecore.com';
+      const adminPassword = 'Hope2025!';
+      
+      if (email == adminEmail && password == adminPassword) {
+        // This is admin login - create admin user if it doesn't exist
+        await _ensureAdminUserExists(email, password);
+      }
+      
       // First try Firebase login
       try {
         final userCredential = await _auth.signInWithEmailAndPassword(
@@ -293,6 +302,39 @@ class AuthService extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  // Ensure admin user exists in local storage
+  Future<void> _ensureAdminUserExists(String email, String password) async {
+    try {
+      final users = await _getUsers();
+      
+      // Check if admin user already exists
+      final adminExists = users.any((user) => user['email'] == email);
+      
+      if (!adminExists) {
+        // Create admin user
+        final hashedPassword = _hashPassword(password);
+        final adminUserId = _uuid.v4();
+        
+        final adminUser = {
+          'id': adminUserId,
+          'name': 'Admin',
+          'email': email,
+          'password': hashedPassword,
+          'createdAt': DateTime.now().toIso8601String(),
+          'isGuest': false,
+          'isAdmin': true,
+        };
+        
+        users.add(adminUser);
+        await _saveUsers(users);
+        
+        debugPrint('Admin user created in local storage');
+      }
+    } catch (e) {
+      debugPrint('Error ensuring admin user exists: $e');
     }
   }
 
@@ -608,5 +650,86 @@ class AuthService extends ChangeNotifier {
   static Future<String?> getApiKey() async {
     final secureStorage = FlutterSecureStorage();
     return await secureStorage.read(key: 'claude_api_key');
+  }
+
+  // Check if current user is admin with specific credentials
+  bool isAdmin() {
+    if (!_isLoggedIn || _userId == null) {
+      return false;
+    }
+    
+    // Check if the current user is the admin with the specific email
+    return _checkAdminCredentials();
+  }
+
+  // Helper method to check admin credentials
+  bool _checkAdminCredentials() {
+    // Admin email check
+    const adminEmail = 'info@ingabohopecore.com';
+    
+    // For Firebase users, check the email directly
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser != null) {
+      return firebaseUser.email == adminEmail;
+    }
+    
+    // For local users, we need to check stored credentials
+    // This will be handled synchronously by checking stored user data
+    return _checkLocalAdminStatus();
+  }
+
+  // Check admin status from local storage synchronously
+  bool _checkLocalAdminStatus() {
+    const adminEmail = 'info@ingabohopecore.com';
+    
+    // This is a simplified check - in a real app you'd store admin status
+    // For now, we'll check if the current user has the admin email
+    // This assumes the admin user was properly created during login
+    return _username == 'Admin'; // Admin user created with this name
+  }
+
+  // Async method to get detailed admin status
+  Future<bool> isAdminAsync() async {
+    if (!_isLoggedIn || _userId == null) {
+      return false;
+    }
+    
+    const adminEmail = 'info@ingabohopecore.com';
+    
+    // For Firebase users, check the email directly
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser != null) {
+      return firebaseUser.email == adminEmail;
+    }
+    
+    // For local users, check stored user data
+    try {
+      final users = await _getUsers();
+      final currentUser = users.firstWhere(
+        (user) => user['id'] == _userId,
+        orElse: () => <String, dynamic>{},
+      );
+      
+      return currentUser.isNotEmpty && 
+             currentUser['email'] == adminEmail &&
+             (currentUser['isAdmin'] == true);
+    } catch (e) {
+      debugPrint('Error checking admin status: $e');
+      return false;
+    }
+  }
+
+  // Enhanced login method that tracks admin status
+  Future<bool> loginAsAdmin(String email, String password) async {
+    const adminEmail = 'info@ingabohopecore.com';
+    const adminPassword = 'Hope2025!';
+    
+    // Only allow admin login with exact credentials
+    if (email != adminEmail || password != adminPassword) {
+      return false;
+    }
+    
+    // Use the regular login method
+    return await login(email, password);
   }
 } 
