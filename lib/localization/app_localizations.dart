@@ -146,7 +146,6 @@ class AppLocalizations {
       'wouldYouLikeToCallEmergencyServicesNow':
           'Would you like to call emergency services now?',
       'callNow': 'Call Now',
-      'cancel': 'Cancel',
       'exploreServices': 'Explore Services',
       'recentPosts': 'Recent Posts',
       'viewAll': 'View All',
@@ -301,7 +300,6 @@ class AppLocalizations {
       'wouldYouLikeToCallEmergencyServicesNow':
           'Voulez-vous appeler les services d\'urgence maintenant?',
       'callNow': 'Appeler Maintenant',
-      'cancel': 'Annuler',
       'exploreServices': 'Explorer les Services',
       'recentPosts': 'Publications Récentes',
       'viewAll': 'Voir Tout',
@@ -455,7 +453,6 @@ class AppLocalizations {
       'wouldYouLikeToCallEmergencyServicesNow':
           'Ungependa kupiga simu kwa huduma za dharura sasa?',
       'callNow': 'Piga Simu Sasa',
-      'cancel': 'Ghairi',
       'exploreServices': 'Chunguza Huduma',
       'recentPosts': 'Machapisho ya Hivi Karibuni',
       'viewAll': 'Ona Yote',
@@ -611,7 +608,6 @@ class AppLocalizations {
       'wouldYouLikeToCallEmergencyServicesNow':
           'Urifuza guhamagara serivisi z\'ubutabazi ubu?',
       'callNow': 'Hamagara Ubu',
-      'cancel': 'Kureka',
       'exploreServices': 'Reba Serivisi',
       'recentPosts': 'Inyandiko za Vuba',
       'viewAll': 'Reba Byose',

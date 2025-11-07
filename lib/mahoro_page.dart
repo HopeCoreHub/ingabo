@@ -219,7 +219,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
       // Store the API key securely - use a valid Gemini API key
       final apiKey =
           'AIzaSyBJ8mjNdjdJphLOWYP_f9yetHLffon1Am0'; // Replace with a real Gemini API key
-      print(
+      debugPrint(
         "Storing API key: ${apiKey.substring(0, 10)}... (length: ${apiKey.length})",
       );
       await AuthService.storeApiKey(apiKey);
