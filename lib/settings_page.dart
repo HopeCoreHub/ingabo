@@ -30,6 +30,7 @@ class SettingsPage extends BaseScreen {
 
 class _SettingsPageState extends BaseScreenState<SettingsPage> {
   bool _isAdmin = false;
+  bool _isCheckingAdmin = true;
 
   @override
   void initState() {

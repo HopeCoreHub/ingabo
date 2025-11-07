@@ -14,6 +14,7 @@ class FirebaseRealtimeService {
   late final DatabaseReference _repliesRef;
 
   // Connection status
+  bool _isConnected = false;
   final StreamController<bool> _connectionStatusController =
       StreamController<bool>.broadcast();
   Stream<bool> get connectionStatus => _connectionStatusController.stream;

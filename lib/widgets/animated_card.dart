@@ -37,6 +37,7 @@ class _AnimatedCardState extends State<AnimatedCard>
     with SingleTickerProviderStateMixin {
   bool _isHovering = false;
   late AnimationController _hoverController;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
