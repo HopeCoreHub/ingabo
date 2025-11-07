@@ -6,14 +6,15 @@ import 'accessibility_provider.dart';
 class ThemeStyleProvider {
   final ThemeProvider themeProvider;
   final AccessibilityProvider accessibilityProvider;
-  
+
   ThemeStyleProvider({
     required this.themeProvider,
     required this.accessibilityProvider,
   });
-  
+
   // Get the font family based on accessibility settings
-  TextStyle getTextStyle(BuildContext context, {
+  TextStyle getTextStyle(
+    BuildContext context, {
     TextStyle? baseStyle,
     double? fontSize,
     FontWeight? fontWeight,
@@ -24,13 +25,13 @@ class ThemeStyleProvider {
   }) {
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    
+
     // Get font family
     final fontFamily = accessibilityProvider.getActualFontFamily();
-    
+
     // Get font size scale factor
-    final fontSizeScale = accessibilityProvider.getFontSizeValue();
-    
+    final fontSizeScale = MediaQuery.textScalerOf(context).scale(1.0);
+
     // Default text style using Google Fonts
     TextStyle defaultStyle = _getGoogleFontTextStyle(
       fontFamily: fontFamily,
@@ -38,12 +39,15 @@ class ThemeStyleProvider {
       fontWeight: FontWeight.normal,
       color: isDarkMode ? Colors.white : Colors.black87,
     );
-    
+
     // Apply base style if provided
     if (baseStyle != null) {
       defaultStyle = _getGoogleFontTextStyle(
         fontFamily: fontFamily,
-        fontSize: baseStyle.fontSize != null ? baseStyle.fontSize! * fontSizeScale : 14.0 * fontSizeScale,
+        fontSize:
+            baseStyle.fontSize != null
+                ? baseStyle.fontSize! * fontSizeScale
+                : 14.0 * fontSizeScale,
         fontWeight: baseStyle.fontWeight,
         color: baseStyle.color,
         decoration: baseStyle.decoration,
@@ -51,15 +55,18 @@ class ThemeStyleProvider {
         height: baseStyle.height,
       );
     }
-    
+
     // Apply high contrast if enabled
     if (highContrastMode) {
       final highContrastColor = isDarkMode ? Colors.white : Colors.black;
       defaultStyle = defaultStyle.copyWith(
-        color: color != null ? _increaseContrast(color, isDarkMode) : highContrastColor,
+        color:
+            color != null
+                ? _increaseContrast(color, isDarkMode)
+                : highContrastColor,
       );
     }
-    
+
     // Apply other style overrides
     return defaultStyle.copyWith(
       fontSize: fontSize != null ? fontSize * fontSizeScale : null,
@@ -70,7 +77,7 @@ class ThemeStyleProvider {
       height: height,
     );
   }
-  
+
   // Helper method to get Google Font text style
   TextStyle _getGoogleFontTextStyle({
     required String fontFamily,
@@ -83,7 +90,7 @@ class ThemeStyleProvider {
   }) {
     // Ensure fontSize is never null to avoid assertion errors
     final safeFontSize = fontSize ?? 14.0;
-    
+
     try {
       switch (fontFamily.toLowerCase()) {
         case 'roboto':
@@ -147,7 +154,7 @@ class ThemeStyleProvider {
       );
     }
   }
-  
+
   // Helper method to increase contrast
   Color _increaseContrast(Color color, bool isDarkMode) {
     if (isDarkMode) {
@@ -160,52 +167,77 @@ class ThemeStyleProvider {
       return hsl.withLightness((hsl.lightness - 0.2).clamp(0.0, 1.0)).toColor();
     }
   }
-  
+
   // Apply font family to theme
   ThemeData getThemeWithAccessibility(BuildContext context) {
     final baseTheme = themeProvider.getTheme(context);
     final fontFamily = accessibilityProvider.getActualFontFamily();
-    final fontSizeScale = accessibilityProvider.getFontSizeValue();
+    final fontSizeScale = MediaQuery.textScalerOf(context).scale(1.0);
     final highContrastMode = accessibilityProvider.highContrastMode;
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     // Get text theme with adjusted font family and size using Google Fonts
     TextTheme adjustedTextTheme = _getGoogleFontsTextTheme(
-      fontFamily, 
+      fontFamily,
       fontSizeScale,
       highContrastMode,
       isDarkMode,
     );
-    
+
     // Apply high contrast theme modifications if enabled
     if (highContrastMode) {
-      return _getHighContrastTheme(baseTheme, adjustedTextTheme, fontFamily, fontSizeScale, isDarkMode);
+      return _getHighContrastTheme(
+        baseTheme,
+        adjustedTextTheme,
+        fontFamily,
+        fontSizeScale,
+        isDarkMode,
+      );
     }
-    
+
     // Return modified theme without high contrast
     return baseTheme.copyWith(
       textTheme: adjustedTextTheme,
       primaryTextTheme: adjustedTextTheme,
       // Adjust button themes
-      elevatedButtonTheme: _getAdjustedButtonTheme(baseTheme, fontFamily, fontSizeScale, highContrastMode),
-      textButtonTheme: _getAdjustedTextButtonTheme(baseTheme, fontFamily, fontSizeScale, highContrastMode),
+      elevatedButtonTheme: _getAdjustedButtonTheme(
+        baseTheme,
+        fontFamily,
+        fontSizeScale,
+        highContrastMode,
+      ),
+      textButtonTheme: _getAdjustedTextButtonTheme(
+        baseTheme,
+        fontFamily,
+        fontSizeScale,
+        highContrastMode,
+      ),
     );
   }
-  
+
   // Create a comprehensive high contrast theme
-  ThemeData _getHighContrastTheme(ThemeData baseTheme, TextTheme textTheme, String fontFamily, double fontSizeScale, bool isDarkMode) {
+  ThemeData _getHighContrastTheme(
+    ThemeData baseTheme,
+    TextTheme textTheme,
+    String fontFamily,
+    double fontSizeScale,
+    bool isDarkMode,
+  ) {
     // High contrast color scheme with better visual hierarchy
     final primaryColor = isDarkMode ? Colors.white : Colors.black;
     final backgroundColor = isDarkMode ? Colors.black : Colors.white;
-    final surfaceColor = isDarkMode ? const Color(0xFF1A1A1A) : const Color(0xFFF8F8F8); // Softer surface color
+    final surfaceColor =
+        isDarkMode
+            ? const Color(0xFF1A1A1A)
+            : const Color(0xFFF8F8F8); // Softer surface color
     final onSurfaceColor = isDarkMode ? Colors.white : Colors.black;
     final dividerColor = isDarkMode ? Colors.white : Colors.black;
-    
+
     return baseTheme.copyWith(
       // Core colors
       primaryColor: primaryColor,
       scaffoldBackgroundColor: backgroundColor,
-      
+
       // Color scheme
       colorScheme: ColorScheme(
         brightness: isDarkMode ? Brightness.dark : Brightness.light,
@@ -220,11 +252,11 @@ class ThemeStyleProvider {
         outline: dividerColor,
         shadow: Colors.transparent, // No shadows in high contrast
       ),
-      
+
       // Text themes
       textTheme: textTheme,
       primaryTextTheme: textTheme,
-      
+
       // AppBar theme
       appBarTheme: AppBarTheme(
         backgroundColor: backgroundColor,
@@ -239,7 +271,7 @@ class ThemeStyleProvider {
           fontWeight: FontWeight.bold,
         ),
       ),
-      
+
       // Card theme
       cardTheme: CardThemeData(
         color: surfaceColor,
@@ -251,12 +283,24 @@ class ThemeStyleProvider {
           side: BorderSide(color: dividerColor, width: 2),
         ),
       ),
-      
+
       // Button themes
-      elevatedButtonTheme: _getHighContrastElevatedButtonTheme(fontFamily, fontSizeScale, isDarkMode),
-      textButtonTheme: _getHighContrastTextButtonTheme(fontFamily, fontSizeScale, isDarkMode),
-      outlinedButtonTheme: _getHighContrastOutlinedButtonTheme(fontFamily, fontSizeScale, isDarkMode),
-      
+      elevatedButtonTheme: _getHighContrastElevatedButtonTheme(
+        fontFamily,
+        fontSizeScale,
+        isDarkMode,
+      ),
+      textButtonTheme: _getHighContrastTextButtonTheme(
+        fontFamily,
+        fontSizeScale,
+        isDarkMode,
+      ),
+      outlinedButtonTheme: _getHighContrastOutlinedButtonTheme(
+        fontFamily,
+        fontSizeScale,
+        isDarkMode,
+      ),
+
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -276,30 +320,27 @@ class ThemeStyleProvider {
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
-            color: isDarkMode ? const Color(0xFFFF6B6B) : const Color(0xFFD32F2F), 
-            width: 2
+            color:
+                isDarkMode ? const Color(0xFFFF6B6B) : const Color(0xFFD32F2F),
+            width: 2,
           ),
         ),
         labelStyle: textTheme.bodyLarge?.copyWith(color: onSurfaceColor),
-        hintStyle: textTheme.bodyLarge?.copyWith(color: onSurfaceColor.withOpacity(0.7)),
+        hintStyle: textTheme.bodyLarge?.copyWith(
+          color: onSurfaceColor.withOpacity(0.7),
+        ),
       ),
-      
+
       // Divider theme
-      dividerTheme: DividerThemeData(
-        color: dividerColor,
-        thickness: 2,
-      ),
-      
+      dividerTheme: DividerThemeData(color: dividerColor, thickness: 2),
+
       // Icon theme
-      iconTheme: IconThemeData(
-        color: onSurfaceColor,
-        size: 24 * fontSizeScale,
-      ),
+      iconTheme: IconThemeData(color: onSurfaceColor, size: 24 * fontSizeScale),
       primaryIconTheme: IconThemeData(
         color: onSurfaceColor,
         size: 24 * fontSizeScale,
       ),
-      
+
       // Switch theme
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
@@ -316,7 +357,7 @@ class ThemeStyleProvider {
         }),
         overlayColor: WidgetStateProperty.all(Colors.transparent),
       ),
-      
+
       // Checkbox theme
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
@@ -325,10 +366,12 @@ class ThemeStyleProvider {
           }
           return Colors.transparent;
         }),
-        checkColor: WidgetStateProperty.all(isDarkMode ? Colors.black : Colors.white),
+        checkColor: WidgetStateProperty.all(
+          isDarkMode ? Colors.black : Colors.white,
+        ),
         side: BorderSide(color: dividerColor, width: 2),
       ),
-      
+
       // Dialog theme
       dialogTheme: DialogThemeData(
         backgroundColor: backgroundColor,
@@ -343,7 +386,7 @@ class ThemeStyleProvider {
         ),
         contentTextStyle: textTheme.bodyLarge?.copyWith(color: onSurfaceColor),
       ),
-      
+
       // Bottom sheet theme
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: backgroundColor,
@@ -355,15 +398,23 @@ class ThemeStyleProvider {
       ),
     );
   }
-  
+
   // Helper to create Google Fonts text theme
-  TextTheme _getGoogleFontsTextTheme(String fontFamily, double fontSizeScale, bool highContrastMode, bool isDarkMode) {
-    final textColor = highContrastMode ? (isDarkMode ? Colors.white : Colors.black) : (isDarkMode ? Colors.white : Colors.black87);
-    
+  TextTheme _getGoogleFontsTextTheme(
+    String fontFamily,
+    double fontSizeScale,
+    bool highContrastMode,
+    bool isDarkMode,
+  ) {
+    final textColor =
+        highContrastMode
+            ? (isDarkMode ? Colors.white : Colors.black)
+            : (isDarkMode ? Colors.white : Colors.black87);
+
     try {
       // Get a base text theme to ensure all text styles have proper fontSize values
       final baseTheme = ThemeData.light().textTheme;
-      
+
       TextTheme googleFontTheme;
       switch (fontFamily.toLowerCase()) {
         case 'roboto':
@@ -384,7 +435,7 @@ class ThemeStyleProvider {
           googleFontTheme = GoogleFonts.interTextTheme(baseTheme);
           break;
       }
-      
+
       // Apply scaling and colors safely
       if (fontSizeScale == 1.0) {
         // If no scaling needed, just apply colors
@@ -394,32 +445,65 @@ class ThemeStyleProvider {
         );
       } else {
         // If scaling needed, manually scale each text style to avoid assertion errors
-        return _applyFontSizeScalingManually(googleFontTheme, fontSizeScale, textColor);
+        return _applyFontSizeScalingManually(
+          googleFontTheme,
+          fontSizeScale,
+          textColor,
+        );
       }
     } catch (e) {
       debugPrint('Error creating Google Fonts text theme for $fontFamily: $e');
       // Fallback to default text theme with manual scaling
       final baseTheme = ThemeData.light().textTheme;
       if (fontSizeScale == 1.0) {
-        return baseTheme.apply(
-          bodyColor: textColor,
-          displayColor: textColor,
-        );
+        return baseTheme.apply(bodyColor: textColor, displayColor: textColor);
       } else {
-        return _applyFontSizeScalingManually(baseTheme, fontSizeScale, textColor);
+        return _applyFontSizeScalingManually(
+          baseTheme,
+          fontSizeScale,
+          textColor,
+        );
       }
     }
   }
-  
+
   // Helper method to manually apply font size scaling to avoid assertion errors
-  TextTheme _applyFontSizeScalingManually(TextTheme theme, double fontSizeScale, Color textColor) {
+  TextTheme _applyFontSizeScalingManually(
+    TextTheme theme,
+    double fontSizeScale,
+    Color textColor,
+  ) {
     return TextTheme(
-      displayLarge: _scaleTextStyle(theme.displayLarge, fontSizeScale, textColor),
-      displayMedium: _scaleTextStyle(theme.displayMedium, fontSizeScale, textColor),
-      displaySmall: _scaleTextStyle(theme.displaySmall, fontSizeScale, textColor),
-      headlineLarge: _scaleTextStyle(theme.headlineLarge, fontSizeScale, textColor),
-      headlineMedium: _scaleTextStyle(theme.headlineMedium, fontSizeScale, textColor),
-      headlineSmall: _scaleTextStyle(theme.headlineSmall, fontSizeScale, textColor),
+      displayLarge: _scaleTextStyle(
+        theme.displayLarge,
+        fontSizeScale,
+        textColor,
+      ),
+      displayMedium: _scaleTextStyle(
+        theme.displayMedium,
+        fontSizeScale,
+        textColor,
+      ),
+      displaySmall: _scaleTextStyle(
+        theme.displaySmall,
+        fontSizeScale,
+        textColor,
+      ),
+      headlineLarge: _scaleTextStyle(
+        theme.headlineLarge,
+        fontSizeScale,
+        textColor,
+      ),
+      headlineMedium: _scaleTextStyle(
+        theme.headlineMedium,
+        fontSizeScale,
+        textColor,
+      ),
+      headlineSmall: _scaleTextStyle(
+        theme.headlineSmall,
+        fontSizeScale,
+        textColor,
+      ),
       titleLarge: _scaleTextStyle(theme.titleLarge, fontSizeScale, textColor),
       titleMedium: _scaleTextStyle(theme.titleMedium, fontSizeScale, textColor),
       titleSmall: _scaleTextStyle(theme.titleSmall, fontSizeScale, textColor),
@@ -431,22 +515,26 @@ class ThemeStyleProvider {
       labelSmall: _scaleTextStyle(theme.labelSmall, fontSizeScale, textColor),
     );
   }
-  
+
   // Helper method to scale individual TextStyle
   TextStyle? _scaleTextStyle(TextStyle? style, double scale, Color textColor) {
     if (style == null) return null;
-    
+
     return style.copyWith(
       fontSize: (style.fontSize ?? 14.0) * scale,
       color: textColor,
     );
   }
-  
+
   // High contrast elevated button theme
-  ElevatedButtonThemeData _getHighContrastElevatedButtonTheme(String fontFamily, double fontSizeScale, bool isDarkMode) {
+  ElevatedButtonThemeData _getHighContrastElevatedButtonTheme(
+    String fontFamily,
+    double fontSizeScale,
+    bool isDarkMode,
+  ) {
     final primaryColor = isDarkMode ? Colors.white : Colors.black;
     final onPrimaryColor = isDarkMode ? Colors.black : Colors.white;
-    
+
     return ElevatedButtonThemeData(
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.resolveWith((states) {
@@ -464,7 +552,9 @@ class ThemeStyleProvider {
         elevation: WidgetStateProperty.all(0),
         shadowColor: WidgetStateProperty.all(Colors.transparent),
         surfaceTintColor: WidgetStateProperty.all(Colors.transparent),
-        side: WidgetStateProperty.all(BorderSide(color: primaryColor, width: 2)),
+        side: WidgetStateProperty.all(
+          BorderSide(color: primaryColor, width: 2),
+        ),
         textStyle: WidgetStateProperty.all(
           _getGoogleFontTextStyle(
             fontFamily: fontFamily,
@@ -473,19 +563,26 @@ class ThemeStyleProvider {
           ),
         ),
         padding: WidgetStateProperty.all(
-          EdgeInsets.symmetric(horizontal: 24 * fontSizeScale, vertical: 12 * fontSizeScale)
+          EdgeInsets.symmetric(
+            horizontal: 24 * fontSizeScale,
+            vertical: 12 * fontSizeScale,
+          ),
         ),
         shape: WidgetStateProperty.all(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );
   }
-  
+
   // High contrast text button theme
-  TextButtonThemeData _getHighContrastTextButtonTheme(String fontFamily, double fontSizeScale, bool isDarkMode) {
+  TextButtonThemeData _getHighContrastTextButtonTheme(
+    String fontFamily,
+    double fontSizeScale,
+    bool isDarkMode,
+  ) {
     final primaryColor = isDarkMode ? Colors.white : Colors.black;
-    
+
     return TextButtonThemeData(
       style: ButtonStyle(
         foregroundColor: WidgetStateProperty.resolveWith((states) {
@@ -496,7 +593,8 @@ class ThemeStyleProvider {
         }),
         overlayColor: WidgetStateProperty.all(primaryColor.withOpacity(0.1)),
         side: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.hovered) || states.contains(WidgetState.focused)) {
+          if (states.contains(WidgetState.hovered) ||
+              states.contains(WidgetState.focused)) {
             return BorderSide(color: primaryColor, width: 2);
           }
           return BorderSide.none;
@@ -509,19 +607,26 @@ class ThemeStyleProvider {
           ),
         ),
         padding: WidgetStateProperty.all(
-          EdgeInsets.symmetric(horizontal: 16 * fontSizeScale, vertical: 8 * fontSizeScale)
+          EdgeInsets.symmetric(
+            horizontal: 16 * fontSizeScale,
+            vertical: 8 * fontSizeScale,
+          ),
         ),
         shape: WidgetStateProperty.all(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );
   }
-  
+
   // High contrast outlined button theme
-  OutlinedButtonThemeData _getHighContrastOutlinedButtonTheme(String fontFamily, double fontSizeScale, bool isDarkMode) {
+  OutlinedButtonThemeData _getHighContrastOutlinedButtonTheme(
+    String fontFamily,
+    double fontSizeScale,
+    bool isDarkMode,
+  ) {
     final primaryColor = isDarkMode ? Colors.white : Colors.black;
-    
+
     return OutlinedButtonThemeData(
       style: ButtonStyle(
         foregroundColor: WidgetStateProperty.resolveWith((states) {
@@ -538,7 +643,9 @@ class ThemeStyleProvider {
         }),
         elevation: WidgetStateProperty.all(0),
         shadowColor: WidgetStateProperty.all(Colors.transparent),
-        side: WidgetStateProperty.all(BorderSide(color: primaryColor, width: 2)),
+        side: WidgetStateProperty.all(
+          BorderSide(color: primaryColor, width: 2),
+        ),
         textStyle: WidgetStateProperty.all(
           _getGoogleFontTextStyle(
             fontFamily: fontFamily,
@@ -547,17 +654,25 @@ class ThemeStyleProvider {
           ),
         ),
         padding: WidgetStateProperty.all(
-          EdgeInsets.symmetric(horizontal: 24 * fontSizeScale, vertical: 12 * fontSizeScale)
+          EdgeInsets.symmetric(
+            horizontal: 24 * fontSizeScale,
+            vertical: 12 * fontSizeScale,
+          ),
         ),
         shape: WidgetStateProperty.all(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );
   }
-  
+
   // Helper to adjust button theme
-  ElevatedButtonThemeData _getAdjustedButtonTheme(ThemeData baseTheme, String fontFamily, double fontSizeScale, bool highContrastMode) {
+  ElevatedButtonThemeData _getAdjustedButtonTheme(
+    ThemeData baseTheme,
+    String fontFamily,
+    double fontSizeScale,
+    bool highContrastMode,
+  ) {
     return ElevatedButtonThemeData(
       style: ButtonStyle(
         textStyle: WidgetStateProperty.all(
@@ -570,9 +685,14 @@ class ThemeStyleProvider {
       ),
     );
   }
-  
+
   // Helper to adjust text button theme
-  TextButtonThemeData _getAdjustedTextButtonTheme(ThemeData baseTheme, String fontFamily, double fontSizeScale, bool highContrastMode) {
+  TextButtonThemeData _getAdjustedTextButtonTheme(
+    ThemeData baseTheme,
+    String fontFamily,
+    double fontSizeScale,
+    bool highContrastMode,
+  ) {
     return TextButtonThemeData(
       style: ButtonStyle(
         textStyle: WidgetStateProperty.all(
@@ -585,18 +705,18 @@ class ThemeStyleProvider {
       ),
     );
   }
-  
+
   // Get animation duration based on reduce motion setting
   Duration getAnimationDuration(Duration normalDuration) {
-    return accessibilityProvider.reduceMotion 
-      ? const Duration(milliseconds: 100) 
-      : normalDuration;
+    return accessibilityProvider.reduceMotion
+        ? const Duration(milliseconds: 100)
+        : normalDuration;
   }
-  
+
   // Get animation curve based on reduce motion setting
   Curve getAnimationCurve() {
-    return accessibilityProvider.reduceMotion 
-      ? Curves.linear
-      : ThemeProvider.animationCurveDefault;
+    return accessibilityProvider.reduceMotion
+        ? Curves.linear
+        : ThemeProvider.animationCurveDefault;
   }
-} 
+}

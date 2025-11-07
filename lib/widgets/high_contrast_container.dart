@@ -53,16 +53,18 @@ class HighContrastContainer extends StatelessWidget {
 
     if (highContrastMode) {
       // High contrast mode: Use strong, clear colors
-      effectiveBackgroundColor = backgroundColor ?? 
+      effectiveBackgroundColor =
+          backgroundColor ??
           AccessibilityUtils.getAccessibleSurfaceColor(context);
-      effectiveBorderColor = borderColor ?? 
-          AccessibilityUtils.getAccessibleBorderColor(context);
+      effectiveBorderColor =
+          borderColor ?? AccessibilityUtils.getAccessibleBorderColor(context);
       effectiveBorderWidth = borderWidth ?? 2.0;
       effectiveBoxShadow = null; // No shadows in high contrast mode
       effectiveGradient = null; // No gradients in high contrast mode
     } else {
       // Normal mode: Use provided styling or defaults
-      effectiveBackgroundColor = backgroundColor ?? 
+      effectiveBackgroundColor =
+          backgroundColor ??
           (isDarkMode ? const Color(0xFF1E293B) : Colors.white);
       effectiveBorderColor = borderColor ?? Colors.transparent;
       effectiveBorderWidth = borderWidth ?? 0.0;
@@ -74,9 +76,13 @@ class HighContrastContainer extends StatelessWidget {
       color: effectiveGradient == null ? effectiveBackgroundColor : null,
       gradient: effectiveGradient,
       borderRadius: borderRadius ?? BorderRadius.circular(8),
-      border: effectiveBorderWidth > 0 
-          ? Border.all(color: effectiveBorderColor, width: effectiveBorderWidth)
-          : null,
+      border:
+          effectiveBorderWidth > 0
+              ? Border.all(
+                color: effectiveBorderColor,
+                width: effectiveBorderWidth,
+              )
+              : null,
       boxShadow: effectiveBoxShadow,
     );
 
@@ -90,10 +96,7 @@ class HighContrastContainer extends StatelessWidget {
     );
 
     if (onTap != null) {
-      return GestureDetector(
-        onTap: onTap,
-        child: containerWidget,
-      );
+      return GestureDetector(onTap: onTap, child: containerWidget);
     }
 
     return containerWidget;
@@ -147,18 +150,19 @@ class HighContrastButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
-    final fontSizeScale = accessibilityProvider.getFontSizeValue();
+    final fontSizeScale = MediaQuery.textScalerOf(context).scale(1.0);
     final effectiveFontSize = (fontSize ?? 16.0) * fontSizeScale;
 
     if (isPrimary) {
       return ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          padding: padding ?? EdgeInsets.symmetric(
-            horizontal: 24 * fontSizeScale, 
-            vertical: 12 * fontSizeScale
-          ),
+          padding:
+              padding ??
+              EdgeInsets.symmetric(
+                horizontal: 24 * fontSizeScale,
+                vertical: 12 * fontSizeScale,
+              ),
           textStyle: TextStyle(
             fontSize: effectiveFontSize,
             fontWeight: FontWeight.bold,
@@ -170,10 +174,12 @@ class HighContrastButton extends StatelessWidget {
       return OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          padding: padding ?? EdgeInsets.symmetric(
-            horizontal: 24 * fontSizeScale, 
-            vertical: 12 * fontSizeScale
-          ),
+          padding:
+              padding ??
+              EdgeInsets.symmetric(
+                horizontal: 24 * fontSizeScale,
+                vertical: 12 * fontSizeScale,
+              ),
           textStyle: TextStyle(
             fontSize: effectiveFontSize,
             fontWeight: FontWeight.w600,
@@ -213,9 +219,10 @@ class HighContrastText extends StatelessWidget {
 
     final Color textColor = AccessibilityUtils.getAccessibleColor(
       context,
-      style?.color ?? (Theme.of(context).brightness == Brightness.dark 
-          ? Colors.white 
-          : Colors.black),
+      style?.color ??
+          (Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Colors.black),
       isPrimary: isPrimary,
     );
 
@@ -228,12 +235,3 @@ class HighContrastText extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-
-
-
-
