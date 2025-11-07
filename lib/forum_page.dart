@@ -33,7 +33,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     super.initState();
     _forumService = ForumService();
     _searchController.addListener(_onSearchChanged);
-    
+
     // Use a post-frame callback to check auth status after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -66,31 +66,33 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
 
   void _checkAuthStatus() {
     final authService = Provider.of<AuthService>(context, listen: false);
-    
+
     // Always load posts regardless of login status
     setState(() {
       _isCheckingAuth = false;
     });
     _loadPosts();
-    
+
     // If not logged in, show auth page after loading posts
     if (!authService.isLoggedIn) {
       debugPrint('User not logged in, but still loading posts');
       // Optionally navigate to auth page if you want to require login
       // _navigateToAuthPage();
-    } 
+    }
   }
 
   void _navigateToAuthPage() {
     // Ensure we're not in a build phase
     Future.microtask(() {
       if (!mounted) return;
-      
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => const AuthPage())
-      ).then((_) {
+
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (context) => const AuthPage())).then((
+        _,
+      ) {
         if (!mounted) return;
-        
+
         // When returning from auth page, check if now logged in
         final authService = Provider.of<AuthService>(context, listen: false);
         if (authService.isLoggedIn) {
@@ -108,7 +110,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
 
   Future<void> _loadPosts() async {
     if (!mounted) return;
-    
+
     debugPrint('🔄 _loadPosts() called - setting loading state to true');
     setState(() {
       _isLoading = true;
@@ -117,36 +119,39 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     try {
       debugPrint('📱 Loading posts in ForumPage');
       debugPrint('🔧 Forum service instance: $_forumService');
-      
+
       // Simulate network delay
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       if (!mounted) return;
-      
+
       debugPrint('📡 Calling _forumService.getPosts()...');
       final posts = await _forumService.getPosts();
-      
+
       debugPrint('✅ Loaded ${posts.length} posts in ForumPage');
-      
+
       if (!mounted) return;
-      
+
       debugPrint('🔄 Setting posts in state and loading to false');
       setState(() {
         _posts = posts;
         _isLoading = false;
       });
-      
+
       debugPrint('📊 Final posts count in UI: ${_posts.length}');
-      
+
       // If posts are still empty after trying to load them
       if (_posts.isEmpty) {
-        debugPrint('⚠️ Posts list is still empty after loading - creating fallback post');
-        
+        debugPrint(
+          '⚠️ Posts list is still empty after loading - creating fallback post',
+        );
+
         // Create some fallback posts directly
         final hardcodedPost = Post(
           id: 'fallback-post-1',
           title: 'Welcome to the Community Forum',
-          content: 'This is a fallback post created directly in the UI when no posts could be loaded.',
+          content:
+              'This is a fallback post created directly in the UI when no posts could be loaded.',
           authorId: 'system',
           authorName: 'System',
           createdAt: DateTime.now(),
@@ -154,7 +159,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
           replies: [],
           isAnonymous: true,
         );
-        
+
         setState(() {
           _posts = [hardcodedPost];
         });
@@ -169,12 +174,13 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
             backgroundColor: Colors.orange,
           ),
         );
-        
+
         // Create a fallback post on error
         final errorPost = Post(
           id: 'error-post-1',
           title: 'Welcome to the Forum',
-          content: 'Unable to load posts at the moment. Please try again later.',
+          content:
+              'Unable to load posts at the moment. Please try again later.',
           authorId: 'system',
           authorName: 'System',
           createdAt: DateTime.now(),
@@ -182,7 +188,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
           replies: [],
           isAnonymous: true,
         );
-        
+
         setState(() {
           _posts = [errorPost];
           _isLoading = false;
@@ -218,9 +224,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
   void _showPostCreationDialog() {
     showDialog(
       context: context,
-      builder: (context) => PostCreationDialog(
-        onCreatePost: _handleCreatePost,
-      ),
+      builder: (context) => PostCreationDialog(onCreatePost: _handleCreatePost),
     );
   }
 
@@ -228,11 +232,11 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     try {
       final result = await _forumService.likePost(post.id);
       final updatedPosts = await _forumService.getPosts();
-      
+
       setState(() {
         _posts = updatedPosts;
       });
-      
+
       // Show appropriate feedback based on the result
       if (result == LikeResult.alreadyLiked) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -258,17 +262,14 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     Navigator.push(
       context,
       AnimationUtils.customPageRoute(
-        page: PostDetailPage(
-          post: post, 
-          focusReply: focusReply,
-        ),
+        page: PostDetailPage(post: post, focusReply: focusReply),
       ),
     ).then((_) async {
       // Refresh posts when returning from details page
       if (!mounted) return;
-      
+
       final updatedPosts = await _forumService.getPosts();
-      
+
       setState(() {
         _posts = updatedPosts;
       });
@@ -279,24 +280,25 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     final authService = Provider.of<AuthService>(context, listen: false);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Logout'),
+            content: const Text('Are you sure you want to logout?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  authService.logout();
+                  Navigator.pop(context); // Close dialog
+                  _navigateToAuthPage();
+                },
+                child: const Text('Logout'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              authService.logout();
-              Navigator.pop(context); // Close dialog
-              _navigateToAuthPage();
-            },
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -306,30 +308,32 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
 
     // If checking auth, show loading
     if (_isCheckingAuth) {
       return Scaffold(
-        backgroundColor: (highContrastMode && isDarkMode) 
-            ? Colors.black 
-            : (isDarkMode ? const Color(0xFF111827) : Colors.white),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        backgroundColor:
+            (highContrastMode && isDarkMode)
+                ? Colors.black
+                : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
-    
+
     return Scaffold(
-      backgroundColor: (highContrastMode && isDarkMode) 
-          ? Colors.black 
-          : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+      backgroundColor:
+          (highContrastMode && isDarkMode)
+              ? Colors.black
+              : (isDarkMode ? const Color(0xFF111827) : Colors.white),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
         child: AppBar(
-          backgroundColor: (highContrastMode && isDarkMode) 
-              ? Colors.black 
-              : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+          backgroundColor:
+              (highContrastMode && isDarkMode)
+                  ? Colors.black
+                  : (isDarkMode ? const Color(0xFF111827) : Colors.white),
           elevation: 0,
           automaticallyImplyLeading: false,
           titleSpacing: 0,
@@ -369,7 +373,9 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
                         fontSize: 12,
                         color: isDarkMode ? Colors.white70 : Colors.black54,
                       ),
-                    ).withEntranceAnimation(delay: const Duration(milliseconds: 100)),
+                    ).withEntranceAnimation(
+                      delay: const Duration(milliseconds: 100),
+                    ),
                   ],
                 ),
               ],
@@ -389,37 +395,48 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
             ),
           ),
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : RefreshIndicator(
-                    onRefresh: _loadPosts,
-                    color: accentColor,
-                    backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-                    displacement: 40,
-                    child: _posts.isEmpty
-                        ? _buildEmptyState()
-                        : StaggeredAnimationList(
-                            itemCount: _posts.length + 1, // +1 for info card at bottom
-                            padding: const EdgeInsets.all(12),
-                            initialDelay: const Duration(milliseconds: 400),
-                            itemBuilder: (context, index) {
-                              if (index == _posts.length) {
-                                return _buildInfoCard();
-                              }
-                              final post = _posts[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12.0),
-                                child: PostCard(
-                                  post: post,
-                                  index: index,
-                                  onTap: () => _navigateToPostDetail(post),
-                                  onLike: () => _handleLikePost(post),
-                                  onReply: () => _navigateToPostDetail(post, focusReply: true),
-                                ),
-                              );
-                            },
-                          ),
-                  ),
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : RefreshIndicator(
+                      onRefresh: _loadPosts,
+                      color: accentColor,
+                      backgroundColor:
+                          isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                      displacement: 40,
+                      child:
+                          _posts.isEmpty
+                              ? _buildEmptyState()
+                              : StaggeredAnimationList(
+                                itemCount:
+                                    _posts.length +
+                                    1, // +1 for info card at bottom
+                                padding: const EdgeInsets.all(12),
+                                initialDelay: const Duration(milliseconds: 400),
+                                itemBuilder: (context, index) {
+                                  if (index == _posts.length) {
+                                    return _buildInfoCard();
+                                  }
+                                  final post = _posts[index];
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: 12.0,
+                                    ),
+                                    child: PostCard(
+                                      post: post,
+                                      index: index,
+                                      onTap: () => _navigateToPostDetail(post),
+                                      onLike: () => _handleLikePost(post),
+                                      onReply:
+                                          () => _navigateToPostDetail(
+                                            post,
+                                            focusReply: true,
+                                          ),
+                                    ),
+                                  );
+                                },
+                              ),
+                    ),
           ),
         ],
       ),
@@ -431,22 +448,20 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final authService = Provider.of<AuthService>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
     // Get first letter of username for avatar
     final String firstLetter = (authService.username ?? 'A')[0].toUpperCase();
     final bool isGuest = authService.username == 'Guest';
-    
+
     return AnimatedContainer(
       duration: ThemeProvider.animationDurationMedium,
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            accentColor,
-            accentColor.withOpacity(0.7),
-          ],
+          colors: [accentColor, accentColor.withOpacity(0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -500,9 +515,9 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  isGuest 
-                    ? 'You are browsing as a guest'
-                    : 'Logged in as ${authService.userId}',
+                  isGuest
+                      ? 'You are browsing as a guest'
+                      : 'Logged in as ${authService.userId}',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
                     fontSize: 12,
@@ -519,16 +534,9 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
             ),
             child: IconButton(
               onPressed: _handleLogout,
-              icon: const Icon(
-                Icons.logout,
-                color: Colors.white,
-                size: 18,
-              ),
+              icon: const Icon(Icons.logout, color: Colors.white, size: 18),
               tooltip: 'Logout',
-              constraints: const BoxConstraints(
-                minWidth: 36,
-                minHeight: 36,
-              ),
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               padding: EdgeInsets.zero,
             ),
           ),
@@ -536,11 +544,11 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
       ),
     );
   }
-  
+
   Widget _buildEmptyState() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -571,23 +579,19 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
           ElevatedButton.icon(
             onPressed: _showPostCreationDialog,
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935),
+              backgroundColor:
+                  isDarkMode
+                      ? const Color(0xFF8A4FFF)
+                      : const Color(0xFFE53935),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            icon: const Icon(
-              Icons.add, 
-              color: Colors.white,
-              size: 18,
-            ),
+            icon: const Icon(Icons.add, color: Colors.white, size: 18),
             label: LocalizedText(
-              'createPost',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-              ),
+              'joinTheConvo',
+              style: const TextStyle(color: Colors.white, fontSize: 14),
             ),
           ),
         ],
@@ -598,7 +602,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
   Widget _buildSearchBar() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     return AnimatedContainer(
       duration: ThemeProvider.animationDurationMedium,
       height: 44,
@@ -626,26 +630,27 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
             fontSize: 14,
           ),
           prefixIcon: Icon(
-            Icons.search, 
+            Icons.search,
             color: isDarkMode ? Colors.white54 : Colors.black54,
             size: 18,
           ),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: Icon(
-                    Icons.clear, 
-                    color: isDarkMode ? Colors.white54 : Colors.black54,
-                    size: 16,
-                  ),
-                  onPressed: () {
-                    _searchController.clear();
-                  },
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
-                )
-              : null,
+          suffixIcon:
+              _searchQuery.isNotEmpty
+                  ? IconButton(
+                    icon: Icon(
+                      Icons.clear,
+                      color: isDarkMode ? Colors.white54 : Colors.black54,
+                      size: 16,
+                    ),
+                    onPressed: () {
+                      _searchController.clear();
+                    },
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                  )
+                  : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           isDense: true,
@@ -657,8 +662,9 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
   Widget _buildInfoCard() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
     return Container(
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -669,18 +675,17 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.favorite,
-            color: accentColor,
-            size: 16,
-          ),
+          Icon(Icons.favorite, color: accentColor, size: 16),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
               'This is a safe, moderated space. All posts are anonymous and supportive.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: isDarkMode ? Colors.white.withOpacity(0.8) : Colors.black87.withOpacity(0.8),
+                color:
+                    isDarkMode
+                        ? Colors.white.withOpacity(0.8)
+                        : Colors.black87.withOpacity(0.8),
                 fontSize: 12,
               ),
             ),
@@ -693,8 +698,9 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
   Widget _buildCreatePostButton() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
     return AnimatedScale(
       scale: 1.0,
       duration: ThemeProvider.animationDurationShort,
@@ -707,25 +713,17 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
           onPressed: _showPostCreationDialog,
           backgroundColor: accentColor,
           elevation: 3,
-          label: const Text(
-            'Create Post',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+          label: LocalizedText(
+            'joinTheConvo',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
-          icon: const Icon(
-            Icons.add,
-            size: 18,
-          ),
+          icon: const Icon(Icons.add, size: 18),
           extendedPadding: const EdgeInsets.symmetric(horizontal: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
         ),
       ),
-    ).withEntranceAnimation(
-      delay: const Duration(milliseconds: 600),
-    );
+    ).withEntranceAnimation(delay: const Duration(milliseconds: 600));
   }
-} 
+}
