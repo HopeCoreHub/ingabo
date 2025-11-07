@@ -23,7 +23,7 @@ void main() async {
   // Load the original image
   final File inputFile = File(inputPath);
   if (!await inputFile.exists()) {
-    print('Error: Input file not found: $inputPath');
+    debugPrint('Error: Input file not found: $inputPath');
     return;
   }
 
@@ -31,7 +31,7 @@ void main() async {
   final img.Image? originalImage = img.decodePng(inputBytes);
 
   if (originalImage == null) {
-    print('Error: Could not decode the input image');
+    debugPrint('Error: Could not decode the input image');
     return;
   }
 
@@ -77,5 +77,7 @@ void main() async {
   final File outputFile = File(outputPath);
   await outputFile.writeAsBytes(img.encodePng(squareImage));
 
-  print('Successfully created square logo (1:1 aspect ratio) at $outputPath');
+  debugPrint(
+    'Successfully created square logo (1:1 aspect ratio) at $outputPath',
+  );
 }

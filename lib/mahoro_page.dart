@@ -224,7 +224,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
       );
       await AuthService.storeApiKey(apiKey);
     } else {
-      print(
+      debugPrint(
         "Using existing API key: ${storedKey.substring(0, 10)}... (length: ${storedKey.length})",
       );
     }
@@ -306,7 +306,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
       }
 
       try {
-        print("Making API request to Gemini...");
+        debugPrint("Making API request to Gemini...");
 
         // Reinitialize Gemini service with the current API key
         _geminiService = GeminiService(apiKey: apiKey);
@@ -317,10 +317,10 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
           systemInstructions: systemPrompt,
         );
 
-        print("Received response from Gemini");
+        debugPrint("Received response from Gemini");
         return response;
       } catch (e) {
-        print('Gemini API Error: $e');
+        debugPrint('Gemini API Error: $e');
         if (e.toString().contains('authentication')) {
           setState(() {
             _isApiKeyValid = false;
