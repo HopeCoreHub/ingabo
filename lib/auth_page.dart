@@ -150,7 +150,9 @@ class _AuthPageState extends State<AuthPage>
   bool _isSubmitting = false;
   String? _errorMessage;
   bool _emailLinkSent = false;
-  final Color accentColor = const Color(0xFF8A4FFF); // Added accent color definition
+  final Color accentColor = const Color(
+    0xFF8A4FFF,
+  ); // Added accent color definition
 
   @override
   void initState() {
@@ -170,7 +172,7 @@ class _AuthPageState extends State<AuthPage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
     _animationController.forward();
-    
+
     // Initialize local users storage
     AuthPage.loadUsers();
   }
@@ -217,7 +219,7 @@ class _AuthPageState extends State<AuthPage>
         if (_isPasswordless) {
           // Handle passwordless email link sign-in
           final email = _emailController.text.trim();
-          
+
           // Store user in local storage if they don't exist
           if (AuthPage.findUserByEmail(email) == null) {
             await AuthPage.addUser(
@@ -227,9 +229,9 @@ class _AuthPageState extends State<AuthPage>
               isEmailLink: true,
             );
           }
-          
+
           final result = await authService.sendSignInLinkToEmail(email);
-          
+
           switch (result) {
             case EmailLinkResult.sent:
               setState(() {
@@ -243,7 +245,8 @@ class _AuthPageState extends State<AuthPage>
               break;
             case EmailLinkResult.error:
               setState(() {
-                _errorMessage = "Failed to send sign-in link. Please try again.";
+                _errorMessage =
+                    "Failed to send sign-in link. Please try again.";
               });
               break;
           }
@@ -251,22 +254,26 @@ class _AuthPageState extends State<AuthPage>
           // First check local storage
           final user = AuthPage.findUserByEmail(_emailController.text.trim());
           bool localSuccess = false;
-          
-          if (user != null && user.password == _passwordController.text.trim()) {
+
+          if (user != null &&
+              user.password == _passwordController.text.trim()) {
             localSuccess = true;
             // Update login state locally and in AuthService
             if (mounted) {
               // Make sure auth service is updated
-              final authService = Provider.of<AuthService>(context, listen: false);
+              final authService = Provider.of<AuthService>(
+                context,
+                listen: false,
+              );
               // Force authentication state update
               authService.updateAuthState(true, user.id, user.name);
-              
+
               _showSuccessMessage('Login successful!');
               // Navigate to home page with bottom navigation
               _navigateToHome();
             }
           }
-          
+
           // If local login fails or no local user, try Firebase
           if (!localSuccess) {
             final success = await authService.login(
@@ -281,10 +288,10 @@ class _AuthPageState extends State<AuthPage>
             } else if (mounted) {
               // Force a reload to ensure we get the latest auth state
               await authService.checkEmailVerified();
-              
+
               // Wait a bit for state to update
               await Future.delayed(Duration(milliseconds: 100));
-              
+
               _showSuccessMessage('Login successful!');
               // Navigate to home page with bottom navigation
               _navigateToHome();
@@ -299,7 +306,7 @@ class _AuthPageState extends State<AuthPage>
               email: _emailController.text.trim(),
               password: _passwordController.text.trim(),
             );
-            
+
             // Also register with Firebase
             final result = await authService.register(
               _nameController.text.trim(),
@@ -322,7 +329,8 @@ class _AuthPageState extends State<AuthPage>
                 break;
               case RegistrationResult.emailAlreadyExists:
                 setState(() {
-                  _errorMessage = "This email is already registered. Please login instead.";
+                  _errorMessage =
+                      "This email is already registered. Please login instead.";
                   // Optionally switch to login mode
                   _isLogin = true;
                   _animationController.reset();
@@ -344,14 +352,15 @@ class _AuthPageState extends State<AuthPage>
       } catch (e) {
         if (mounted) {
           String errorMessage = "An error occurred. Please try again.";
-          
+
           if (e.toString().contains('email-already-in-use')) {
             errorMessage = "This email is already registered.";
           } else if (e.toString().contains('invalid-email')) {
             errorMessage = "The email address is not valid.";
           } else if (e.toString().contains('user-disabled')) {
             errorMessage = "This account has been disabled.";
-          } else if (e.toString().contains('user-not-found') || e.toString().contains('wrong-password')) {
+          } else if (e.toString().contains('user-not-found') ||
+              e.toString().contains('wrong-password')) {
             errorMessage = "Invalid email or password.";
           } else if (e.toString().contains('weak-password')) {
             errorMessage = "The password is too weak.";
@@ -360,7 +369,7 @@ class _AuthPageState extends State<AuthPage>
           } else if (e.toString().contains('too-many-requests')) {
             errorMessage = "Too many attempts. Please try again later.";
           }
-          
+
           setState(() {
             _errorMessage = errorMessage;
           });
@@ -381,20 +390,21 @@ class _AuthPageState extends State<AuthPage>
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (context) => const MainNavigationWrapper(
-          selectedIndex: 0,
-          child: HopeCoreHub(),
-        ),
+        builder:
+            (context) => const MainNavigationWrapper(
+              selectedIndex: 0,
+              child: HopeCoreHub(),
+            ),
       ),
       (route) => false, // Remove all previous routes
     );
   }
-  
+
   // Show dialog for email verification after registration
   void _showVerificationDialog() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -453,11 +463,16 @@ class _AuthPageState extends State<AuthPage>
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () async {
-                    final authService = Provider.of<AuthService>(context, listen: false);
+                    final authService = Provider.of<AuthService>(
+                      context,
+                      listen: false,
+                    );
+                    final messenger = ScaffoldMessenger.of(context);
                     final result = await authService.sendEmailVerification();
-                    
+
+                    if (!context.mounted) return;
                     if (result['success']) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(
                           content: Text('Verification email sent again!'),
                           backgroundColor: const Color(0xFF8A4FFF),
@@ -465,22 +480,28 @@ class _AuthPageState extends State<AuthPage>
                         ),
                       );
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(
-                          content: Text(result['error'] ?? 'Failed to send verification email'),
+                          content: Text(
+                            result['error'] ??
+                                'Failed to send verification email',
+                          ),
                           backgroundColor: Colors.red,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
-                      
+
                       // If it's a rate limiting error, show additional guidance
                       if (result['code'] == 'too-many-requests') {
                         // Wait a moment before showing the second message
                         await Future.delayed(Duration(milliseconds: 300));
-                        
-                        ScaffoldMessenger.of(context).showSnackBar(
+
+                        if (!context.mounted) return;
+                        messenger.showSnackBar(
                           SnackBar(
-                            content: Text('Please check your email for an existing verification link or try again later'),
+                            content: Text(
+                              'Please check your email for an existing verification link or try again later',
+                            ),
                             backgroundColor: Colors.orange,
                             behavior: SnackBarBehavior.floating,
                             duration: Duration(seconds: 6),
@@ -537,9 +558,7 @@ class _AuthPageState extends State<AuthPage>
         content: Text(message),
         backgroundColor: const Color(0xFF8A4FFF),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(10),
       ),
     );
@@ -578,9 +597,10 @@ class _AuthPageState extends State<AuthPage>
                           if (_emailLinkSent) _buildEmailLinkSentMessage(),
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 300),
-                            child: _isPasswordless
-                                ? _buildPasswordlessFields()
-                                : _isLogin
+                            child:
+                                _isPasswordless
+                                    ? _buildPasswordlessFields()
+                                    : _isLogin
                                     ? _buildLoginFields()
                                     : _buildRegisterFields(),
                           ),
@@ -673,9 +693,10 @@ class _AuthPageState extends State<AuthPage>
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white70
-                : Colors.black87,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.black87,
           ),
         ),
         const SizedBox(height: 8),
@@ -693,9 +714,10 @@ class _AuthPageState extends State<AuthPage>
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white70
-                : Colors.black87,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.black87,
           ),
         ),
         const SizedBox(height: 8),
@@ -706,9 +728,10 @@ class _AuthPageState extends State<AuthPage>
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white70
-                : Colors.black87,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.black87,
           ),
         ),
         const SizedBox(height: 8),
@@ -726,9 +749,10 @@ class _AuthPageState extends State<AuthPage>
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white70
-                : Colors.black87,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.black87,
           ),
         ),
         const SizedBox(height: 8),
@@ -739,9 +763,10 @@ class _AuthPageState extends State<AuthPage>
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white70
-                : Colors.black87,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.black87,
           ),
         ),
         const SizedBox(height: 8),
@@ -752,9 +777,10 @@ class _AuthPageState extends State<AuthPage>
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white70
-                : Colors.black87,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.black87,
           ),
         ),
         const SizedBox(height: 8),
@@ -771,9 +797,10 @@ class _AuthPageState extends State<AuthPage>
             ? 'Use password to sign in'
             : 'Sign in with email link (no password)',
         style: TextStyle(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF8A4FFF)
-              : const Color(0xFFE53935),
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF8A4FFF)
+                  : const Color(0xFFE53935),
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -785,34 +812,60 @@ class _AuthPageState extends State<AuthPage>
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
       autocorrect: false,
-      style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87),
+      style: TextStyle(
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+      ),
       decoration: InputDecoration(
         labelText: 'Email Address',
         labelStyle: TextStyle(
-          color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white70
+                  : Colors.black54,
         ),
         prefixIcon: Icon(
           Icons.email_outlined,
-          color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38,
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white54
+                  : Colors.black38,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black12,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white30
+                    : Colors.black12,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black12,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white30
+                    : Colors.black12,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38, width: 2),
+          borderSide: BorderSide(
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white54
+                    : Colors.black38,
+            width: 2,
+          ),
         ),
         filled: true,
-        fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+        fillColor:
+            Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1E293B)
+                : const Color(0xFFF1F5F9),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -830,22 +883,36 @@ class _AuthPageState extends State<AuthPage>
     return TextFormField(
       controller: _passwordController,
       obscureText: _obscurePassword,
-      style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87),
+      style: TextStyle(
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+      ),
       decoration: InputDecoration(
         labelText: 'Password',
         labelStyle: TextStyle(
-          color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white70
+                  : Colors.black54,
         ),
         prefixIcon: Icon(
           Icons.lock_outline,
-          color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38,
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white54
+                  : Colors.black38,
         ),
         suffixIcon: IconButton(
           icon: Icon(
             _obscurePassword
                 ? Icons.visibility_outlined
                 : Icons.visibility_off_outlined,
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white54
+                    : Colors.black38,
           ),
           onPressed: () {
             setState(() {
@@ -856,21 +923,36 @@ class _AuthPageState extends State<AuthPage>
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black12,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white30
+                    : Colors.black12,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black12,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white30
+                    : Colors.black12,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38, width: 2),
+          borderSide: BorderSide(
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white54
+                    : Colors.black38,
+            width: 2,
+          ),
         ),
         filled: true,
-        fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+        fillColor:
+            Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1E293B)
+                : const Color(0xFFF1F5F9),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -889,34 +971,60 @@ class _AuthPageState extends State<AuthPage>
       controller: _nameController,
       keyboardType: TextInputType.name,
       textCapitalization: TextCapitalization.words,
-      style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87),
+      style: TextStyle(
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+      ),
       decoration: InputDecoration(
         labelText: 'Full Name',
         labelStyle: TextStyle(
-          color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white70
+                  : Colors.black54,
         ),
         prefixIcon: Icon(
           Icons.person_outline,
-          color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38,
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white54
+                  : Colors.black38,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black12,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white30
+                    : Colors.black12,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black12,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white30
+                    : Colors.black12,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black38, width: 2),
+          borderSide: BorderSide(
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white54
+                    : Colors.black38,
+            width: 2,
+          ),
         ),
         filled: true,
-        fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+        fillColor:
+            Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1E293B)
+                : const Color(0xFFF1F5F9),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {

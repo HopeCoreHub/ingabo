@@ -206,13 +206,16 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
   }
 
   Future<void> _handleCreatePost(String title, String content) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final newPost = await _forumService.addPost(title, content);
+      if (!mounted) return;
       setState(() {
         _posts = [newPost, ..._posts];
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Error creating post: ${e.toString()}'),
           backgroundColor: Colors.red,
@@ -229,17 +232,20 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
   }
 
   Future<void> _handleLikePost(Post post) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final result = await _forumService.likePost(post.id);
       final updatedPosts = await _forumService.getPosts();
 
+      if (!mounted) return;
       setState(() {
         _posts = updatedPosts;
       });
 
       // Show appropriate feedback based on the result
       if (result == LikeResult.alreadyLiked) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        messenger.showSnackBar(
           SnackBar(
             content: const Text('You have already liked this post'),
             backgroundColor: Colors.orange,
@@ -249,7 +255,8 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Error liking post: ${e.toString()}'),
           backgroundColor: Colors.red,

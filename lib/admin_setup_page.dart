@@ -49,8 +49,11 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
       });
 
       // Run the admin setup
+      // Note: setupAdmin doesn't actually use context, but we check mounted for safety
+      if (!mounted) return;
       final result = await AdminSetup.setupAdmin(context);
       
+      if (!mounted) return;
       if (result['success'] == true) {
         setState(() {
           _isLoading = false;
