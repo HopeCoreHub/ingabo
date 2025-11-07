@@ -43,7 +43,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             const SizedBox(height: 24),
             _buildHighlightCards(isDarkMode),
             const SizedBox(height: 24),
-_buildSection(
+            _buildSection(
               'Information We Collect',
               [
                 'Name and contact information (email, phone number)',
@@ -53,47 +53,31 @@ _buildSection(
               isDarkMode,
               subtitle: 'Personal Information',
             ),
-            _buildSection(
-              'Service Usage Data',
-              [
-                'App usage patterns and feature interactions',
-                'Support request history and communication records',
-                'Emergency contact information (when provided)',
-              ],
-              isDarkMode,
-            ),
-            _buildSection(
-              'Technical Information',
-              [
-                'Device information and operating system',
-                'IP address and general location data',
-                'App performance and error logs',
-              ],
-              isDarkMode,
-            ),
-            _buildSection(
-              'How We Use Your Information',
-              [
-                'Provide personalized support and mental health resources',
-                'Respond to your inquiries and support requests',
-                'Send important safety alerts and service updates',
-                'Improve our services through anonymous analytics',
-                'Ensure platform security and prevent misuse',
-                'Comply with legal obligations and emergency situations',
-              ],
-              isDarkMode,
-            ),
-            _buildSection(
-              'Data Protection & Security',
-              [
-                'All personal data is encrypted both in transit and at rest using industry-standard encryption protocols',
-                'Our systems are regularly audited for security vulnerabilities',
-                'Only authorized personnel with legitimate need have access to personal data',
-                'All access is logged and monitored for compliance',
-                'We retain personal data only as long as necessary to provide services or as required by law',
-              ],
-              isDarkMode,
-            ),
+            _buildSection('Service Usage Data', [
+              'App usage patterns and feature interactions',
+              'Support request history and communication records',
+              'Emergency contact information (when provided)',
+            ], isDarkMode),
+            _buildSection('Technical Information', [
+              'Device information and operating system',
+              'IP address and general location data',
+              'App performance and error logs',
+            ], isDarkMode),
+            _buildSection('How We Use Your Information', [
+              'Provide personalized support and mental health resources',
+              'Respond to your inquiries and support requests',
+              'Send important safety alerts and service updates',
+              'Improve our services through anonymous analytics',
+              'Ensure platform security and prevent misuse',
+              'Comply with legal obligations and emergency situations',
+            ], isDarkMode),
+            _buildSection('Data Protection & Security', [
+              'All personal data is encrypted both in transit and at rest using industry-standard encryption protocols',
+              'Our systems are regularly audited for security vulnerabilities',
+              'Only authorized personnel with legitimate need have access to personal data',
+              'All access is logged and monitored for compliance',
+              'We retain personal data only as long as necessary to provide services or as required by law',
+            ], isDarkMode),
             _buildSection(
               'Data Sharing & Third Parties',
               [
@@ -106,18 +90,14 @@ _buildSection(
               isDarkMode,
               subtitle: 'We Do Not Sell Your Data',
             ),
-            _buildSection(
-              'Your Rights & Choices',
-              [
-                'Access: Request a copy of your personal data',
-                'Correction: Update or correct inaccurate information',
-                'Deletion: Request deletion of your account and data',
-                'Portability: Request your data in a portable format',
-                'Consent Withdrawal: Withdraw consent for non-essential processing',
-                'Communication Preferences: Opt out of non-critical communications',
-              ],
-              isDarkMode,
-            ),
+            _buildSection('Your Rights & Choices', [
+              'Access: Request a copy of your personal data',
+              'Correction: Update or correct inaccurate information',
+              'Deletion: Request deletion of your account and data',
+              'Portability: Request your data in a portable format',
+              'Consent Withdrawal: Withdraw consent for non-essential processing',
+              'Communication Preferences: Opt out of non-critical communications',
+            ], isDarkMode),
             const SizedBox(height: 32),
             _buildContactInfo(isDarkMode),
             const SizedBox(height: 24),
@@ -191,7 +171,12 @@ _buildSection(
     );
   }
 
-  Widget _buildSection(String title, List<String> content, bool isDarkMode, {String? subtitle}) {
+  Widget _buildSection(
+    String title,
+    List<String> content,
+    bool isDarkMode, {
+    String? subtitle,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -216,43 +201,61 @@ _buildSection(
           ),
         ],
         const SizedBox(height: 12),
-        ...content.map((item) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 8, right: 12),
-                width: 4,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF7C3AED),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  item,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
-                    height: 1.5,
+        ...content.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 8, right: 12),
+                  width: 4,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF7C3AED),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: Text(
+                    item,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        )),
+        ),
       ],
     );
   }
 
   Widget _buildHighlightCards(bool isDarkMode) {
     final highlights = [
-      {'title': 'Data Protection', 'subtitle': 'Your data is encrypted and secure', 'icon': Icons.security},
-      {'title': 'Confidentiality', 'subtitle': 'Strict confidentiality protocols', 'icon': Icons.lock},
-      {'title': 'Transparency', 'subtitle': 'Clear about what we collect', 'icon': Icons.visibility},
-      {'title': 'Your Control', 'subtitle': 'You control your data', 'icon': Icons.settings},
+      {
+        'title': 'Data Protection',
+        'subtitle': 'Your data is encrypted and secure',
+        'icon': Icons.security,
+      },
+      {
+        'title': 'Confidentiality',
+        'subtitle': 'Strict confidentiality protocols',
+        'icon': Icons.lock,
+      },
+      {
+        'title': 'Transparency',
+        'subtitle': 'Clear about what we collect',
+        'icon': Icons.visibility,
+      },
+      {
+        'title': 'Your Control',
+        'subtitle': 'You control your data',
+        'icon': Icons.settings,
+      },
     ];
 
     return GridView.builder(
@@ -270,10 +273,12 @@ _buildSection(
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+            color:
+                isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05),
+              color:
+                  isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05),
             ),
           ),
           child: Column(

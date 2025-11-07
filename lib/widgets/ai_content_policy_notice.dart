@@ -42,14 +42,19 @@ class AiContentPolicyNotice extends StatelessWidget {
     final highContrastMode = accessibilityProvider.highContrastMode;
 
     return AlertDialog(
-      backgroundColor: highContrastMode 
-          ? (isDarkMode ? Colors.black : Colors.white)
-          : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
+      backgroundColor:
+          highContrastMode
+              ? (isDarkMode ? Colors.black : Colors.white)
+              : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: highContrastMode 
-            ? BorderSide(color: isDarkMode ? Colors.white : Colors.black, width: 2)
-            : BorderSide.none,
+        side:
+            highContrastMode
+                ? BorderSide(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  width: 2,
+                )
+                : BorderSide.none,
       ),
       title: Row(
         children: [
@@ -59,11 +64,7 @@ class AiContentPolicyNotice extends StatelessWidget {
               color: Colors.blue.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.policy,
-              color: Colors.blue,
-              size: 24,
-            ),
+            child: const Icon(Icons.policy, color: Colors.blue, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -97,11 +98,7 @@ class AiContentPolicyNotice extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.smart_toy,
-                          color: Colors.blue,
-                          size: 20,
-                        ),
+                        Icon(Icons.smart_toy, color: Colors.blue, size: 20),
                         const SizedBox(width: 8),
                         Text(
                           'AI-Generated Content Notice',
@@ -125,9 +122,9 @@ class AiContentPolicyNotice extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -140,11 +137,7 @@ class AiContentPolicyNotice extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.flag,
-                          color: Colors.orange,
-                          size: 20,
-                        ),
+                        Icon(Icons.flag, color: Colors.orange, size: 20),
                         const SizedBox(width: 8),
                         Text(
                           'Content Reporting',
@@ -174,11 +167,7 @@ class AiContentPolicyNotice extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.security,
-                            color: Colors.green,
-                            size: 16,
-                          ),
+                          Icon(Icons.security, color: Colors.green, size: 16),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -186,7 +175,10 @@ class AiContentPolicyNotice extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: isDarkMode ? Colors.white70 : Colors.black87,
+                                color:
+                                    isDarkMode
+                                        ? Colors.white70
+                                        : Colors.black87,
                               ),
                             ),
                           ),
@@ -196,16 +188,12 @@ class AiContentPolicyNotice extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               Row(
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.grey,
-                    size: 16,
-                  ),
+                  Icon(Icons.info_outline, color: Colors.grey, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(

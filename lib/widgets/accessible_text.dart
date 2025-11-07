@@ -13,7 +13,7 @@ class AccessibleText extends StatelessWidget {
   final TextOverflow? overflow;
   final bool enableTextToSpeech;
   final bool selectable;
-  
+
   const AccessibleText({
     super.key,
     required this.textKey,
@@ -24,44 +24,45 @@ class AccessibleText extends StatelessWidget {
     this.enableTextToSpeech = false,
     this.selectable = false,
   });
-  
+
   // Static method to get translated text
   static String getTranslatedText(BuildContext context, String textKey) {
     final localizations = AppLocalizations.of(context);
     return localizations.translate(textKey);
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     // Get accessible text style
     final accessibleStyle = AccessibilityUtils.getTextStyle(
       context,
       baseStyle: style,
     );
-    
+
     // Get translated text
     final translatedText = getTranslatedText(context, textKey);
-    
+
     // Create the text widget
-    Widget textWidget = selectable
-        ? SelectableText(
-            translatedText,
-            style: accessibleStyle,
-            textAlign: textAlign,
-            maxLines: maxLines,
-          )
-        : Text(
-            translatedText,
-            style: accessibleStyle,
-            textAlign: textAlign,
-            maxLines: maxLines,
-            overflow: overflow,
-          );
-    
+    Widget textWidget =
+        selectable
+            ? SelectableText(
+              translatedText,
+              style: accessibleStyle,
+              textAlign: textAlign,
+              maxLines: maxLines,
+            )
+            : Text(
+              translatedText,
+              style: accessibleStyle,
+              textAlign: textAlign,
+              maxLines: maxLines,
+              overflow: overflow,
+            );
+
     // If text-to-speech is enabled and requested for this text
     if (accessibilityProvider.textToSpeech && enableTextToSpeech) {
       return Row(
@@ -77,7 +78,7 @@ class AccessibleText extends StatelessWidget {
         ],
       );
     }
-    
+
     return textWidget;
   }
 }
@@ -94,7 +95,7 @@ class AccessibleTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final bool enableVoiceToText;
-  
+
   const AccessibleTextField({
     super.key,
     required this.hintTextKey,
@@ -109,20 +110,20 @@ class AccessibleTextField extends StatefulWidget {
     this.onSubmitted,
     this.enableVoiceToText = false,
   });
-  
+
   @override
   State<AccessibleTextField> createState() => _AccessibleTextFieldState();
 }
 
 class _AccessibleTextFieldState extends State<AccessibleTextField> {
   late FocusNode _focusNode;
-  
+
   @override
   void initState() {
     super.initState();
     _focusNode = widget.focusNode ?? FocusNode();
   }
-  
+
   @override
   void dispose() {
     if (widget.focusNode == null) {
@@ -130,29 +131,32 @@ class _AccessibleTextFieldState extends State<AccessibleTextField> {
     }
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     // Get accessible text style
     final accessibleStyle = AccessibilityUtils.getTextStyle(
       context,
       fontSize: 16,
     );
-    
+
     // Get accessible hint text style
     final accessibleHintStyle = AccessibilityUtils.getTextStyle(
       context,
       fontSize: 16,
       color: isDarkMode ? Colors.white54 : Colors.black54,
     );
-    
+
     // Get translated hint text
-    final translatedHint = AccessibleText.getTranslatedText(context, widget.hintTextKey);
-    
+    final translatedHint = AccessibleText.getTranslatedText(
+      context,
+      widget.hintTextKey,
+    );
+
     return Row(
       children: [
         Expanded(
@@ -175,8 +179,14 @@ class _AccessibleTextFieldState extends State<AccessibleTextField> {
                 borderSide: BorderSide.none,
               ),
               filled: true,
-              fillColor: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              fillColor:
+                  isDarkMode
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFF1F5F9),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
             ),
           ),
         ),
@@ -185,7 +195,8 @@ class _AccessibleTextFieldState extends State<AccessibleTextField> {
             context,
             onResult: (text) {
               final currentText = widget.controller.text;
-              widget.controller.text = currentText.isEmpty ? text : '$currentText $text';
+              widget.controller.text =
+                  currentText.isEmpty ? text : '$currentText $text';
               widget.controller.selection = TextSelection.fromPosition(
                 TextPosition(offset: widget.controller.text.length),
               );
@@ -197,4 +208,4 @@ class _AccessibleTextFieldState extends State<AccessibleTextField> {
       ],
     );
   }
-} 
+}

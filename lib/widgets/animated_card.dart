@@ -33,11 +33,10 @@ class AnimatedCard extends StatefulWidget {
   State<AnimatedCard> createState() => _AnimatedCardState();
 }
 
-class _AnimatedCardState extends State<AnimatedCard> 
+class _AnimatedCardState extends State<AnimatedCard>
     with SingleTickerProviderStateMixin {
   bool _isHovering = false;
   late AnimationController _hoverController;
-  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -46,11 +45,8 @@ class _AnimatedCardState extends State<AnimatedCard>
       vsync: this,
       duration: ThemeProvider.animationDurationShort,
     );
-    
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.03,
-    ).animate(
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.03).animate(
       CurvedAnimation(
         parent: _hoverController,
         curve: ThemeProvider.animationCurveSnappy,
@@ -66,11 +62,11 @@ class _AnimatedCardState extends State<AnimatedCard>
 
   void _onHoverChanged(bool isHovering) {
     if (!widget.showBounceOnHover || widget.onTap == null) return;
-    
+
     setState(() {
       _isHovering = isHovering;
     });
-    
+
     if (isHovering) {
       _hoverController.forward();
     } else {
@@ -82,7 +78,7 @@ class _AnimatedCardState extends State<AnimatedCard>
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     final cardContent = Material(
       color: Colors.transparent,
       child: Padding(
@@ -90,42 +86,48 @@ class _AnimatedCardState extends State<AnimatedCard>
         child: widget.child,
       ),
     );
-    
+
     final decoratedCard = AnimatedContainer(
       duration: ThemeProvider.animationDurationMedium,
       decoration: BoxDecoration(
-        color: widget.backgroundColor ?? 
+        color:
+            widget.backgroundColor ??
             (isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
         borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(_isHovering ? 0.1 : 0.05),
-            blurRadius: _isHovering ? widget.elevation * 3 : widget.elevation * 2,
+            blurRadius:
+                _isHovering ? widget.elevation * 3 : widget.elevation * 2,
             spreadRadius: _isHovering ? widget.elevation : widget.elevation / 2,
-            offset: Offset(0, _isHovering ? widget.elevation * 0.5 : widget.elevation),
+            offset: Offset(
+              0,
+              _isHovering ? widget.elevation * 0.5 : widget.elevation,
+            ),
           ),
         ],
       ),
       child: cardContent,
     );
-    
-    Widget result = widget.onTap != null
-        ? MouseRegion(
-            cursor: SystemMouseCursors.click,
-            onEnter: (_) => _onHoverChanged(true),
-            onExit: (_) => _onHoverChanged(false),
-            child: GestureDetector(
-              onTap: widget.onTap,
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedScale(
-                scale: _isHovering ? 1.02 : 1.0,
-                duration: ThemeProvider.animationDurationShort,
-                curve: ThemeProvider.animationCurveSnappy,
-                child: decoratedCard,
+
+    Widget result =
+        widget.onTap != null
+            ? MouseRegion(
+              cursor: SystemMouseCursors.click,
+              onEnter: (_) => _onHoverChanged(true),
+              onExit: (_) => _onHoverChanged(false),
+              child: GestureDetector(
+                onTap: widget.onTap,
+                behavior: HitTestBehavior.opaque,
+                child: AnimatedScale(
+                  scale: _isHovering ? 1.02 : 1.0,
+                  duration: ThemeProvider.animationDurationShort,
+                  curve: ThemeProvider.animationCurveSnappy,
+                  child: decoratedCard,
+                ),
               ),
-            ),
-          )
-        : decoratedCard;
+            )
+            : decoratedCard;
 
     if (widget.animate) {
       result = result.withStaggeredAnimation(widget.animationDelayIndex);
@@ -133,4 +135,4 @@ class _AnimatedCardState extends State<AnimatedCard>
 
     return result;
   }
-} 
+}

@@ -40,14 +40,14 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
 
   Future<void> _loadDashboardData() async {
     if (!isLoading) return; // Prevent multiple simultaneous loads
-    
+
     try {
       setState(() => isLoading = true);
-      
+
       // Load real project data with error handling
       AuthService? authService;
       ForumService? forumService;
-      
+
       try {
         authService = Provider.of<AuthService>(context, listen: false);
         forumService = Provider.of<ForumService>(context, listen: false);
@@ -57,9 +57,7 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
         authService = AuthService();
         forumService = ForumService();
       }
-      
-      final reportingService = ContentReportingService();
-      
+
       // Get users count with fallback
       int totalUsers = 0;
       try {
@@ -69,7 +67,7 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
         debugPrint('Error loading users: $e');
         totalUsers = 10; // Fallback value
       }
-      
+
       // Get forum posts with fallback
       int activePosts = 0;
       try {
@@ -79,7 +77,7 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
         debugPrint('Error loading posts: $e');
         activePosts = 5; // Fallback value
       }
-      
+
       // Get reports from Firebase
       int totalReports = 0;
       int pendingReports = 0;
@@ -89,20 +87,21 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
         if (reportsSnapshot.exists) {
           final reports = reportsSnapshot.value as Map<dynamic, dynamic>;
           totalReports = reports.length;
-          pendingReports = reports.values
-              .where((report) => report['status'] == 'pending')
-              .length;
+          pendingReports =
+              reports.values
+                  .where((report) => report['status'] == 'pending')
+                  .length;
         }
       } catch (e) {
         debugPrint('Error loading reports: $e');
       }
-      
+
       // Calculate AI interactions (estimate based on app usage)
       final aiInteractions = (totalUsers * 15) + (activePosts * 3);
-      
+
       // Calculate weekly growth (mock data)
       final weeklyGrowth = totalUsers > 10 ? 12.5 : 8.3;
-      
+
       if (mounted) {
         setState(() {
           dashboardData = {
@@ -134,6 +133,7 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,7 +156,10 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
               onPressed: () {},
               icon: Stack(
                 children: [
-                  const Icon(Icons.notifications_outlined, color: Color(0xFF6B7280)),
+                  const Icon(
+                    Icons.notifications_outlined,
+                    color: Color(0xFF6B7280),
+                  ),
                   Positioned(
                     right: 0,
                     top: 0,
@@ -230,28 +233,43 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
         'title': 'Total Users',
         'value': '${dashboardData['totalUsers']}',
         'color': const Color(0xFF10B981),
-        'progress': ((dashboardData['totalUsers'] as int) / 100).clamp(0.0, 1.0),
+        'progress': ((dashboardData['totalUsers'] as int) / 100).clamp(
+          0.0,
+          1.0,
+        ),
         'icon': Icons.people,
       },
       {
         'title': 'Forum Posts',
         'value': '${dashboardData['activePosts']}',
         'color': const Color(0xFF3B82F6),
-        'progress': ((dashboardData['activePosts'] as int) / 50).clamp(0.0, 1.0),
+        'progress': ((dashboardData['activePosts'] as int) / 50).clamp(
+          0.0,
+          1.0,
+        ),
         'icon': Icons.forum,
       },
       {
         'title': 'AI Interactions',
         'value': '${dashboardData['aiInteractions']}',
         'color': const Color(0xFF8B5CF6),
-        'progress': ((dashboardData['aiInteractions'] as int) / 500).clamp(0.0, 1.0),
+        'progress': ((dashboardData['aiInteractions'] as int) / 500).clamp(
+          0.0,
+          1.0,
+        ),
         'icon': Icons.smart_toy,
       },
       {
         'title': 'Pending Reports',
         'value': '${dashboardData['pendingReports']}',
-        'color': dashboardData['pendingReports'] > 0 ? const Color(0xFFEF4444) : const Color(0xFF10B981),
-        'progress': ((dashboardData['pendingReports'] as int) / 10).clamp(0.0, 1.0),
+        'color':
+            dashboardData['pendingReports'] > 0
+                ? const Color(0xFFEF4444)
+                : const Color(0xFF10B981),
+        'progress': ((dashboardData['pendingReports'] as int) / 10).clamp(
+          0.0,
+          1.0,
+        ),
         'icon': Icons.report_problem,
       },
     ];
@@ -316,8 +334,12 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
                     child: CircularProgressIndicator(
                       value: stat['progress'] as double,
                       strokeWidth: 4,
-                      backgroundColor: (stat['color'] as Color).withValues(alpha: 0.1),
-                      valueColor: AlwaysStoppedAnimation<Color>(stat['color'] as Color),
+                      backgroundColor: (stat['color'] as Color).withValues(
+                        alpha: 0.1,
+                      ),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        stat['color'] as Color,
+                      ),
                     ),
                   ),
                 ],
@@ -357,19 +379,32 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Text('${dashboardData['totalUsers']} Users', 
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                '${dashboardData['totalUsers']} Users',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(width: 24),
-              Text('${dashboardData['activePosts']} Posts', 
-                  style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
+              Text(
+                '${dashboardData['activePosts']} Posts',
+                style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+              ),
             ],
           ),
           const SizedBox(height: 4),
           const Row(
             children: [
-              Text('Active Community', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+              Text(
+                'Active Community',
+                style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              ),
               SizedBox(width: 24),
-              Text('Forum Activity', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+              Text(
+                'Forum Activity',
+                style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -390,8 +425,12 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
                 ),
                 titlesData: FlTitlesData(
                   show: true,
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -460,12 +499,36 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
                 lineBarsData: [
                   LineChartBarData(
                     spots: [
-                      FlSpot(0, ((dashboardData['activePosts'] as int) * 0.7).toDouble()),
-                      FlSpot(1, ((dashboardData['activePosts'] as int) * 0.8).toDouble()),
-                      FlSpot(2, ((dashboardData['activePosts'] as int) * 1.2).toDouble()),
-                      FlSpot(3, ((dashboardData['activePosts'] as int) * 0.9).toDouble()),
-                      FlSpot(4, ((dashboardData['activePosts'] as int) * 1.1).toDouble()),
-                      FlSpot(5, ((dashboardData['activePosts'] as int) * 1.3).toDouble()),
+                      FlSpot(
+                        0,
+                        ((dashboardData['activePosts'] as int) * 0.7)
+                            .toDouble(),
+                      ),
+                      FlSpot(
+                        1,
+                        ((dashboardData['activePosts'] as int) * 0.8)
+                            .toDouble(),
+                      ),
+                      FlSpot(
+                        2,
+                        ((dashboardData['activePosts'] as int) * 1.2)
+                            .toDouble(),
+                      ),
+                      FlSpot(
+                        3,
+                        ((dashboardData['activePosts'] as int) * 0.9)
+                            .toDouble(),
+                      ),
+                      FlSpot(
+                        4,
+                        ((dashboardData['activePosts'] as int) * 1.1)
+                            .toDouble(),
+                      ),
+                      FlSpot(
+                        5,
+                        ((dashboardData['activePosts'] as int) * 1.3)
+                            .toDouble(),
+                      ),
                       FlSpot(6, dashboardData['activePosts'].toDouble()),
                     ],
                     isCurved: true,
@@ -525,7 +588,10 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF8B5CF6),
                   borderRadius: BorderRadius.circular(20),
@@ -563,7 +629,9 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
             Icons.shield,
             '${dashboardData['totalReports']} Reports',
             dashboardData['pendingReports'] > 0 ? 'Needs Review' : 'Clean',
-            dashboardData['pendingReports'] > 0 ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+            dashboardData['pendingReports'] > 0
+                ? const Color(0xFFEF4444)
+                : const Color(0xFF10B981),
           ),
           const Divider(color: Color(0xFFF9FAFB)),
           _buildFeatureItem(
@@ -586,7 +654,13 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
     );
   }
 
-  Widget _buildFeatureItem(String name, IconData icon, String users, String status, Color statusColor) {
+  Widget _buildFeatureItem(
+    String name,
+    IconData icon,
+    String users,
+    String status,
+    Color statusColor,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -645,10 +719,26 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
 
   Widget _buildActionCards() {
     final cards = [
-      {'title': 'Mental Health Support', 'icon': Icons.favorite, 'color': const Color(0xFFEF4444)},
-      {'title': 'Community Forum', 'icon': Icons.forum, 'color': const Color(0xFF3B82F6)},
-      {'title': 'Privacy Protection', 'icon': Icons.security, 'color': const Color(0xFF10B981)},
-      {'title': 'Accessibility', 'icon': Icons.accessibility, 'color': const Color(0xFF8B5CF6)},
+      {
+        'title': 'Mental Health Support',
+        'icon': Icons.favorite,
+        'color': const Color(0xFFEF4444),
+      },
+      {
+        'title': 'Community Forum',
+        'icon': Icons.forum,
+        'color': const Color(0xFF3B82F6),
+      },
+      {
+        'title': 'Privacy Protection',
+        'icon': Icons.security,
+        'color': const Color(0xFF10B981),
+      },
+      {
+        'title': 'Accessibility',
+        'icon': Icons.accessibility,
+        'color': const Color(0xFF8B5CF6),
+      },
     ];
 
     return GridView.builder(
@@ -708,4 +798,3 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
     );
   }
 }
-

@@ -8,12 +8,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:ingabo/firebase_options.dart';
 
 void main() {
-  testWidgets('Mahoro chat simulation responds with appropriate messages', (WidgetTester tester) async {
+  testWidgets('Mahoro chat simulation responds with appropriate messages', (
+    WidgetTester tester,
+  ) async {
     // Initialize Firebase for tests
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    
+
     // Build our app and trigger a frame
     await tester.pumpWidget(
       MultiProvider(
@@ -21,9 +23,7 @@ void main() {
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider<AuthService>(create: (_) => AuthService()),
         ],
-        child: const MaterialApp(
-          home: MahoroPage(),
-        ),
+        child: const MaterialApp(home: MahoroPage()),
       ),
     );
 
@@ -31,25 +31,35 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify that the welcome message is displayed
-    expect(find.text("Muraho! I'm Mahoro, your supportive AI companion. How can I help you today? You can speak to me in Kinyarwanda, English, Swahili, or French."), findsOneWidget);
+    expect(
+      find.text(
+        "Muraho! I'm Mahoro, your supportive AI companion. How can I help you today? You can speak to me in Kinyarwanda, English, Swahili, or French.",
+      ),
+      findsOneWidget,
+    );
 
     // Enter a test message
     await tester.enterText(find.byType(TextField), 'Hello');
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    
+
     // Wait for the typing indicator and response
     await tester.pump();
-    
+
     // Wait for the simulated delay (2 seconds)
     await tester.pump(const Duration(seconds: 2));
     await tester.pump();
-    
+
     // Verify that the user message was added
     expect(find.text('Hello'), findsOneWidget);
-    
+
     // Verify that the AI response was added (English response)
-    expect(find.text("Thank you for sharing. I understand how you feel and I'm here to listen. Would you like to tell me more about what's on your mind?"), findsOneWidget);
-    
+    expect(
+      find.text(
+        "Thank you for sharing. I understand how you feel and I'm here to listen. Would you like to tell me more about what's on your mind?",
+      ),
+      findsOneWidget,
+    );
+
     print('All Mahoro chat simulation tests passed successfully!');
   });
-} 
+}

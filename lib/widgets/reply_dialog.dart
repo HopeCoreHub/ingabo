@@ -8,11 +8,7 @@ class ReplyDialog extends StatefulWidget {
   final Post post;
   final Function(String) onReply;
 
-  const ReplyDialog({
-    super.key,
-    required this.post,
-    required this.onReply,
-  });
+  const ReplyDialog({super.key, required this.post, required this.onReply});
 
   @override
   State<ReplyDialog> createState() => _ReplyDialogState();
@@ -33,8 +29,9 @@ class _ReplyDialogState extends State<ReplyDialog> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final authService = Provider.of<AuthService>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
     // Get first letter of username for avatar
     final String firstLetter = (authService.username ?? 'A')[0].toUpperCase();
     final bool isGuest = authService.username == 'Guest';
@@ -109,12 +106,16 @@ class _ReplyDialogState extends State<ReplyDialog> {
             const SizedBox(height: 16),
             TextField(
               controller: _replyController,
-              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
               maxLines: 5,
               minLines: 3,
               decoration: InputDecoration(
                 hintText: 'Write your reply...',
-                hintStyle: TextStyle(color: isDarkMode ? Colors.white54 : Colors.black54),
+                hintStyle: TextStyle(
+                  color: isDarkMode ? Colors.white54 : Colors.black54,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
@@ -123,12 +124,13 @@ class _ReplyDialogState extends State<ReplyDialog> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: accentColor,
-                  ),
+                  borderSide: BorderSide(color: accentColor),
                 ),
                 filled: true,
-                fillColor: isDarkMode ? const Color(0xFF111827) : const Color(0xFFF1F5F9),
+                fillColor:
+                    isDarkMode
+                        ? const Color(0xFF111827)
+                        : const Color(0xFFF1F5F9),
               ),
             ),
             const SizedBox(height: 16),
@@ -138,7 +140,8 @@ class _ReplyDialogState extends State<ReplyDialog> {
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: TextButton.styleFrom(
-                    foregroundColor: isDarkMode ? Colors.white70 : Colors.black54,
+                    foregroundColor:
+                        isDarkMode ? Colors.white70 : Colors.black54,
                   ),
                   child: const Text('Cancel'),
                 ),
@@ -153,16 +156,19 @@ class _ReplyDialogState extends State<ReplyDialog> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text('Submit'),
+                  child:
+                      _isSubmitting
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : const Text('Submit'),
                 ),
               ],
             ),
@@ -186,4 +192,4 @@ class _ReplyDialogState extends State<ReplyDialog> {
       Navigator.of(context).pop();
     });
   }
-} 
+}

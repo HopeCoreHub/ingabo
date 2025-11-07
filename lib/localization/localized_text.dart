@@ -8,7 +8,7 @@ class LocalizedText extends StatelessWidget {
   final TextAlign? textAlign;
   final int? maxLines;
   final TextOverflow? overflow;
-  
+
   const LocalizedText(
     this.textKey, {
     super.key,
@@ -17,17 +17,17 @@ class LocalizedText extends StatelessWidget {
     this.maxLines,
     this.overflow,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
-    
+
     // Get accessible text style with font size scaling applied
     final accessibleStyle = AccessibilityUtils.getTextStyle(
       context,
       baseStyle: style,
     );
-    
+
     return Text(
       localizations.translate(textKey),
       style: accessibleStyle,
@@ -36,4 +36,4 @@ class LocalizedText extends StatelessWidget {
       overflow: overflow,
     );
   }
-} 
+}

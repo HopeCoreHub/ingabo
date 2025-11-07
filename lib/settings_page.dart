@@ -30,7 +30,6 @@ class SettingsPage extends BaseScreen {
 
 class _SettingsPageState extends BaseScreenState<SettingsPage> {
   bool _isAdmin = false;
-  bool _isCheckingAdmin = true;
 
   @override
   void initState() {
@@ -80,9 +79,6 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    final accentColor =
-        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    final localizations = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor:
@@ -294,7 +290,6 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
 
     // Get user information
     final username = authService.username ?? 'Guest User';
-    final userId = authService.userId ?? 'No ID';
 
     // Define isGuest based on authentication status
     final bool isGuest =
@@ -652,71 +647,6 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
           const SizedBox(width: 12),
           child,
         ],
-      ),
-    );
-  }
-
-  Widget _buildDropdownSetting(
-    String title,
-    String value,
-    String description, {
-    IconData? icon,
-  }) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
-    final highContrastMode = accessibilityProvider.highContrastMode;
-
-    return _buildSettingItem(
-      title: title,
-      description: description,
-      leadingIcon: icon,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color:
-              highContrastMode
-                  ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-                  : (isDarkMode ? const Color(0xFF111827) : Colors.white),
-          borderRadius: BorderRadius.circular(8),
-          border:
-              highContrastMode
-                  ? Border.all(
-                    color: AccessibilityUtils.getAccessibleBorderColor(context),
-                    width: 2.0,
-                  )
-                  : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                color:
-                    highContrastMode
-                        ? AccessibilityUtils.getAccessibleColor(
-                          context,
-                          isDarkMode ? Colors.white70 : Colors.black87,
-                        )
-                        : (isDarkMode ? Colors.white70 : Colors.black87),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.arrow_drop_down,
-              color:
-                  highContrastMode
-                      ? AccessibilityUtils.getAccessibleColor(
-                        context,
-                        isDarkMode ? Colors.white54 : Colors.black54,
-                      )
-                      : (isDarkMode ? Colors.white54 : Colors.black54),
-              size: 20,
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -2041,8 +1971,6 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
   Widget _buildContentPolicySection() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final accentColor =
-        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

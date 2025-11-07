@@ -55,14 +55,10 @@ class TermsOfServicePage extends StatelessWidget {
               isDarkMode,
               subtitle: 'What We Provide',
             ),
-            _buildSection(
-              'Service Availability',
-              [
-                'We strive to provide 24/7 access to our digital platforms.',
-                'Services may be temporarily unavailable due to maintenance, technical issues, or circumstances beyond our control.',
-              ],
-              isDarkMode,
-            ),
+            _buildSection('Service Availability', [
+              'We strive to provide 24/7 access to our digital platforms.',
+              'Services may be temporarily unavailable due to maintenance, technical issues, or circumstances beyond our control.',
+            ], isDarkMode),
             _buildSection(
               'User Responsibilities',
               [
@@ -74,16 +70,12 @@ class TermsOfServicePage extends StatelessWidget {
               isDarkMode,
               subtitle: 'Account & Information',
             ),
-            _buildSection(
-              'Appropriate Use',
-              [
-                'Use services for their intended purpose of safety and support',
-                'Respect other users and maintain confidentiality',
-                'Do not share harmful, illegal, or abusive content',
-                'Do not attempt to compromise platform security',
-              ],
-              isDarkMode,
-            ),
+            _buildSection('Appropriate Use', [
+              'Use services for their intended purpose of safety and support',
+              'Respect other users and maintain confidentiality',
+              'Do not share harmful, illegal, or abusive content',
+              'Do not attempt to compromise platform security',
+            ], isDarkMode),
             _buildSection(
               'Important Disclaimers',
               [
@@ -93,62 +85,38 @@ class TermsOfServicePage extends StatelessWidget {
               isDarkMode,
               subtitle: 'Emergency Situations',
             ),
-            _buildSection(
-              'Medical & Legal Advice',
-              [
-                'Our services provide support and resources but do not constitute professional medical, legal, or psychiatric advice.',
-                'Always consult qualified professionals for specific medical or legal guidance.',
-              ],
-              isDarkMode,
-            ),
-            _buildSection(
-              'Privacy & Confidentiality',
-              [
-                'We are committed to protecting your privacy and maintaining confidentiality.',
-                'Our privacy policy details how we collect, use, and protect your information.',
-                'In certain circumstances, we may be legally required to report information to authorities.',
-                'Information shared in community forums may be seen by other users.',
-              ],
-              isDarkMode,
-            ),
-            _buildSection(
-              'Prohibited Activities',
-              [
-                'Harassment, abuse, or threatening behavior toward other users',
-                'Sharing false information or impersonating others',
-                'Attempting to hack, disrupt, or compromise platform security',
-                'Using services for illegal activities or commercial purposes',
-                'Sharing or distributing harmful, explicit, or inappropriate content',
-                'Violating intellectual property rights',
-                'Circumventing safety measures or reporting systems',
-              ],
-              isDarkMode,
-            ),
-            _buildSection(
-              'Liability & Indemnification',
-              [
-                'To the maximum extent permitted by law, Ingabo HopeCore shall not be liable for any indirect, incidental, special, or consequential damages.',
-                'Users agree to indemnify and hold harmless Ingabo HopeCore from any claims, damages, or expenses arising from their use of services.',
-              ],
-              isDarkMode,
-            ),
-            _buildSection(
-              'Changes & Termination',
-              [
-                'We may update these terms periodically. Significant changes will be communicated through our platform.',
-                'You may terminate your account at any time.',
-                'We may suspend or terminate accounts for violation of terms or to protect user safety.',
-              ],
-              isDarkMode,
-            ),
-            _buildSection(
-              'Governance',
-              [
-                'These terms are governed by the laws of Rwanda.',
-                'Any disputes will be resolved through appropriate legal channels in Rwanda.',
-              ],
-              isDarkMode,
-            ),
+            _buildSection('Medical & Legal Advice', [
+              'Our services provide support and resources but do not constitute professional medical, legal, or psychiatric advice.',
+              'Always consult qualified professionals for specific medical or legal guidance.',
+            ], isDarkMode),
+            _buildSection('Privacy & Confidentiality', [
+              'We are committed to protecting your privacy and maintaining confidentiality.',
+              'Our privacy policy details how we collect, use, and protect your information.',
+              'In certain circumstances, we may be legally required to report information to authorities.',
+              'Information shared in community forums may be seen by other users.',
+            ], isDarkMode),
+            _buildSection('Prohibited Activities', [
+              'Harassment, abuse, or threatening behavior toward other users',
+              'Sharing false information or impersonating others',
+              'Attempting to hack, disrupt, or compromise platform security',
+              'Using services for illegal activities or commercial purposes',
+              'Sharing or distributing harmful, explicit, or inappropriate content',
+              'Violating intellectual property rights',
+              'Circumventing safety measures or reporting systems',
+            ], isDarkMode),
+            _buildSection('Liability & Indemnification', [
+              'To the maximum extent permitted by law, Ingabo HopeCore shall not be liable for any indirect, incidental, special, or consequential damages.',
+              'Users agree to indemnify and hold harmless Ingabo HopeCore from any claims, damages, or expenses arising from their use of services.',
+            ], isDarkMode),
+            _buildSection('Changes & Termination', [
+              'We may update these terms periodically. Significant changes will be communicated through our platform.',
+              'You may terminate your account at any time.',
+              'We may suspend or terminate accounts for violation of terms or to protect user safety.',
+            ], isDarkMode),
+            _buildSection('Governance', [
+              'These terms are governed by the laws of Rwanda.',
+              'Any disputes will be resolved through appropriate legal channels in Rwanda.',
+            ], isDarkMode),
             const SizedBox(height: 32),
             _buildEmergencyNotice(isDarkMode),
             const SizedBox(height: 24),
@@ -224,7 +192,12 @@ class TermsOfServicePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(String title, List<String> content, bool isDarkMode, {String? subtitle}) {
+  Widget _buildSection(
+    String title,
+    List<String> content,
+    bool isDarkMode, {
+    String? subtitle,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -249,43 +222,61 @@ class TermsOfServicePage extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 12),
-        ...content.map((item) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 8, right: 12),
-                width: 4,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF7C3AED),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  item,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
-                    height: 1.5,
+        ...content.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 8, right: 12),
+                  width: 4,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF7C3AED),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: Text(
+                    item,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        )),
+        ),
       ],
     );
   }
 
   Widget _buildHighlightCards(bool isDarkMode) {
     final highlights = [
-      {'title': 'Safety First', 'subtitle': 'Your safety is our priority', 'icon': Icons.security},
-      {'title': 'Confidentiality', 'subtitle': 'Protected communications', 'icon': Icons.lock},
-      {'title': 'Community', 'subtitle': 'Respectful interactions', 'icon': Icons.people},
-      {'title': 'Fair Use', 'subtitle': 'Responsible platform use', 'icon': Icons.balance},
+      {
+        'title': 'Safety First',
+        'subtitle': 'Your safety is our priority',
+        'icon': Icons.security,
+      },
+      {
+        'title': 'Confidentiality',
+        'subtitle': 'Protected communications',
+        'icon': Icons.lock,
+      },
+      {
+        'title': 'Community',
+        'subtitle': 'Respectful interactions',
+        'icon': Icons.people,
+      },
+      {
+        'title': 'Fair Use',
+        'subtitle': 'Responsible platform use',
+        'icon': Icons.balance,
+      },
     ];
 
     return GridView.builder(
@@ -303,10 +294,12 @@ class TermsOfServicePage extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+            color:
+                isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05),
+              color:
+                  isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05),
             ),
           ),
           child: Column(
@@ -360,7 +353,10 @@ class TermsOfServicePage extends StatelessWidget {
             children: [
               Icon(
                 Icons.emergency,
-                color: isDarkMode ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626),
+                color:
+                    isDarkMode
+                        ? const Color(0xFFFCA5A5)
+                        : const Color(0xFFDC2626),
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -369,7 +365,10 @@ class TermsOfServicePage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: isDarkMode ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626),
+                  color:
+                      isDarkMode
+                          ? const Color(0xFFFCA5A5)
+                          : const Color(0xFFDC2626),
                 ),
               ),
             ],

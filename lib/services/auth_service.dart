@@ -7,31 +7,23 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 // Registration result enum
-enum RegistrationResult {
-  success,
-  emailAlreadyExists,
-  error
-}
+enum RegistrationResult { success, emailAlreadyExists, error }
 
 // Email link result enum
-enum EmailLinkResult {
-  sent,
-  invalidEmail,
-  error
-}
+enum EmailLinkResult { sent, invalidEmail, error }
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
-  
+
   final Uuid _uuid = const Uuid();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
   bool _isLoggedIn = false;
   String? _userId;
   String? _username;
   bool _isLoading = true;
   bool _isEmailVerified = false;
-  
+
   factory AuthService() {
     return _instance;
   }
@@ -40,12 +32,15 @@ class AuthService extends ChangeNotifier {
     _loadAuthState();
     // Listen for Firebase auth state changes with error handling
     try {
-      _auth.authStateChanges().listen((User? user) {
-        _syncFirebaseAuthState(user);
-      }, onError: (error) {
-        debugPrint('Firebase auth state change error: $error');
-        // Continue with local auth if Firebase fails
-      });
+      _auth.authStateChanges().listen(
+        (User? user) {
+          _syncFirebaseAuthState(user);
+        },
+        onError: (error) {
+          debugPrint('Firebase auth state change error: $error');
+          // Continue with local auth if Firebase fails
+        },
+      );
     } catch (e) {
       debugPrint('Error setting up Firebase auth state listener: $e');
       // Continue with local auth if Firebase fails
@@ -65,7 +60,7 @@ class AuthService extends ChangeNotifier {
       _userId = user.uid;
       _username = user.displayName ?? user.email?.split('@')[0] ?? 'User';
       _isEmailVerified = user.emailVerified;
-      
+
       // Update SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
@@ -78,17 +73,21 @@ class AuthService extends ChangeNotifier {
     }
     notifyListeners();
   }
-  
+
   // Public method to force-update the authentication state
-  Future<void> updateAuthState(bool isLoggedIn, String userId, String username) async {
+  Future<void> updateAuthState(
+    bool isLoggedIn,
+    String userId,
+    String username,
+  ) async {
     _isLoggedIn = isLoggedIn;
     _userId = userId;
     _username = username;
-    
+
     // Update SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', isLoggedIn);
-    
+
     if (isLoggedIn) {
       await prefs.setString('userId', userId);
       await prefs.setString('username', username);
@@ -99,23 +98,23 @@ class AuthService extends ChangeNotifier {
       await prefs.remove('isEmailVerified');
       debugPrint('Auth state manually updated: User logged out');
     }
-    
+
     notifyListeners();
   }
-  
+
   // Method to reload auth state from SharedPreferences and Firebase
   Future<void> reloadAuthState() async {
     debugPrint('Reloading auth state...');
-    
+
     try {
       // First check SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final storedIsLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-      
+
       if (storedIsLoggedIn) {
         final storedUserId = prefs.getString('userId');
         final storedUsername = prefs.getString('username');
-        
+
         if (storedUserId != null && storedUsername != null) {
           // We have stored credentials - update state if not already logged in
           if (!_isLoggedIn || _userId != storedUserId) {
@@ -123,29 +122,36 @@ class AuthService extends ChangeNotifier {
             _userId = storedUserId;
             _username = storedUsername;
             _isEmailVerified = prefs.getBool('isEmailVerified') ?? false;
-            
-            debugPrint('Auth state reloaded: User $_username logged in from SharedPreferences');
+
+            debugPrint(
+              'Auth state reloaded: User $_username logged in from SharedPreferences',
+            );
             notifyListeners();
           }
         }
       }
-      
+
       // Then check Firebase
       final firebaseUser = _auth.currentUser;
       if (firebaseUser != null) {
         await firebaseUser.reload();
         _isLoggedIn = true;
         _userId = firebaseUser.uid;
-        _username = firebaseUser.displayName ?? firebaseUser.email?.split('@')[0] ?? 'User';
+        _username =
+            firebaseUser.displayName ??
+            firebaseUser.email?.split('@')[0] ??
+            'User';
         _isEmailVerified = firebaseUser.emailVerified;
-        
+
         // Update SharedPreferences with Firebase values
         await prefs.setBool('isLoggedIn', true);
         await prefs.setString('userId', _userId!);
         await prefs.setString('username', _username!);
         await prefs.setBool('isEmailVerified', _isEmailVerified);
-        
-        debugPrint('Auth state reloaded: User $_username logged in from Firebase');
+
+        debugPrint(
+          'Auth state reloaded: User $_username logged in from Firebase',
+        );
         notifyListeners();
       }
     } catch (e) {
@@ -157,14 +163,14 @@ class AuthService extends ChangeNotifier {
   Future<void> _loadAuthState() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
       _userId = prefs.getString('userId');
       _username = prefs.getString('username');
       _isEmailVerified = prefs.getBool('isEmailVerified') ?? false;
-      
+
       // Try to sync with Firebase if we're logged in
       if (_isLoggedIn) {
         final firebaseUser = _auth.currentUser;
@@ -200,7 +206,7 @@ class AuthService extends ChangeNotifier {
     final List<dynamic> usersList = jsonDecode(usersJson);
     return usersList.cast<Map<String, dynamic>>();
   }
-  
+
   // Public method to get users (for migration purposes)
   Future<List<Map<String, dynamic>>> getUsers() async {
     return await _getUsers();
@@ -215,24 +221,24 @@ class AuthService extends ChangeNotifier {
   Future<bool> login(String email, String password) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       // Check if this is the admin login
       const adminEmail = 'info@ingabohopecore.com';
       const adminPassword = 'Hope2025!';
-      
+
       if (email == adminEmail && password == adminPassword) {
         // This is admin login - create admin user if it doesn't exist
         await _ensureAdminUserExists(email, password);
       }
-      
+
       // First try Firebase login
       try {
         final userCredential = await _auth.signInWithEmailAndPassword(
-          email: email, 
-          password: password
+          email: email,
+          password: password,
         );
-        
+
         final firebaseUser = userCredential.user;
         if (firebaseUser != null) {
           // Firebase login successful
@@ -240,21 +246,23 @@ class AuthService extends ChangeNotifier {
           _userId = firebaseUser.uid;
           _username = firebaseUser.displayName ?? email.split('@')[0];
           _isEmailVerified = firebaseUser.emailVerified;
-          
+
           // Save auth state
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isLoggedIn', true);
           await prefs.setString('userId', _userId!);
           await prefs.setString('username', _username!);
           await prefs.setBool('isEmailVerified', _isEmailVerified);
-          
+
           notifyListeners();
           return true;
         }
       } on FirebaseAuthException catch (e) {
         // Handle specific Firebase errors
         if (e.code == 'too-many-requests') {
-          debugPrint('Firebase rate limiting detected (too many login attempts)');
+          debugPrint(
+            'Firebase rate limiting detected (too many login attempts)',
+          );
           // We'll continue to local login below
         } else {
           debugPrint('Firebase login error: ${e.code}, ${e.message}');
@@ -264,36 +272,36 @@ class AuthService extends ChangeNotifier {
         debugPrint('Firebase login error: $firebaseError');
         // Continue to try local login if Firebase login fails
       }
-      
+
       // If Firebase login fails, try local login
       // Hash the password for comparison
       final hashedPassword = _hashPassword(password);
-      
+
       // Get users from SharedPreferences
       final users = await _getUsers();
-      
+
       // Find user with matching email
       final user = users.firstWhere(
         (user) => user['email'] == email,
         orElse: () => <String, dynamic>{},
       );
-      
+
       // Check if user exists and password matches
       if (user.isEmpty || user['password'] != hashedPassword) {
         return false;
       }
-      
+
       // User authenticated successfully
       _isLoggedIn = true;
       _userId = user['id'];
       _username = user['name'];
-      
+
       // Save auth state
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
       await prefs.setString('userId', _userId!);
       await prefs.setString('username', _username!);
-      
+
       notifyListeners();
       return true;
     } catch (e) {
@@ -309,15 +317,15 @@ class AuthService extends ChangeNotifier {
   Future<void> _ensureAdminUserExists(String email, String password) async {
     try {
       final users = await _getUsers();
-      
+
       // Check if admin user already exists
       final adminExists = users.any((user) => user['email'] == email);
-      
+
       if (!adminExists) {
         // Create admin user
         final hashedPassword = _hashPassword(password);
         final adminUserId = _uuid.v4();
-        
+
         final adminUser = {
           'id': adminUserId,
           'name': 'Admin',
@@ -327,10 +335,10 @@ class AuthService extends ChangeNotifier {
           'isGuest': false,
           'isAdmin': true,
         };
-        
+
         users.add(adminUser);
         await _saveUsers(users);
-        
+
         debugPrint('Admin user created in local storage');
       }
     } catch (e) {
@@ -346,24 +354,29 @@ class AuthService extends ChangeNotifier {
         await user.sendEmailVerification();
         return {'success': true, 'error': null};
       }
-      return {'success': false, 'error': 'No user logged in or email already verified'};
+      return {
+        'success': false,
+        'error': 'No user logged in or email already verified',
+      };
     } on FirebaseAuthException catch (e) {
-      debugPrint('Firebase error sending verification email: ${e.code}, ${e.message}');
+      debugPrint(
+        'Firebase error sending verification email: ${e.code}, ${e.message}',
+      );
       String errorMsg;
-      
+
       if (e.code == 'too-many-requests') {
         errorMsg = 'Too many attempts. Please try again after some time.';
       } else {
         errorMsg = 'Failed to send verification email: ${e.message}';
       }
-      
+
       return {'success': false, 'error': errorMsg, 'code': e.code};
     } catch (e) {
       debugPrint('Error sending verification email: $e');
       return {'success': false, 'error': 'An unexpected error occurred'};
     }
   }
-  
+
   // Check if the current user's email is verified
   Future<bool> checkEmailVerified() async {
     try {
@@ -374,11 +387,11 @@ class AuthService extends ChangeNotifier {
         final reloadedUser = _auth.currentUser;
         if (reloadedUser != null) {
           _isEmailVerified = reloadedUser.emailVerified;
-          
+
           // Update SharedPreferences
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isEmailVerified', _isEmailVerified);
-          
+
           notifyListeners();
           return _isEmailVerified;
         }
@@ -394,13 +407,13 @@ class AuthService extends ChangeNotifier {
   Future<EmailLinkResult> sendSignInLinkToEmail(String email) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       // Validate email format
       if (!email.contains('@') || !email.contains('.')) {
         return EmailLinkResult.invalidEmail;
       }
-      
+
       // Create action code settings for Firebase email link
       final actionCodeSettings = ActionCodeSettings(
         url: 'https://hopecore-hub.firebaseapp.com/?email=$email',
@@ -411,27 +424,27 @@ class AuthService extends ChangeNotifier {
         androidMinimumVersion: '12',
         iOSBundleId: 'com.ingabohopecore.hopecorehub',
       );
-      
+
       // Send sign-in link to email using Firebase Auth
       await _auth.sendSignInLinkToEmail(
         email: email,
         actionCodeSettings: actionCodeSettings,
       );
-      
+
       // Save the email locally to be used when the link is opened
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('pendingEmailLink', email);
-      
+
       debugPrint('Email sign-in link sent successfully to $email');
       return EmailLinkResult.sent;
     } on FirebaseAuthException catch (e) {
       debugPrint('Firebase email link error: ${e.code}, ${e.message}');
-      
+
       // Check specific Firebase Auth error codes
       if (e.code == 'invalid-email') {
         return EmailLinkResult.invalidEmail;
       }
-      
+
       return EmailLinkResult.error;
     } catch (e) {
       debugPrint('Email link error: $e');
@@ -446,42 +459,42 @@ class AuthService extends ChangeNotifier {
   Future<bool> signInWithEmailLink(String email, String link) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       // Check if the link is a sign-in link
       if (!_auth.isSignInWithEmailLink(link)) {
         debugPrint('Not a valid sign-in link');
         return false;
       }
-      
+
       // Sign in with email link
       final userCredential = await _auth.signInWithEmailLink(
         email: email,
         emailLink: link,
       );
-      
+
       final firebaseUser = userCredential.user;
       if (firebaseUser == null) {
         debugPrint('Sign in failed - no user returned');
         return false;
       }
-      
+
       // User signed in successfully
       _isLoggedIn = true;
       _userId = firebaseUser.uid;
       _username = firebaseUser.displayName ?? email.split('@')[0];
       _isEmailVerified = firebaseUser.emailVerified;
-      
+
       // Save auth state
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
       await prefs.setString('userId', _userId!);
       await prefs.setString('username', _username!);
       await prefs.setBool('isEmailVerified', _isEmailVerified);
-      
+
       // Clear the pending email
       await prefs.remove('pendingEmailLink');
-      
+
       notifyListeners();
       return true;
     } catch (e) {
@@ -493,46 +506,52 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<RegistrationResult> register(String name, String email, String password) async {
+  Future<RegistrationResult> register(
+    String name,
+    String email,
+    String password,
+  ) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       // First try to register with Firebase
       bool shouldUseLocalRegistration = false;
-      
+
       try {
         final userCredential = await _auth.createUserWithEmailAndPassword(
           email: email,
-          password: password
+          password: password,
         );
-        
+
         final firebaseUser = userCredential.user;
         if (firebaseUser != null) {
           // Update user profile
           await firebaseUser.updateDisplayName(name);
-          
+
           try {
             // Send email verification (with error handling)
             await firebaseUser.sendEmailVerification();
           } catch (verificationError) {
             // Log but continue if verification sending fails
-            debugPrint('Warning: Could not send verification email: $verificationError');
+            debugPrint(
+              'Warning: Could not send verification email: $verificationError',
+            );
           }
-          
+
           // User registered successfully with Firebase
           _isLoggedIn = true;
           _userId = firebaseUser.uid;
           _username = name;
           _isEmailVerified = false; // New users need to verify email
-          
+
           // Save auth state
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isLoggedIn', true);
           await prefs.setString('userId', _userId!);
           await prefs.setString('username', _username!);
           await prefs.setBool('isEmailVerified', _isEmailVerified);
-          
+
           notifyListeners();
           return RegistrationResult.success;
         }
@@ -541,7 +560,9 @@ class AuthService extends ChangeNotifier {
           return RegistrationResult.emailAlreadyExists;
         } else if (e.code == 'too-many-requests') {
           // Firebase is rate limiting us, fall back to local auth
-          debugPrint('Firebase rate limiting detected, falling back to local authentication');
+          debugPrint(
+            'Firebase rate limiting detected, falling back to local authentication',
+          );
           shouldUseLocalRegistration = true;
         } else {
           // Continue with local registration for other Firebase errors
@@ -553,29 +574,30 @@ class AuthService extends ChangeNotifier {
         debugPrint('Error during Firebase registration: $e');
         shouldUseLocalRegistration = true;
       }
-      
-      // If we hit rate limiting or another Firebase error, 
+
+      // If we hit rate limiting or another Firebase error,
       // use local registration as backup
       if (shouldUseLocalRegistration) {
         // Continue with local registration
       }
-      
+
       // If Firebase registration fails, try local registration
       // Get current users
       final users = await _getUsers();
-      
+
       // Check if email already exists
       final emailExists = users.any((user) => user['email'] == email);
       if (emailExists) {
-        return RegistrationResult.emailAlreadyExists; // Return special error code
+        return RegistrationResult
+            .emailAlreadyExists; // Return special error code
       }
-      
+
       // Hash the password
       final hashedPassword = _hashPassword(password);
-      
+
       // Generate a new user ID
       final userId = _uuid.v4();
-      
+
       // Create new user
       final newUser = {
         'id': userId,
@@ -583,24 +605,24 @@ class AuthService extends ChangeNotifier {
         'email': email,
         'password': hashedPassword,
         'createdAt': DateTime.now().toIso8601String(),
-        'isGuest': false
+        'isGuest': false,
       };
-      
+
       // Add to users list and save
       users.add(newUser);
       await _saveUsers(users);
-      
+
       // Set as logged in
       _isLoggedIn = true;
       _userId = userId;
       _username = name;
-      
+
       // Save auth state
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
       await prefs.setString('userId', _userId!);
       await prefs.setString('username', _username!);
-      
+
       notifyListeners();
       return RegistrationResult.success;
     } catch (e) {
@@ -615,18 +637,18 @@ class AuthService extends ChangeNotifier {
   Future<void> logout() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       // Sign out from Firebase
       await _auth.signOut();
-      
+
       // Clear auth state from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('isLoggedIn');
       await prefs.remove('userId');
       await prefs.remove('username');
       await prefs.remove('isEmailVerified');
-      
+
       // Update local state
       _isLoggedIn = false;
       _userId = null;
@@ -657,7 +679,7 @@ class AuthService extends ChangeNotifier {
     if (!_isLoggedIn || _userId == null) {
       return false;
     }
-    
+
     // Check if the current user is the admin with the specific email
     return _checkAdminCredentials();
   }
@@ -666,13 +688,13 @@ class AuthService extends ChangeNotifier {
   bool _checkAdminCredentials() {
     // Admin email check
     const adminEmail = 'info@ingabohopecore.com';
-    
+
     // For Firebase users, check the email directly
     final firebaseUser = _auth.currentUser;
     if (firebaseUser != null) {
       return firebaseUser.email == adminEmail;
     }
-    
+
     // For local users, we need to check stored credentials
     // This will be handled synchronously by checking stored user data
     return _checkLocalAdminStatus();
@@ -680,8 +702,6 @@ class AuthService extends ChangeNotifier {
 
   // Check admin status from local storage synchronously
   bool _checkLocalAdminStatus() {
-    const adminEmail = 'info@ingabohopecore.com';
-    
     // This is a simplified check - in a real app you'd store admin status
     // For now, we'll check if the current user has the admin email
     // This assumes the admin user was properly created during login
@@ -693,15 +713,15 @@ class AuthService extends ChangeNotifier {
     if (!_isLoggedIn || _userId == null) {
       return false;
     }
-    
+
     const adminEmail = 'info@ingabohopecore.com';
-    
+
     // For Firebase users, check the email directly
     final firebaseUser = _auth.currentUser;
     if (firebaseUser != null) {
       return firebaseUser.email == adminEmail;
     }
-    
+
     // For local users, check stored user data
     try {
       final users = await _getUsers();
@@ -709,10 +729,10 @@ class AuthService extends ChangeNotifier {
         (user) => user['id'] == _userId,
         orElse: () => <String, dynamic>{},
       );
-      
-      return currentUser.isNotEmpty && 
-             currentUser['email'] == adminEmail &&
-             (currentUser['isAdmin'] == true);
+
+      return currentUser.isNotEmpty &&
+          currentUser['email'] == adminEmail &&
+          (currentUser['isAdmin'] == true);
     } catch (e) {
       debugPrint('Error checking admin status: $e');
       return false;
@@ -723,13 +743,13 @@ class AuthService extends ChangeNotifier {
   Future<bool> loginAsAdmin(String email, String password) async {
     const adminEmail = 'info@ingabohopecore.com';
     const adminPassword = 'Hope2025!';
-    
+
     // Only allow admin login with exact credentials
     if (email != adminEmail || password != adminPassword) {
       return false;
     }
-    
+
     // Use the regular login method
     return await login(email, password);
   }
-} 
+}

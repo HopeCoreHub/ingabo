@@ -6,10 +6,7 @@ import '../services/auth_service.dart';
 class PostCreationDialog extends StatefulWidget {
   final Function(String, String) onCreatePost;
 
-  const PostCreationDialog({
-    super.key,
-    required this.onCreatePost,
-  });
+  const PostCreationDialog({super.key, required this.onCreatePost});
 
   @override
   State<PostCreationDialog> createState() => _PostCreationDialogState();
@@ -59,8 +56,9 @@ class _PostCreationDialogState extends State<PostCreationDialog>
     final themeProvider = Provider.of<ThemeProvider>(context);
     final authService = Provider.of<AuthService>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
     // Get first letter of username for avatar
     final String firstLetter = (authService.username ?? 'A')[0].toUpperCase();
     final bool isGuest = authService.username == 'Guest';
@@ -71,7 +69,9 @@ class _PostCreationDialogState extends State<PostCreationDialog>
         opacity: _fadeAnimation,
         child: Dialog(
           backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           elevation: 8,
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -79,7 +79,12 @@ class _PostCreationDialogState extends State<PostCreationDialog>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildDialogHeader(isDarkMode, firstLetter, isGuest, authService),
+                _buildDialogHeader(
+                  isDarkMode,
+                  firstLetter,
+                  isGuest,
+                  authService,
+                ),
                 const SizedBox(height: 24),
                 _buildTitleField(isDarkMode, accentColor),
                 const SizedBox(height: 16),
@@ -94,7 +99,12 @@ class _PostCreationDialogState extends State<PostCreationDialog>
     );
   }
 
-  Widget _buildDialogHeader(bool isDarkMode, String firstLetter, bool isGuest, AuthService authService) {
+  Widget _buildDialogHeader(
+    bool isDarkMode,
+    String firstLetter,
+    bool isGuest,
+    AuthService authService,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -130,12 +140,16 @@ class _PostCreationDialogState extends State<PostCreationDialog>
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935),
+                color:
+                    isDarkMode
+                        ? const Color(0xFF8A4FFF)
+                        : const Color(0xFFE53935),
                 boxShadow: [
                   BoxShadow(
-                    color: isDarkMode 
-                      ? const Color(0xFF8A4FFF).withOpacity(0.3) 
-                      : const Color(0xFFE53935).withOpacity(0.3),
+                    color:
+                        isDarkMode
+                            ? const Color(0xFF8A4FFF).withOpacity(0.3)
+                            : const Color(0xFFE53935).withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -164,7 +178,8 @@ class _PostCreationDialogState extends State<PostCreationDialog>
             if (isGuest) ...[
               const SizedBox(width: 4),
               Tooltip(
-                message: 'You are posting as a guest. Sign in to track your posts.',
+                message:
+                    'You are posting as a guest. Sign in to track your posts.',
                 child: Icon(
                   Icons.info_outline,
                   size: 16,
@@ -213,13 +228,13 @@ class _PostCreationDialogState extends State<PostCreationDialog>
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: accentColor,
-                    width: 2,
-                  ),
+                  borderSide: BorderSide(color: accentColor, width: 2),
                 ),
                 filled: true,
-                fillColor: isDarkMode ? const Color(0xFF111827) : const Color(0xFFF1F5F9),
+                fillColor:
+                    isDarkMode
+                        ? const Color(0xFF111827)
+                        : const Color(0xFFF1F5F9),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 16,
@@ -248,11 +263,16 @@ class _PostCreationDialogState extends State<PostCreationDialog>
             opacity: contentAnimation.value,
             child: TextField(
               controller: _contentController,
-              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
               maxLines: 5,
               decoration: InputDecoration(
-                hintText: 'Share your thoughts, experiences, or ask for support...',
-                hintStyle: TextStyle(color: isDarkMode ? Colors.white54 : Colors.black54),
+                hintText:
+                    'Share your thoughts, experiences, or ask for support...',
+                hintStyle: TextStyle(
+                  color: isDarkMode ? Colors.white54 : Colors.black54,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
@@ -262,13 +282,13 @@ class _PostCreationDialogState extends State<PostCreationDialog>
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: accentColor,
-                    width: 2,
-                  ),
+                  borderSide: BorderSide(color: accentColor, width: 2),
                 ),
                 filled: true,
-                fillColor: isDarkMode ? const Color(0xFF111827) : const Color(0xFFF1F5F9),
+                fillColor:
+                    isDarkMode
+                        ? const Color(0xFF111827)
+                        : const Color(0xFFF1F5F9),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 16,
@@ -301,7 +321,8 @@ class _PostCreationDialogState extends State<PostCreationDialog>
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: TextButton.styleFrom(
-                    foregroundColor: isDarkMode ? Colors.white70 : Colors.black54,
+                    foregroundColor:
+                        isDarkMode ? Colors.white70 : Colors.black54,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -332,19 +353,22 @@ class _PostCreationDialogState extends State<PostCreationDialog>
                       vertical: 12,
                     ),
                   ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  child:
+                      _isSubmitting
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : const Text(
+                            'Post',
+                            style: TextStyle(fontWeight: FontWeight.w600),
                           ),
-                        )
-                      : const Text(
-                          'Post',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
                 ),
               ],
             ),
@@ -357,17 +381,17 @@ class _PostCreationDialogState extends State<PostCreationDialog>
   void _submitPost() {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
-    
+
     if (title.isEmpty || content.isEmpty) return;
-    
+
     setState(() {
       _isSubmitting = true;
     });
-    
+
     // Play a reverse animation before closing the dialog
     _animationController.reverse().then((_) {
       widget.onCreatePost(title, content);
       Navigator.of(context).pop();
     });
   }
-} 
+}

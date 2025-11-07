@@ -15,13 +15,13 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
   String _status = 'Initializing admin setup...';
   bool _isSuccess = false;
   String? _errorMessage;
-  
+
   @override
   void initState() {
     super.initState();
     _runAdminSetup();
   }
-  
+
   Future<void> _runAdminSetup() async {
     try {
       setState(() {
@@ -52,7 +52,7 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
       // Note: setupAdmin doesn't actually use context, but we check mounted for safety
       if (!mounted) return;
       final result = await AdminSetup.setupAdmin(context);
-      
+
       if (!mounted) return;
       if (result['success'] == true) {
         setState(() {
@@ -98,7 +98,10 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
                 const SizedBox(height: 24),
                 Text(
                   _status,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -115,7 +118,10 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
                 const SizedBox(height: 24),
                 Text(
                   _status,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
@@ -128,26 +134,30 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF9667FF),
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 12,
+                    ),
                   ),
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => const AdminPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const AdminPage(),
+                      ),
                     );
                   },
                   child: const Text('Go to Admin Dashboard'),
                 ),
               ] else ...[
-                const Icon(
-                  Icons.error_outline,
-                  color: Colors.red,
-                  size: 72,
-                ),
+                const Icon(Icons.error_outline, color: Colors.red, size: 72),
                 const SizedBox(height: 24),
                 Text(
                   _status,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -169,7 +179,10 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF9667FF),
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 12,
+                    ),
                   ),
                   onPressed: _runAdminSetup,
                   child: const Text('Try Again'),
@@ -181,4 +194,4 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
       ),
     );
   }
-} 
+}

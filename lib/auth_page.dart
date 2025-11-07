@@ -1221,47 +1221,4 @@ class _AuthPageState extends State<AuthPage>
       ],
     );
   }
-
-  Widget _buildPrivacyNote(bool isDarkMode) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.security_outlined,
-            color: isDarkMode ? Colors.white54 : Colors.black54,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Your privacy is our priority. We protect all your personal information.',
-              style: TextStyle(
-                color: isDarkMode ? Colors.white70 : Colors.black54,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFooter(bool isDarkMode) {
-    return Text(
-      'By continuing, you agree to our Terms of Service and Privacy Policy',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        color: isDarkMode ? Colors.white54 : Colors.black45,
-        fontSize: 12,
-      ),
-    );
-  }
 }

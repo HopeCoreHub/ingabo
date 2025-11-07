@@ -44,7 +44,7 @@ class Reply {
       isAnonymous: json['isAnonymous'] as bool,
     );
   }
-  
+
   Reply copyWith({
     String? id,
     String? postId,
@@ -66,4 +66,4 @@ class Reply {
       isAnonymous: isAnonymous ?? this.isAnonymous,
     );
   }
-} 
+}

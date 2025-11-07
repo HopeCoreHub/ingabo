@@ -3,12 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'auth_service.dart';
 
-enum ContentType {
-  aiMessage,
-  forumPost,
-  forumReply,
-  other,
-}
+enum ContentType { aiMessage, forumPost, forumReply, other }
 
 enum ReportReason {
   inappropriate,
@@ -83,19 +78,21 @@ class ContentReport {
       reportedAt: DateTime.parse(json['reportedAt'] as String),
       status: json['status'] as String? ?? 'pending',
       reviewedBy: json['reviewedBy'] as String?,
-      reviewedAt: json['reviewedAt'] != null 
-          ? DateTime.parse(json['reviewedAt'] as String)
-          : null,
+      reviewedAt:
+          json['reviewedAt'] != null
+              ? DateTime.parse(json['reviewedAt'] as String)
+              : null,
       moderatorNotes: json['moderatorNotes'] as String?,
     );
   }
 }
 
 class ContentReportingService {
-  static final ContentReportingService _instance = ContentReportingService._internal();
+  static final ContentReportingService _instance =
+      ContentReportingService._internal();
   DatabaseReference? _database;
   final uuid = const Uuid();
-  
+
   DatabaseReference? get db {
     try {
       _database ??= FirebaseDatabase.instance.ref();
@@ -105,7 +102,7 @@ class ContentReportingService {
       return null;
     }
   }
-  
+
   factory ContentReportingService() {
     return _instance;
   }
@@ -123,13 +120,15 @@ class ContentReportingService {
     try {
       final database = db;
       if (database == null) {
-        debugPrint('Firebase Realtime Database not available, cannot submit report');
+        debugPrint(
+          'Firebase Realtime Database not available, cannot submit report',
+        );
         return false;
       }
 
       final authService = AuthService();
       final userId = authService.userId ?? 'anonymous';
-      
+
       final report = ContentReport(
         id: uuid.v4(),
         contentId: contentId,
@@ -142,22 +141,31 @@ class ContentReportingService {
       );
 
       // Save to Firebase Realtime Database under 'content_reports' node
-      await database.child('content_reports').child(report.id).set(report.toJson());
-      
+      await database
+          .child('content_reports')
+          .child(report.id)
+          .set(report.toJson());
+
       // Also save to user's report history for tracking
       if (userId != 'anonymous') {
-        await database.child('users').child(userId)
-            .child('reports').child(report.id).set({
-          'reportId': report.id,
-          'contentId': contentId,
-          'contentType': contentType.name,
-          'reason': reason.name,
-          'reportedAt': report.reportedAt.toIso8601String(),
-          'status': 'pending',
-        });
+        await database
+            .child('users')
+            .child(userId)
+            .child('reports')
+            .child(report.id)
+            .set({
+              'reportId': report.id,
+              'contentId': contentId,
+              'contentType': contentType.name,
+              'reason': reason.name,
+              'reportedAt': report.reportedAt.toIso8601String(),
+              'status': 'pending',
+            });
       }
 
-      debugPrint('Content report submitted successfully to Realtime Database: ${report.id}');
+      debugPrint(
+        'Content report submitted successfully to Realtime Database: ${report.id}',
+      );
       return true;
     } catch (e) {
       debugPrint('Error submitting content report to Realtime Database: $e');
@@ -170,20 +178,24 @@ class ContentReportingService {
     try {
       final database = db;
       if (database == null) {
-        debugPrint('Firebase Realtime Database not available, cannot check report status');
+        debugPrint(
+          'Firebase Realtime Database not available, cannot check report status',
+        );
         return false;
       }
 
       final authService = AuthService();
       final userId = authService.userId ?? 'anonymous';
-      
+
       if (userId == 'anonymous') return false;
 
       // Query content_reports where contentId matches and reportedBy matches userId
-      final snapshot = await database.child('content_reports')
-          .orderByChild('contentId')
-          .equalTo(contentId)
-          .get();
+      final snapshot =
+          await database
+              .child('content_reports')
+              .orderByChild('contentId')
+              .equalTo(contentId)
+              .get();
 
       if (snapshot.exists) {
         final reports = snapshot.value as Map<dynamic, dynamic>;
@@ -207,29 +219,33 @@ class ContentReportingService {
     try {
       final database = db;
       if (database == null) return [];
-      
-      final snapshot = await database.child('content_reports')
-          .orderByChild('reportedBy')
-          .equalTo(userId)
-          .get();
+
+      final snapshot =
+          await database
+              .child('content_reports')
+              .orderByChild('reportedBy')
+              .equalTo(userId)
+              .get();
 
       if (snapshot.exists) {
         final reports = snapshot.value as Map<dynamic, dynamic>;
         final List<ContentReport> result = [];
-        
+
         reports.forEach((key, value) {
           try {
-            result.add(ContentReport.fromJson(Map<String, dynamic>.from(value)));
+            result.add(
+              ContentReport.fromJson(Map<String, dynamic>.from(value)),
+            );
           } catch (e) {
             debugPrint('Error parsing report: $e');
           }
         });
-        
+
         // Sort by date (newest first)
         result.sort((a, b) => b.reportedAt.compareTo(a.reportedAt));
         return result.take(50).toList();
       }
-      
+
       return [];
     } catch (e) {
       debugPrint('Error getting user reports: $e');
@@ -242,29 +258,33 @@ class ContentReportingService {
     try {
       final database = db;
       if (database == null) return [];
-      
-      final snapshot = await database.child('content_reports')
-          .orderByChild('status')
-          .equalTo('pending')
-          .get();
+
+      final snapshot =
+          await database
+              .child('content_reports')
+              .orderByChild('status')
+              .equalTo('pending')
+              .get();
 
       if (snapshot.exists) {
         final reports = snapshot.value as Map<dynamic, dynamic>;
         final List<ContentReport> result = [];
-        
+
         reports.forEach((key, value) {
           try {
-            result.add(ContentReport.fromJson(Map<String, dynamic>.from(value)));
+            result.add(
+              ContentReport.fromJson(Map<String, dynamic>.from(value)),
+            );
           } catch (e) {
             debugPrint('Error parsing pending report: $e');
           }
         });
-        
+
         // Sort by date (newest first)
         result.sort((a, b) => b.reportedAt.compareTo(a.reportedAt));
         return result;
       }
-      
+
       return [];
     } catch (e) {
       debugPrint('Error getting pending reports: $e');
@@ -282,7 +302,7 @@ class ContentReportingService {
     try {
       final database = db;
       if (database == null) return false;
-      
+
       await database.child('content_reports').child(reportId).update({
         'status': status,
         'reviewedBy': reviewedBy,
@@ -290,7 +310,9 @@ class ContentReportingService {
         'moderatorNotes': moderatorNotes,
       });
 
-      debugPrint('Report status updated successfully in Realtime Database: $reportId');
+      debugPrint(
+        'Report status updated successfully in Realtime Database: $reportId',
+      );
       return true;
     } catch (e) {
       debugPrint('Error updating report status in Realtime Database: $e');
@@ -302,14 +324,15 @@ class ContentReportingService {
   Future<Map<String, int>> getReportStats() async {
     try {
       final database = db;
-      if (database == null) return {'total': 0, 'pending': 0, 'reviewed': 0, 'resolved': 0};
-      
+      if (database == null)
+        return {'total': 0, 'pending': 0, 'reviewed': 0, 'resolved': 0};
+
       final snapshot = await database.child('content_reports').get();
-      
+
       if (!snapshot.exists) {
         return {'total': 0, 'pending': 0, 'reviewed': 0, 'resolved': 0};
       }
-      
+
       final reports = snapshot.value as Map<dynamic, dynamic>;
       final stats = <String, int>{
         'total': reports.length,
