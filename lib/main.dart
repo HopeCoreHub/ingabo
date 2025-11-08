@@ -560,9 +560,10 @@ class HopeCoreHub extends BaseScreen {
 }
 
 class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   int _selectedIndex = 0;
   late AnimationController _animationController;
+  late AnimationController _sosPulseController;
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -574,6 +575,12 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
     );
     _animationController.forward();
 
+    // SOS button pulsing animation
+    _sosPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
     // Show content policy notice on first launch
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AiContentPolicyNotice.showIfNeeded(context);
@@ -583,6 +590,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
   @override
   void dispose() {
     _animationController.dispose();
+    _sosPulseController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -1094,21 +1102,10 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 10),
-                      FadeSlideTransition(
-                        animation: _animationController,
-                        begin: const Offset(0, -20),
-                        delay: 0.0,
-                        child: _buildHeader(),
-                      ),
-                      const SizedBox(height: 14),
-                      FadeSlideTransition(
-                        animation: _animationController,
-                        begin: const Offset(0, -15),
-                        delay: 0.05,
-                        child: _buildUserGreeting(),
-                      ),
-                      const SizedBox(height: 14),
+                      // Top bar with profile icon and theme toggle
+                      _buildTopBar(),
+                      const SizedBox(height: 24),
+                      // SOS Button - circular, glowing, centered
                       FadeSlideTransition(
                         animation: _animationController,
                         begin: const Offset(0, -10),
@@ -1159,6 +1156,57 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final username = authService.username ?? 'Guest';
+    final String firstLetter = username[0].toUpperCase();
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Profile icon (top left)
+        GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const SettingsPage()),
+            );
+          },
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isDarkMode ? Colors.white.withAlpha(25) : Colors.black.withAlpha(25),
+            ),
+            child: Center(
+              child: Text(
+                firstLetter,
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Theme toggle (top right)
+        IconButton(
+          onPressed: () {
+            themeProvider.toggleDarkMode(!isDarkMode);
+          },
+          icon: Icon(
+            isDarkMode ? Icons.light_mode : Icons.dark_mode,
+            color: isDarkMode ? Colors.white : Colors.black87,
+            size: 24,
+          ),
+        ),
+      ],
     );
   }
 
@@ -1329,190 +1377,615 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
 
   Widget _buildEmergencyButton() {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final highContrastMode = accessibilityProvider.highContrastMode;
 
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        final pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
-          CurvedAnimation(
-            parent: _animationController,
-            curve: Interval(0.5, 0.8, curve: Curves.easeInOut),
-          ),
-        );
+    return Center(
+      child: AnimatedBuilder(
+        animation: _sosPulseController,
+        builder: (context, child) {
+          // Pulsing scale animation
+          final scale = 1.0 + (_sosPulseController.value * 0.1);
+          
+          // Radiating rings animation
+          final ring1Opacity = (1.0 - _sosPulseController.value) * 0.3;
+          final ring1Scale = 1.0 + (_sosPulseController.value * 0.5);
+          final ring2Opacity = (1.0 - (_sosPulseController.value * 0.7)) * 0.2;
+          final ring2Scale = 1.0 + (_sosPulseController.value * 0.8);
 
-        return Transform.scale(
-          scale: pulseAnimation.value,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient:
-                  highContrastMode
-                      ? null // No gradients in high contrast mode
-                      : const LinearGradient(
-                        colors: [Color(0xFFE53935), Color(0xFFC62828)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-              color: highContrastMode ? Colors.red : null,
-              borderRadius: BorderRadius.circular(14),
-              border:
-                  highContrastMode
-                      ? Border.all(
-                        color: Colors.white,
-                        width: 3.0,
-                      ) // More prominent border for emergency buttons
-                      : null,
-              boxShadow:
-                  highContrastMode
-                      ? null // No shadows in high contrast mode
-                      : [
-                        BoxShadow(
-                          color: const Color(0xFFE53935).withAlpha(76),
-                          blurRadius: 12,
-                          spreadRadius: 1,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(14),
-                splashColor: Colors.white.withAlpha(25),
-                highlightColor: Colors.transparent,
-                onTap: () {
-                  _playButtonPressAnimation();
-                  HapticFeedback.mediumImpact();
-
-                  // Show quick action dialog for emergency call
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        backgroundColor:
-                            isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-                        title: LocalizedText(
-                          'emergencyCall',
-                          style: TextStyle(
-                            color: isDarkMode ? Colors.white : Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        content: LocalizedText(
-                          'wouldYouLikeToCallEmergencyServicesNow',
-                          style: TextStyle(
-                            color: isDarkMode ? Colors.white70 : Colors.black87,
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: LocalizedText(
-                              'cancel',
-                              style: TextStyle(
-                                color:
-                                    isDarkMode
-                                        ? Colors.white60
-                                        : Colors.black54,
-                              ),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              _makePhoneCall('112'); // Rwanda emergency number
-                            },
-                            child: LocalizedText(
-                              'callNow',
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 16,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color:
-                              highContrastMode
-                                  ? Colors.white
-                                  : Colors.white.withAlpha(51),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.phone,
-                          color: highContrastMode ? Colors.red : Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          LocalizedText(
-                            'emergencyHelp',
-                            style: TextStyle(
-                              color:
-                                  highContrastMode
-                                      ? Colors.white
-                                      : Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          LocalizedText(
-                            'getImmediateSupport',
-                            style: TextStyle(
-                              color:
-                                  highContrastMode
-                                      ? Colors.white70
-                                      : Colors.white70,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color:
-                              highContrastMode
-                                  ? Colors.white
-                                  : Colors.white.withAlpha(51),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.arrow_forward,
-                          color: highContrastMode ? Colors.red : Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                    ],
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              // Outer radiating ring 2
+              Transform.scale(
+                scale: ring2Scale,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.red.withAlpha((ring2Opacity * 255).round()),
                   ),
                 ),
               ),
+              // Outer radiating ring 1
+              Transform.scale(
+                scale: ring1Scale,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.red.withAlpha((ring1Opacity * 255).round()),
+                  ),
+                ),
+              ),
+              // Main SOS button
+              Transform.scale(
+                scale: scale,
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    _showSOSDialog();
+                  },
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFE53935), Color(0xFFC62828)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.red.withAlpha(127),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                        BoxShadow(
+                          color: Colors.red.withAlpha(76),
+                          blurRadius: 30,
+                          spreadRadius: 10,
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'SOS',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _showEmergencyContactDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: isDarkMode ? const Color(0xFF0F172A) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Close button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(
+                        Icons.close,
+                        color: isDarkMode ? Colors.white60 : Colors.black54,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                // Title
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.phone,
+                      color: Colors.red,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Choose Emergency Contact',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Select who you\'d like to call for immediate assistance:',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Emergency contacts with improved UI
+                _buildModernContactCard(
+                  title: 'Isange One Stop Center',
+                  number: '3029',
+                  description: 'Gender-based violence support',
+                  isDarkMode: isDarkMode,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _makePhoneCall('3029');
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildModernContactCard(
+                  title: 'Rwanda Investigation Bureau (RIB)',
+                  number: '3512',
+                  description: 'Criminal investigations & safety',
+                  isDarkMode: isDarkMode,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _makePhoneCall('3512');
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildModernContactCard(
+                  title: 'HopeCore Hub Team',
+                  number: '0780332779',
+                  description: 'We\'ll help contact authorities',
+                  isDarkMode: isDarkMode,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _makePhoneCall('0780332779');
+                  },
+                ),
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _showSOSDialog();
+                  },
+                  child: Text(
+                    'Back',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildModernContactCard({
+    required String title,
+    required String number,
+    required String description,
+    required bool isDarkMode,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDarkMode
+              ? Colors.white.withAlpha(25)
+              : Colors.grey.withAlpha(25),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDarkMode
+                ? Colors.white.withAlpha(51)
+                : Colors.grey.withAlpha(51),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              number,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDarkMode ? Colors.white70 : Colors.black54,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMessageOptionsDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: isDarkMode ? const Color(0xFF0F172A) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Close button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(
+                        Icons.close,
+                        color: isDarkMode ? Colors.white60 : Colors.black54,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                // Title
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.chat_bubble_outline,
+                      color: const Color(0xFF8A4FFF),
+                      size: 28,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Send a Message',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF8A4FFF),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Select who you\'d like to message for support:',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // HopeCore Hub Team (SMS)
+                _buildMessageOptionCard(
+                  title: 'HopeCore Hub Team',
+                  number: '0780332779',
+                  icon: Icons.chat_bubble_outline,
+                  isDarkMode: isDarkMode,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _sendSms('0780332779', 'Hello, I need help regarding safety concern.');
+                  },
+                ),
+                const SizedBox(height: 12),
+                // Trusted Contact (from phonebook)
+                _buildMessageOptionCard(
+                  title: 'Trusted Contact',
+                  number: 'Add from phonebook',
+                  icon: Icons.contacts,
+                  isDarkMode: isDarkMode,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _showAddContactDialog();
+                  },
+                ),
+                const SizedBox(height: 12),
+                // WhatsApp HopeCore Hub Team
+                _buildMessageOptionCard(
+                  title: 'WhatsApp HopeCore Hub Team',
+                  number: '+250780332779',
+                  icon: Icons.chat,
+                  isDarkMode: isDarkMode,
+                  isWhatsApp: true,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _sendWhatsApp('+250780332779', 'Hello, I need help regarding safety concern.');
+                  },
+                ),
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _showSOSDialog();
+                  },
+                  child: Text(
+                    'Back',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMessageOptionCard({
+    required String title,
+    required String number,
+    required IconData icon,
+    required bool isDarkMode,
+    required VoidCallback onTap,
+    bool isWhatsApp = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDarkMode
+              ? Colors.white.withAlpha(25)
+              : Colors.grey.withAlpha(25),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDarkMode
+                ? Colors.white.withAlpha(51)
+                : Colors.grey.withAlpha(51),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isWhatsApp
+                    ? const Color(0xFF25D366).withAlpha(51)
+                    : const Color(0xFF8A4FFF).withAlpha(51),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: isWhatsApp ? const Color(0xFF25D366) : const Color(0xFF8A4FFF),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    number,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: isDarkMode ? Colors.white60 : Colors.black54,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSOSDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: isDarkMode ? const Color(0xFF0F172A) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Close button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(
+                        Icons.close,
+                        color: isDarkMode ? Colors.white60 : Colors.black54,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                // Title
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.favorite,
+                      color: const Color(0xFF8A4FFF),
+                      size: 28,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'You Are Not Alone',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF8A4FFF),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Everything is going to be okay. 💜',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'If you\'re in immediate danger, we\'re here to help connect you with the right support.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Call and Message buttons side by side
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _showEmergencyContactDialog();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.phone, color: Colors.white),
+                        label: const Text(
+                          'Call',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _showMessageOptionsDialog();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF8A4FFF),
+                          side: const BorderSide(color: Color(0xFF8A4FFF), width: 2),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.chat_bubble_outline),
+                        label: const Text(
+                          'Message',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDarkMode ? Colors.white60 : Colors.black54,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -4384,6 +4857,35 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
         SnackBar(
           content: Text('Error sending SMS: $e'),
           duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _sendWhatsApp(String phoneNumber, String message) async {
+    // Remove any non-digit characters except + for WhatsApp
+    final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri whatsappUri = Uri.parse('https://wa.me/$cleanNumber?text=${Uri.encodeComponent(message)}');
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      if (await canLaunchUrl(whatsappUri)) {
+        await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+      } else {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(
+            content: const Text('Could not launch WhatsApp. Please make sure WhatsApp is installed.'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error sending WhatsApp message: $e');
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Error sending WhatsApp message: $e'),
+          duration: const Duration(seconds: 3),
         ),
       );
     }
