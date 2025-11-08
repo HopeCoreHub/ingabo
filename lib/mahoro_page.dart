@@ -403,8 +403,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    final accentColor =
-        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+    final accentColor = const Color(0xFF8A4FFF); // Use purple for both modes
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -562,8 +561,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    final accentColor =
-        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+    final accentColor = const Color(0xFF8A4FFF); // Use purple for both modes
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -652,8 +650,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    final accentColor =
-        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+    final accentColor = const Color(0xFF8A4FFF); // Use purple for both modes
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -952,8 +949,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
   Widget _buildFooter() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final accentColor =
-        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+    final accentColor = const Color(0xFF8A4FFF); // Use purple for both modes
 
     return Container(
       decoration: BoxDecoration(
@@ -1128,6 +1124,9 @@ class ClaudeService {
           return textBlock['text'] as String;
         }
         return 'No response generated.';
+      } else if (response.statusCode == 401) {
+        debugPrint('Claude API authentication error: ${response.statusCode} - ${response.body}');
+        throw Exception('Authentication failed. Please check your API key.');
       } else {
         debugPrint('Claude API error: ${response.statusCode} - ${response.body}');
         throw Exception('API request failed: ${response.statusCode}');

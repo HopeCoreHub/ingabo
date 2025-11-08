@@ -482,31 +482,16 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
 
   Widget _buildDateSeparator(String dateKey, bool isDarkMode) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Divider(
-              color: isDarkMode ? Colors.white.withAlpha(61) : Colors.black.withAlpha(61),
-            ),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Center(
+        child: Text(
+          dateKey,
+          style: TextStyle(
+            color: isDarkMode ? Colors.white60 : Colors.black54,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(
-              dateKey,
-              style: TextStyle(
-                color: isDarkMode ? Colors.white60 : Colors.black54,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Divider(
-              color: isDarkMode ? Colors.white.withAlpha(61) : Colors.black.withAlpha(61),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -700,6 +685,16 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
   }
 
   Future<void> _handleReply(String postId, String content) async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    if (!authService.isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to reply'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     try {
       await _forumService.addReply(postId, content);
@@ -731,6 +726,16 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
   }
 
   Future<void> _handleLikePost(Post post) async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    if (!authService.isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to like posts'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     try {
       final result = await _forumService.likePost(post.id);

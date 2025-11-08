@@ -401,11 +401,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
         borderRadius: BorderRadius.circular(16),
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
-        child: AnimatedOpacity(
-          opacity: _animationController.value.clamp(0.0, 1.0),
-          duration: ThemeProvider.animationDurationShort,
-          curve: ThemeProvider.animationCurveDefault,
-          child: Padding(
+        child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(
               mainAxisSize: MainAxisSize.min,

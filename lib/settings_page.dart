@@ -1255,7 +1255,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         _buildSectionHeader('notifications', Icons.notifications_outlined),
         _buildSectionCard([
           _buildSwitchSetting(
-            'forumMessages',
+            'Forum Posts',
             'New messages in the forum',
             notificationProvider.forumMessages,
             (value) => notificationProvider.toggleForumMessages(value),

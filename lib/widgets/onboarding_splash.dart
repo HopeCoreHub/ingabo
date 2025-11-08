@@ -83,12 +83,10 @@ class _OnboardingSplashState extends State<OnboardingSplash>
       ),
     );
 
-    // Start animations in sequence
-    _logoController.forward().then((_) {
-      _textController.forward().then((_) {
-        _subtitleController.forward();
-      });
-    });
+    // Start all animations simultaneously
+    _logoController.forward();
+    _textController.forward();
+    _subtitleController.forward();
   }
 
   @override
