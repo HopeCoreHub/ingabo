@@ -3,9 +3,16 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme_provider.dart';
+import '../main.dart';
+import '../services/auth_service.dart';
 
 class OnboardingSplash extends StatefulWidget {
   const OnboardingSplash({super.key});
+
+  static Future<void> markAsCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_completed', true);
+  }
 
   @override
   State<OnboardingSplash> createState() => _OnboardingSplashState();

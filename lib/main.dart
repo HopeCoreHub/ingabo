@@ -3676,20 +3676,23 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                               : Colors.black.withAlpha(204))
                           : Colors.white.withAlpha(204),
                 ),
-            ),
-            const SizedBox(height: 1),
-            Text(
-              number,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color:
-                    highContrastMode
-                        ? (isDarkMode ? Colors.white : Colors.black)
-                        : Colors.white,
               ),
-            ),
-          ],
+              const SizedBox(height: 1),
+              Text(
+                number,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color:
+                      highContrastMode
+                          ? (isDarkMode ? Colors.white : Colors.black)
+                          : Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
         const Spacer(),
         InkWell(
