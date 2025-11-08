@@ -402,62 +402,61 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
         child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AnimatedContainer(
-                  duration: ThemeProvider.animationDurationShort,
-                  curve: ThemeProvider.animationCurveSnappy,
-                  transform: Matrix4.diagonal3Values(
-                    isSelected ? 1.15 : 1.0,
-                    isSelected ? 1.15 : 1.0,
-                    1.0,
-                  ),
-                  transformAlignment: Alignment.center,
-                  child: Icon(
-                    icon,
-                    color:
-                        highContrastMode
-                            ? (isSelected
-                                ? highContrastSelectedColor
-                                : highContrastUnselectedColor)
-                            : (isSelected ? selectedColor : unselectedColor),
-                    size: 28, // Bigger icons
-                  ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: ThemeProvider.animationDurationShort,
+                curve: ThemeProvider.animationCurveSnappy,
+                transform: Matrix4.diagonal3Values(
+                  isSelected ? 1.15 : 1.0,
+                  isSelected ? 1.15 : 1.0,
+                  1.0,
                 ),
-                const SizedBox(height: 6), // More spacing between icon and text
-                AnimatedDefaultTextStyle(
-                  duration: ThemeProvider.animationDurationShort,
-                  style: TextStyle(
-                    color:
-                        highContrastMode
-                            ? (isSelected
-                                ? highContrastSelectedColor
-                                : highContrastUnselectedColor)
-                            : (isSelected ? selectedColor : unselectedColor),
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w500,
-                    fontSize: 13, // Bigger text
-                  ),
-                  child: LocalizedText(label),
+                transformAlignment: Alignment.center,
+                child: Icon(
+                  icon,
+                  color:
+                      highContrastMode
+                          ? (isSelected
+                              ? highContrastSelectedColor
+                              : highContrastUnselectedColor)
+                          : (isSelected ? selectedColor : unselectedColor),
+                  size: 28, // Bigger icons
                 ),
-                const SizedBox(height: 4), // Spacing before indicator bar
-                AnimatedContainer(
-                  duration: ThemeProvider.animationDurationShort,
-                  width: isSelected ? 24 : 0,
-                  height: 3, // Slightly thicker indicator bar
-                  decoration: BoxDecoration(
-                    color:
-                        highContrastMode
-                            ? highContrastSelectedColor
-                            : selectedColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+              ),
+              const SizedBox(height: 6), // More spacing between icon and text
+              AnimatedDefaultTextStyle(
+                duration: ThemeProvider.animationDurationShort,
+                style: TextStyle(
+                  color:
+                      highContrastMode
+                          ? (isSelected
+                              ? highContrastSelectedColor
+                              : highContrastUnselectedColor)
+                          : (isSelected ? selectedColor : unselectedColor),
+                  fontWeight:
+                      isSelected ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: 13, // Bigger text
                 ),
-              ],
-            ),
+                child: LocalizedText(label),
+              ),
+              const SizedBox(height: 4), // Spacing before indicator bar
+              AnimatedContainer(
+                duration: ThemeProvider.animationDurationShort,
+                width: isSelected ? 24 : 0,
+                height: 3, // Slightly thicker indicator bar
+                decoration: BoxDecoration(
+                  color:
+                      highContrastMode
+                          ? highContrastSelectedColor
+                          : selectedColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ),
         ),
       ),
