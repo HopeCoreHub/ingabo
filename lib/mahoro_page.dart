@@ -6,7 +6,8 @@ import 'accessibility_provider.dart';
 import 'services/auth_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'localization/app_localizations.dart';
 import 'localization/localized_text.dart';
 import 'localization/base_screen.dart';
@@ -41,8 +42,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
   // Firebase instance
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Gemini service
-  late GeminiService _geminiService;
+  // Claude service
+  late ClaudeService _claudeService;
 
   final Map<String, String> _languageNames = {
     'EN': 'English',
@@ -82,8 +83,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     // Load previous conversation if any
     _loadPreviousConversation();
 
-    // Initialize Gemini service
-    _initializeGeminiService();
+    // Initialize Claude service
+    _initializeClaudeService();
   }
 
   Future<void> _createNewConversation() async {
@@ -216,9 +217,9 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     // Check if we already have an API key stored
     final storedKey = await AuthService.getApiKey();
     if (storedKey == null || storedKey.isEmpty) {
-      // Store the API key securely - use a valid Gemini API key
+      // Store the Claude API key securely
       final apiKey =
-          'AIzaSyBJ8mjNdjdJphLOWYP_f9yetHLffon1Am0'; // Replace with a real Gemini API key
+          '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';
       debugPrint(
         "Storing API key: ${apiKey.substring(0, 10)}... (length: ${apiKey.length})",
       );
@@ -230,10 +231,10 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     }
   }
 
-  Future<void> _initializeGeminiService() async {
+  Future<void> _initializeClaudeService() async {
     final apiKey = await _getApiKey() ?? '';
     if (apiKey.isNotEmpty) {
-      _geminiService = GeminiService(apiKey: apiKey);
+      _claudeService = ClaudeService(apiKey: apiKey);
     }
   }
 
@@ -306,22 +307,22 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
       }
 
       try {
-        debugPrint("Making API request to Gemini...");
+        debugPrint("Making API request to Claude...");
 
-        // Reinitialize Gemini service with the current API key
-        _geminiService = GeminiService(apiKey: apiKey);
+        // Reinitialize Claude service with the current API key
+        _claudeService = ClaudeService(apiKey: apiKey);
 
-        // Generate response using Gemini
-        final response = await _geminiService.generateContent(
+        // Generate response using Claude
+        final response = await _claudeService.generateContent(
           prompt: userMessage,
           systemInstructions: systemPrompt,
         );
 
-        debugPrint("Received response from Gemini");
+        debugPrint("Received response from Claude");
         return response;
       } catch (e) {
-        debugPrint('Gemini API Error: $e');
-        if (e.toString().contains('authentication')) {
+        debugPrint('Claude API Error: $e');
+        if (e.toString().contains('authentication') || e.toString().contains('401')) {
           setState(() {
             _isApiKeyValid = false;
           });
@@ -348,7 +349,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     });
 
     try {
-      // Get response from Gemini
+      // Get response from Claude
       final response = await _getAnthropicResponse(text);
 
       if (mounted) {
@@ -1117,20 +1118,56 @@ class ChatMessage {
   }) : id = id ?? const Uuid().v4();
 }
 
-class GeminiService {
-  final GenerativeModel _model;
+class ClaudeService {
+  final String _apiKey;
 
-  GeminiService({required String apiKey})
-    : _model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+  ClaudeService({required String apiKey}) : _apiKey = apiKey;
 
   Future<String> generateContent({
     required String prompt,
     required String systemInstructions,
   }) async {
-    final content = [Content.text(systemInstructions), Content.text(prompt)];
+    try {
+      final url = Uri.parse('https://api.anthropic.com/v1/messages');
+      
+      final requestBody = {
+        'model': 'claude-3-5-sonnet-20241022',
+        'max_tokens': 1024,
+        'system': systemInstructions,
+        'messages': [
+          {
+            'role': 'user',
+            'content': prompt,
+          },
+        ],
+      };
 
-    final response = await _model.generateContent(content);
-    return response.text ?? 'No response generated.';
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': _apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        final content = responseData['content'] as List;
+        if (content.isNotEmpty) {
+          final textBlock = content[0] as Map<String, dynamic>;
+          return textBlock['text'] as String;
+        }
+        return 'No response generated.';
+      } else {
+        debugPrint('Claude API error: ${response.statusCode} - ${response.body}');
+        throw Exception('API request failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Claude API error: $e');
+      rethrow;
+    }
   }
 
   Future<String> generateResponse(String prompt) async {

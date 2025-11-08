@@ -99,19 +99,6 @@ class FirebaseRealtimeService {
 
   // POSTS OPERATIONS
 
-  // Delete all posts and replies (for fresh start)
-  Future<void> deleteAllPosts() async {
-    try {
-      // Delete all posts
-      await _postsRef.remove();
-      // Delete all replies
-      await _repliesRef.remove();
-      debugPrint('All posts and replies deleted from Realtime Database');
-    } catch (e) {
-      debugPrint('Error deleting all posts from Realtime Database: $e');
-    }
-  }
-
   // Get all forum posts
   Future<List<Post>> getAllPosts() async {
     try {
@@ -128,9 +115,7 @@ class FirebaseRealtimeService {
             key.toString(),
             value as Map<dynamic, dynamic>,
           );
-          // Reset likes to 0 and clear likedBy
-          final postWithoutLikes = post.copyWith(likes: 0, likedBy: {});
-          posts.add(postWithoutLikes);
+          posts.add(post);
         });
 
         // Sort by date (newest first)
