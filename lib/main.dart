@@ -1476,12 +1476,17 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       size: 28,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'Choose Emergency Contact',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
+                    Flexible(
+                      child: Text(
+                        'Choose Emergency Contact',
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
                       ),
                     ),
                   ],
@@ -1581,6 +1586,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
           children: [
             Text(
               title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -1781,6 +1788,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 children: [
                   Text(
                     title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -1852,12 +1861,17 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       size: 28,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'You Are Not Alone',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF8A4FFF),
+                    Flexible(
+                      child: Text(
+                        'You Are Not Alone',
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF8A4FFF),
+                        ),
                       ),
                     ),
                   ],
@@ -3731,12 +3745,17 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       size: 24,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'You Are Not Alone',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF8A4FFF),
+                    Flexible(
+                      child: Text(
+                        'You Are Not Alone',
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF8A4FFF),
+                        ),
                       ),
                     ),
                   ],
@@ -3821,12 +3840,17 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                         size: 24,
                                       ),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        'Choose Emergency Contact',
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.red,
+                                      Flexible(
+                                        child: Text(
+                                          'Choose Emergency Contact',
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.red,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -4484,6 +4508,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
           children: [
             Text(
               title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
