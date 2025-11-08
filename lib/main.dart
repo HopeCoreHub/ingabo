@@ -2960,10 +2960,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                     ? AccessibilityUtils.getAccessibleSurfaceColor(
                                       context,
                                     )
-                                    : Colors.white.withValues(
-                                      alpha:
-                                          ((isDarkMode ? 0.1 : 0.8) * 255)
-                                              .round(),
+                                    : Colors.white.withAlpha(
+                                      ((isDarkMode ? 0.1 : 0.8) * 255).round(),
                                     ),
                             borderRadius: BorderRadius.circular(10),
                             border:

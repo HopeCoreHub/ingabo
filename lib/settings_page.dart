@@ -1786,9 +1786,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.red.withValues(
-            alpha: ((isDarkMode ? 0.2 : 0.1) * 255).round(),
-          ),
+          color: Colors.red.withAlpha(((isDarkMode ? 0.2 : 0.1) * 255).round()),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.red.withAlpha(127)),
         ),

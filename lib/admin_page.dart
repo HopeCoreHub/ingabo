@@ -337,20 +337,20 @@ class _SubscriptionListState extends State<SubscriptionList> {
         if (isDarkMode) {
           // Dark mode colors
           if (subscription['status'] == 'approved') {
-            cardColor = Colors.green.withValues(alpha: ((0.1 * 255).round()));
+            cardColor = Colors.green.withAlpha(((0.1 * 255).round()));
           } else if (subscription['status'] == 'rejected') {
-            cardColor = Colors.red.withValues(alpha: ((0.1 * 255).round()));
+            cardColor = Colors.red.withAlpha(((0.1 * 255).round()));
           } else {
-            cardColor = Colors.orange.withValues(alpha: ((0.1 * 255).round()));
+            cardColor = Colors.orange.withAlpha(((0.1 * 255).round()));
           }
         } else {
           // Light mode colors
           if (subscription['status'] == 'approved') {
-            cardColor = Colors.green.withValues(alpha: ((0.05 * 255).round()));
+            cardColor = Colors.green.withAlpha(((0.05 * 255).round()));
           } else if (subscription['status'] == 'rejected') {
-            cardColor = Colors.red.withValues(alpha: ((0.05 * 255).round()));
+            cardColor = Colors.red.withAlpha(((0.05 * 255).round()));
           } else {
-            cardColor = Colors.orange.withValues(alpha: ((0.05 * 255).round()));
+            cardColor = Colors.orange.withAlpha(((0.05 * 255).round()));
           }
         }
 
@@ -362,7 +362,7 @@ class _SubscriptionListState extends State<SubscriptionList> {
             side: BorderSide(
               color: _getStatusColor(
                 subscription['status'],
-              ).withValues(alpha: ((0.3 * 255).round())),
+              ).withAlpha(((0.3 * 255).round())),
               width: 1,
             ),
           ),
