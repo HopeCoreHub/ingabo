@@ -103,21 +103,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         automaticallyImplyLeading: false,
         systemOverlayStyle:
             isDarkMode ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            child: IconButton(
-              icon: Icon(
-                Icons.search,
-                color: isDarkMode ? Colors.white70 : Colors.black54,
-              ),
-              onPressed: () {
-                // Show search dialog
-                _showSearchDialog();
-              },
-            ),
-          ),
-        ],
+        actions: [],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -145,8 +131,6 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 _buildAdminSection(),
                 const SizedBox(height: 12),
               ],
-              _buildDatabaseSection(),
-              const SizedBox(height: 12),
               _buildEmergencyContactsSection(),
               const SizedBox(height: 12),
               _buildFooter(),
@@ -1275,18 +1259,25 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         _buildSectionHeader('notifications', Icons.notifications_outlined),
         _buildSectionCard([
           _buildSwitchSetting(
+            'forumMessages',
+            'New messages in the forum',
+            notificationProvider.forumMessages,
+            (value) => notificationProvider.toggleForumMessages(value),
+            icon: Icons.forum,
+          ),
+          _buildSwitchSetting(
             'forumReplies',
-            'Get notified of new replies',
+            'Forum replies',
             notificationProvider.forumReplies,
             (value) => notificationProvider.toggleForumReplies(value),
             icon: Icons.chat_bubble_outline,
           ),
           _buildSwitchSetting(
-            'weeklyCheckIns',
-            'Mental health reminders',
-            notificationProvider.weeklyCheckIns,
-            (value) => notificationProvider.toggleWeeklyCheckIns(value),
-            icon: Icons.event_note,
+            'dailyAffirmations',
+            'Daily Affirmations',
+            notificationProvider.dailyAffirmations,
+            (value) => notificationProvider.toggleDailyAffirmations(value),
+            icon: Icons.favorite,
           ),
           _buildSwitchSetting(
             'systemUpdates',

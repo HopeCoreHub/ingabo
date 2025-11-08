@@ -5,7 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class NotificationProvider extends ChangeNotifier {
   // Notification settings
   bool _forumReplies = true;
-  bool _weeklyCheckIns = true;
+  bool _forumMessages = true;
+  bool _dailyAffirmations = true;
   bool _systemUpdates = false;
 
   // Loading state
@@ -20,7 +21,8 @@ class NotificationProvider extends ChangeNotifier {
 
   // Getters
   bool get forumReplies => _forumReplies;
-  bool get weeklyCheckIns => _weeklyCheckIns;
+  bool get forumMessages => _forumMessages;
+  bool get dailyAffirmations => _dailyAffirmations;
   bool get systemUpdates => _systemUpdates;
   bool get isLoading => _isLoading;
 
@@ -32,7 +34,8 @@ class NotificationProvider extends ChangeNotifier {
       // First try to get settings from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       _forumReplies = prefs.getBool('forumReplies') ?? true;
-      _weeklyCheckIns = prefs.getBool('weeklyCheckIns') ?? true;
+      _forumMessages = prefs.getBool('forumMessages') ?? true;
+      _dailyAffirmations = prefs.getBool('dailyAffirmations') ?? true;
       _systemUpdates = prefs.getBool('systemUpdates') ?? false;
 
       // Try to get the user ID from SharedPreferences
@@ -57,8 +60,8 @@ class NotificationProvider extends ChangeNotifier {
                   settingsData['notifications'] as Map<String, dynamic>;
 
               _forumReplies = notificationData['forumReplies'] ?? _forumReplies;
-              _weeklyCheckIns =
-                  notificationData['weeklyCheckIns'] ?? _weeklyCheckIns;
+              _forumMessages = notificationData['forumMessages'] ?? _forumMessages;
+              _dailyAffirmations = notificationData['dailyAffirmations'] ?? _dailyAffirmations;
               _systemUpdates =
                   notificationData['systemUpdates'] ?? _systemUpdates;
             }
@@ -85,9 +88,17 @@ class NotificationProvider extends ChangeNotifier {
     await _saveNotificationSettings();
   }
 
-  // Toggle weekly check-ins notifications
-  Future<void> toggleWeeklyCheckIns(bool value) async {
-    _weeklyCheckIns = value;
+  // Toggle forum messages notifications
+  Future<void> toggleForumMessages(bool value) async {
+    _forumMessages = value;
+    notifyListeners();
+
+    await _saveNotificationSettings();
+  }
+
+  // Toggle daily affirmations notifications
+  Future<void> toggleDailyAffirmations(bool value) async {
+    _dailyAffirmations = value;
     notifyListeners();
 
     await _saveNotificationSettings();
@@ -107,7 +118,8 @@ class NotificationProvider extends ChangeNotifier {
       // Save to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('forumReplies', _forumReplies);
-      await prefs.setBool('weeklyCheckIns', _weeklyCheckIns);
+      await prefs.setBool('forumMessages', _forumMessages);
+      await prefs.setBool('dailyAffirmations', _dailyAffirmations);
       await prefs.setBool('systemUpdates', _systemUpdates);
 
       // Try to save to Firebase if user is logged in
@@ -123,7 +135,8 @@ class NotificationProvider extends ChangeNotifier {
               .set({
                 'notifications': {
                   'forumReplies': _forumReplies,
-                  'weeklyCheckIns': _weeklyCheckIns,
+                  'forumMessages': _forumMessages,
+                  'dailyAffirmations': _dailyAffirmations,
                   'systemUpdates': _systemUpdates,
                 },
               }, SetOptions(merge: true));

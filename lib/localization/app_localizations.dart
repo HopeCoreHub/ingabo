@@ -39,14 +39,15 @@ class AppLocalizations {
       'searchSettings': 'Search Settings',
       'selectFontFamily': 'Select Font Family',
       'selectFontSize': 'Select Font Size',
-      'languageAudio': 'Language & Audio',
+      'languageAudio': 'Language Audio',
+      'dataPerformance': 'Data Performance',
       'chooseLanguageDescription': 'Choose your preferred language',
       'chooseFontFamilyDescription':
           'Choose a font that feels comfortable to read',
       'fontSizeFollowsSystem':
           'Font size follows your device accessibility setting.',
       'database': 'Database',
-      'contentPolicyReporting': 'Content Policy & Reporting',
+      'contentPolicyReporting': 'Content Policy Reporting',
       'adminControls': 'Admin Controls',
       'lowDataMode': 'Low Data Mode',
       'imageLazyLoading': 'Image Lazy Loading',
@@ -77,7 +78,7 @@ class AppLocalizations {
       'systemUpdates': 'System Updates',
 
       // Privacy & Security
-      'privacySecurity': 'Privacy & Security',
+      'privacySecurity': 'Privacy Policy',
       'emergencyContacts': 'Emergency Contacts',
       'logout': 'Logout',
       'signIn': 'Sign In',
