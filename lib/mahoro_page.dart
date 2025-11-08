@@ -33,8 +33,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     ),
   ];
   bool _isTyping = false;
-  String _currentLanguage = 'FR';
-  String _currentLanguageName = 'Français';
+  String _currentLanguage = 'EN';
+  String _currentLanguageName = 'English';
   bool _isApiKeyValid = true;
   String _conversationId = '';
 
@@ -451,7 +451,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  Icons.smart_toy_outlined,
+                  Icons.psychology_rounded,
                   color:
                       highContrastMode
                           ? (isDarkMode ? Colors.white : Colors.black)
@@ -774,7 +774,9 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                 : (isDarkMode ? Colors.black : Colors.white))
             : (message.isUserMessage
                 ? (isDarkMode ? const Color(0xFF1E293B) : Colors.grey.shade200)
-                : (isDarkMode ? accentColor : accentColor));
+                : (isDarkMode 
+                    ? Colors.white.withAlpha(25)  // Translucent white in dark mode
+                    : Colors.white.withAlpha(204)));  // Translucent white in light mode
 
     final textColor =
         highContrastMode
@@ -783,7 +785,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                 : (isDarkMode ? Colors.white : Colors.black))
             : (message.isUserMessage
                 ? (isDarkMode ? Colors.white : Colors.black87)
-                : Colors.white);
+                : (isDarkMode ? Colors.white : Colors.black87));  // Dark text on translucent white
 
     final radius =
         message.isUserMessage
@@ -819,7 +821,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                         : accentColor,
               ),
               child: Icon(
-                Icons.smart_toy_outlined,
+                Icons.psychology_rounded,
                 color:
                     highContrastMode
                         ? (isDarkMode ? Colors.black : Colors.white)
@@ -1004,6 +1006,10 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
               ),
               child: TextField(
                 controller: _messageController,
+                maxLines: null,
+                minLines: 1,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.newline,
                 decoration: InputDecoration(
                   hintText: AppLocalizations.of(
                     context,
@@ -1022,7 +1028,11 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                           ? (isDarkMode ? Colors.white : Colors.black)
                           : (isDarkMode ? Colors.white : Colors.black87),
                 ),
-                onSubmitted: _handleSubmitted,
+                onSubmitted: (text) {
+                  if (text.trim().isNotEmpty) {
+                    _handleSubmitted(text);
+                  }
+                },
               ),
             ),
           ),
