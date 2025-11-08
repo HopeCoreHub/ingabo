@@ -186,7 +186,19 @@ class _PostCardState extends State<PostCard> {
                         children: [
                           // Like button
                           InkWell(
-                            onTap: () => widget.onLike(),
+                            onTap: () {
+                              final authService = Provider.of<AuthService>(context, listen: false);
+                              if (!authService.isLoggedIn) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Please log in to like posts'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                                return;
+                              }
+                              widget.onLike();
+                            },
                             borderRadius: BorderRadius.circular(8),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
