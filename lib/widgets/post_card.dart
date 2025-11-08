@@ -52,25 +52,16 @@ class _PostCardState extends State<PostCard> {
   }
 
   Future<void> _loadReplies() async {
-    setState(() {
-      _isLoadingReplies = true;
-    });
-
     try {
       final forumService = Provider.of<ForumService>(context, listen: false);
       final replies = await forumService.getRepliesForPost(widget.post.id);
       if (mounted) {
         setState(() {
           _replies = replies;
-          _isLoadingReplies = false;
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingReplies = false;
-        });
-      }
+      debugPrint('Error loading replies: $e');
     }
   }
 
