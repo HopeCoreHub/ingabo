@@ -411,8 +411,8 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                 ],
               ),
               child: Container(
-                height: kBottomNavigationBarHeight + 8,
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                height: kBottomNavigationBarHeight + 20,
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: AccessibilityUtils.getAccessibleSurfaceColor(context),
                   borderRadius: BorderRadius.circular(16),
@@ -446,7 +446,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
 
     // Only show dashboard for admin users
     if (isAdminUser) {
-      navItems.add(_buildNavItem(0, Icons.dashboard_outlined, 'dashboard'));
+      navItems.add(_buildNavItem(0, Icons.dashboard_rounded, 'dashboard'));
     }
 
     // Add other navigation items with adjusted indices
@@ -456,10 +456,10 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
     int settingsIndex = isAdminUser ? 4 : 3;
 
     navItems.addAll([
-      _buildNavItem(homeIndex, Icons.home_outlined, 'home'),
-      _buildNavItem(forumIndex, Icons.chat_bubble_outline, 'forum'),
-      _buildNavItem(mahoroIndex, Icons.smart_toy_outlined, 'mahoro'),
-      _buildNavItem(settingsIndex, Icons.settings_outlined, 'settings'),
+      _buildNavItem(homeIndex, Icons.home_rounded, 'home'),
+      _buildNavItem(forumIndex, Icons.forum_rounded, 'forum'),
+      _buildNavItem(mahoroIndex, Icons.psychology_rounded, 'mahoro'),
+      _buildNavItem(settingsIndex, Icons.settings_rounded, 'settings'),
     ]);
 
     return navItems;
@@ -490,16 +490,17 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
           duration: ThemeProvider.animationDurationShort,
           curve: ThemeProvider.animationCurveDefault,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 AnimatedContainer(
                   duration: ThemeProvider.animationDurationShort,
                   curve: ThemeProvider.animationCurveSnappy,
                   transform: Matrix4.diagonal3Values(
-                    isSelected ? 1.2 : 1.0,
-                    isSelected ? 1.2 : 1.0,
+                    isSelected ? 1.15 : 1.0,
+                    isSelected ? 1.15 : 1.0,
                     1.0,
                   ),
                   transformAlignment: Alignment.center,
@@ -511,10 +512,10 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                                 ? highContrastSelectedColor
                                 : highContrastUnselectedColor)
                             : (isSelected ? selectedColor : unselectedColor),
-                    size: 22,
+                    size: 28, // Bigger icons
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 6), // More spacing between icon and text
                 AnimatedDefaultTextStyle(
                   duration: ThemeProvider.animationDurationShort,
                   style: TextStyle(
@@ -525,22 +526,22 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                                 : highContrastUnselectedColor)
                             : (isSelected ? selectedColor : unselectedColor),
                     fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.normal,
-                    fontSize: 11,
+                        isSelected ? FontWeight.w600 : FontWeight.w500,
+                    fontSize: 13, // Bigger text
                   ),
                   child: LocalizedText(label),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4), // Spacing before indicator bar
                 AnimatedContainer(
                   duration: ThemeProvider.animationDurationShort,
-                  width: isSelected ? 20 : 0,
-                  height: 2,
+                  width: isSelected ? 24 : 0,
+                  height: 3, // Slightly thicker indicator bar
                   decoration: BoxDecoration(
                     color:
                         highContrastMode
                             ? highContrastSelectedColor
                             : selectedColor,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ],
@@ -1138,14 +1139,14 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                         animation: _animationController,
                         begin: const Offset(0, 10),
                         delay: 0.5,
-                        child: _buildDailyAffirmationSection(),
+                        child: _buildEmergencyContactsSection(),
                       ),
                       const SizedBox(height: 16),
                       FadeSlideTransition(
                         animation: _animationController,
                         begin: const Offset(0, 10),
                         delay: 0.6,
-                        child: _buildEmergencyContactsSection(),
+                        child: _buildDailyAffirmationSection(),
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -2046,9 +2047,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.25, // Make cards less tall
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 1.4, // Make cards smaller and wider
           children: [
             _buildAnimatedQuickAccessItem(
               color: const Color(0xFF6366F1),
@@ -2151,28 +2152,32 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
         width: 3.0, // Slightly thicker for better visibility
       );
     } else {
-      // Normal mode: Use original gradient styling
-      backgroundColor = color;
-      textColor = Colors.white;
-      iconColor = Colors.white;
-      iconBackgroundColor = Colors.white.withAlpha(51);
+      // Normal mode: Use liquid transparent apple-like styling
+      backgroundColor = isDarkMode
+          ? Colors.white.withAlpha(25)
+          : Colors.black.withAlpha(25);
+      textColor = isDarkMode ? Colors.white : Colors.black87;
+      iconColor = isDarkMode ? Colors.white70 : Colors.black54;
+      iconBackgroundColor = isDarkMode
+          ? Colors.white.withAlpha(25)
+          : Colors.black.withAlpha(25);
       boxShadow = [
         BoxShadow(
-          color: color.withAlpha(63),
-          blurRadius: 10,
+          color: isDarkMode
+              ? Colors.black.withAlpha(25)
+              : Colors.black.withAlpha(10),
+          blurRadius: 8,
           spreadRadius: 0,
-          offset: const Offset(0, 4),
+          offset: const Offset(0, 2),
         ),
       ];
-      gradient = LinearGradient(
-        colors: [
-          color,
-          Color.lerp(color, isDarkMode ? Colors.black : Colors.white, 0.3)!,
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+      gradient = null; // No gradient for liquid transparent look
+      border = Border.all(
+        color: isDarkMode
+            ? Colors.white.withAlpha(51)
+            : Colors.black.withAlpha(25),
+        width: 1,
       );
-      border = null;
     }
 
     return GestureDetector(
@@ -2229,35 +2234,37 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
           border: border,
         ),
         padding: EdgeInsets.all(
-          highContrastMode ? 16 : 14,
-        ), // More padding in high contrast for better visual breathing
+          highContrastMode ? 16 : 12,
+        ), // Smaller padding for compact look
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 42,
-              height: 42,
+              width: highContrastMode ? 42 : 36,
+              height: highContrastMode ? 42 : 36,
               decoration: BoxDecoration(
                 color: iconBackgroundColor,
-                borderRadius: BorderRadius.circular(highContrastMode ? 8 : 10),
+                borderRadius: BorderRadius.circular(highContrastMode ? 8 : 8),
                 border:
                     highContrastMode
                         ? Border.all(
                           color: AccessibilityUtils.getAccessibleBorderColor(
                             context,
                           ),
-                          width: 2.0, // Thicker border for icon container
+                          width: 2.0,
                         )
-                        : null,
+                        : Border.all(
+                          color: isDarkMode
+                              ? Colors.white.withAlpha(51)
+                              : Colors.black.withAlpha(25),
+                          width: 1,
+                        ),
               ),
               child: Icon(
                 icon,
                 color: iconColor,
-                size:
-                    highContrastMode
-                        ? 24
-                        : 22, // Slightly larger icons in high contrast
+                size: highContrastMode ? 24 : 20,
               ),
             ),
             const Spacer(),
@@ -2265,22 +2272,26 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
               title,
               style: AccessibilityUtils.getTextStyle(
                 context,
-                fontSize: 16,
+                fontSize: highContrastMode ? 16 : 14,
                 fontWeight: FontWeight.bold,
                 color: textColor,
               ),
             ),
-            SizedBox(
-              height: highContrastMode ? 4 : 2,
-            ), // More spacing in high contrast mode
+            SizedBox(height: highContrastMode ? 4 : 2),
             Text(
               subtitle,
               style: AccessibilityUtils.getTextStyle(
                 context,
-                fontSize: 11,
+                fontSize: highContrastMode ? 11 : 10,
                 fontWeight: FontWeight.w500,
-                color: highContrastMode ? textColor : textColor.withAlpha(204),
+                color: highContrastMode
+                    ? textColor
+                    : (isDarkMode
+                        ? Colors.white60
+                        : Colors.black54),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -2293,8 +2304,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    final primaryColor =
-        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+    // Use light blue for both modes
+    const lightBlueColor = Color(0xFF87CEEB);
 
     return Container(
       decoration: BoxDecoration(
@@ -2304,8 +2315,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 : LinearGradient(
                   colors:
                       isDarkMode
-                          ? [const Color(0xFF2A3B53), const Color(0xFF1E293B)]
-                          : [const Color(0xFFFFEFEF), const Color(0xFFFAF0F0)],
+                          ? [lightBlueColor.withAlpha(51), lightBlueColor.withAlpha(25)]
+                          : [lightBlueColor.withAlpha(76), lightBlueColor.withAlpha(51)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -2347,16 +2358,10 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       highContrastMode
                           ? null
                           : LinearGradient(
-                            colors:
-                                isDarkMode
-                                    ? [
-                                      const Color(0xFF8A4FFF),
-                                      const Color(0xFF6D28D9),
-                                    ]
-                                    : [
-                                      const Color(0xFFE53935),
-                                      const Color(0xFFD32F2F),
-                                    ],
+                            colors: [
+                              lightBlueColor.withAlpha(76),
+                              lightBlueColor.withAlpha(51),
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -2396,35 +2401,17 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 ),
               ),
               const SizedBox(width: 12),
-              // In high contrast mode, use standard text instead of animated text
-              highContrastMode
-                  ? Text(
-                    AppLocalizations.of(
-                      context,
-                    ).translate('howAreYouFeelingToday'),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDarkMode ? Colors.white : Colors.black,
-                    ),
-                  )
-                  : AnimatedTextKit(
-                    animatedTexts: [
-                      TypewriterAnimatedText(
-                        AppLocalizations.of(
-                          context,
-                        ).translate('howAreYouFeelingToday'),
-                        textStyle: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
-                        ),
-                        speed: const Duration(milliseconds: 100),
-                      ),
-                    ],
-                    totalRepeatCount: 1,
-                    displayFullTextOnTap: true,
-                  ),
+              // Show text without typing animation
+              Text(
+                AppLocalizations.of(
+                  context,
+                ).translate('howAreYouFeelingToday'),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -3425,62 +3412,26 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
+                        // Text quote without dark box
+                        Text(
+                          '"You are stronger than you know, braver than you feel, and more loved than you imagine."',
+                          style: AccessibilityUtils.getTextStyle(
+                            context,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                             color:
                                 highContrastMode
-                                    ? AccessibilityUtils.getAccessibleSurfaceColor(
-                                      context,
-                                    )
-                                    : Colors.white.withAlpha(
-                                      ((isDarkMode ? 0.1 : 0.8) * 255).round(),
-                                    ),
-                            borderRadius: BorderRadius.circular(10),
-                            border:
-                                highContrastMode
-                                    ? Border.all(
-                                      color:
-                                          AccessibilityUtils.getAccessibleBorderColor(
-                                            context,
-                                          ),
-                                      width: 2.0,
-                                    )
-                                    : null,
-                            boxShadow:
-                                highContrastMode
-                                    ? null // No shadows in high contrast mode
-                                    : [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 7,
-                                        ),
-                                        blurRadius: 6,
-                                        spreadRadius: 0,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
+                                    ? (isDarkMode
+                                        ? Colors.white
+                                        : Colors.black)
+                                    : (isDarkMode
+                                        ? Colors.white70
+                                        : Colors.black87),
+                          ).copyWith(
+                            fontStyle: FontStyle.italic,
+                            height: 1.4,
                           ),
-                          child: Text(
-                            '"You are stronger than you know, braver than you feel, and more loved than you imagine."',
-                            style: AccessibilityUtils.getTextStyle(
-                              context,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color:
-                                  highContrastMode
-                                      ? (isDarkMode
-                                          ? Colors.white
-                                          : Colors.black)
-                                      : (isDarkMode
-                                          ? Colors.white
-                                          : Colors.black87),
-                            ).copyWith(
-                              fontStyle: FontStyle.italic,
-                              height: 1.4,
-                            ),
-                            textAlign: TextAlign.start,
-                          ),
+                          textAlign: TextAlign.start,
                         ),
                       ],
                     ),
