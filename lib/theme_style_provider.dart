@@ -327,7 +327,7 @@ class ThemeStyleProvider {
         ),
         labelStyle: textTheme.bodyLarge?.copyWith(color: onSurfaceColor),
         hintStyle: textTheme.bodyLarge?.copyWith(
-          color: onSurfaceColor.withOpacity(0.7),
+          color: onSurfaceColor.withAlpha(178),
         ),
       ),
 
@@ -591,7 +591,7 @@ class ThemeStyleProvider {
           }
           return primaryColor;
         }),
-        overlayColor: WidgetStateProperty.all(primaryColor.withOpacity(0.1)),
+        overlayColor: WidgetStateProperty.all(primaryColor.withAlpha(25)),
         side: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.hovered) ||
               states.contains(WidgetState.focused)) {
@@ -637,7 +637,7 @@ class ThemeStyleProvider {
         }),
         backgroundColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.pressed)) {
-            return primaryColor.withOpacity(0.1);
+            return primaryColor.withAlpha(25);
           }
           return Colors.transparent;
         }),

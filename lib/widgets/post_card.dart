@@ -144,10 +144,10 @@ class PostCard extends StatelessWidget {
                 color:
                     highContrastMode
                         ? (isDarkMode
-                            ? Colors.white.withOpacity(0.6)
-                            : Colors.black.withOpacity(0.6))
+                            ? Colors.white.withAlpha(153)
+                            : Colors.black.withAlpha(153))
                         : (isDarkMode
-                            ? const Color(0xFF2D3748).withOpacity(0.6)
+                            ? const Color(0xFF2D3748).withAlpha(153)
                             : const Color(0xFFE2E8F0)),
                 height: 1,
               ),
@@ -189,7 +189,7 @@ class PostCard extends StatelessWidget {
             : const Color(0xFF8A4FFF);
 
     final borderColor =
-        highContrastMode ? Colors.white : Colors.white.withOpacity(0.2);
+        highContrastMode ? Colors.white : Colors.white.withAlpha(51);
 
     return Hero(
       tag: 'post-avatar-${post.id}',
@@ -205,7 +205,7 @@ class PostCard extends StatelessWidget {
                   ? null
                   : [
                     BoxShadow(
-                      color: const Color(0xFF8A4FFF).withOpacity(0.3),
+                      color: const Color(0xFF8A4FFF).withAlpha(76),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -333,7 +333,7 @@ class PostCard extends StatelessWidget {
             : const Color(0xFF8A4FFF);
 
     final bgColor =
-        highContrastMode ? Colors.transparent : accentColor.withOpacity(0.1);
+        highContrastMode ? Colors.transparent : accentColor.withAlpha(25);
 
     return AnimatedContainer(
       duration: ThemeProvider.animationDurationShort,

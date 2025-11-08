@@ -8,6 +8,7 @@
 // 2. Run the script:
 //    dart run lib/add_padding.dart
 //
+import 'package:flutter/foundation.dart';
 // This will create a padded version of your logo in the assets directory.
 
 import 'dart:io';

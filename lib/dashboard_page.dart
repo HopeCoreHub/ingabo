@@ -561,7 +561,7 @@ class _DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withAlpha(12),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -751,8 +751,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF3B82F6).withOpacity(0.1),
-                          const Color(0xFF3B82F6).withOpacity(0.05),
+                          const Color(0xFF3B82F6).withAlpha(25),
+                          const Color(0xFF3B82F6).withAlpha(12),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -824,7 +824,7 @@ class _DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withAlpha(12),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -998,7 +998,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withAlpha(25),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(icon, size: 16, color: statusColor),
@@ -1025,7 +1025,7 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
+                color: statusColor.withAlpha(25),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(

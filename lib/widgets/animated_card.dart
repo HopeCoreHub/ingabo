@@ -97,7 +97,9 @@ class _AnimatedCardState extends State<AnimatedCard>
         borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(_isHovering ? 0.1 : 0.05),
+            color: Colors.black.withValues(
+              alpha: ((_isHovering ? 0.1 : 0.05) * 255).round(),
+            ),
             blurRadius:
                 _isHovering ? widget.elevation * 3 : widget.elevation * 2,
             spreadRadius: _isHovering ? widget.elevation : widget.elevation / 2,

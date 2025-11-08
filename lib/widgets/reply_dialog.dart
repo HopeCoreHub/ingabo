@@ -148,7 +148,7 @@ class _ReplyDialogState extends State<ReplyDialog> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accentColor,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: accentColor.withOpacity(0.5),
+                    disabledBackgroundColor: accentColor.withAlpha(127),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

@@ -403,7 +403,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                 color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withAlpha(12),
                     blurRadius: 10,
                     spreadRadius: 0,
                     offset: const Offset(0, -5),
@@ -706,7 +706,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 ? null
                 : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withAlpha(15),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -725,7 +725,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 height: 60,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withAlpha(25),
                 ),
               ),
             ),
@@ -737,7 +737,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 height: 40,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: primaryColor.withOpacity(0.08),
+                  color: primaryColor.withAlpha(20),
                 ),
               ),
             ),
@@ -754,13 +754,13 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [primaryColor, primaryColor.withOpacity(0.8)],
+                        colors: [primaryColor, primaryColor.withAlpha(204)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: primaryColor.withOpacity(0.3),
+                          color: primaryColor.withAlpha(76),
                           blurRadius: 8,
                           spreadRadius: 1,
                           offset: const Offset(0, 3),
@@ -831,10 +831,12 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.red.withOpacity(0.1),
+                                        color: Colors.red.withAlpha(25),
                                         borderRadius: BorderRadius.circular(4),
                                         border: Border.all(
-                                          color: Colors.red.withOpacity(0.3),
+                                          color: Colors.red.withValues(
+                                            alpha: 76,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -892,11 +894,11 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                             color:
                                 highContrastMode
                                     ? (isDarkMode
-                                        ? Colors.white.withOpacity(0.1)
-                                        : Colors.black.withOpacity(0.1))
+                                        ? Colors.white.withAlpha(25)
+                                        : Colors.black.withAlpha(25))
                                     : (isDarkMode
-                                        ? primaryColor.withOpacity(0.2)
-                                        : primaryColor.withOpacity(0.1)),
+                                        ? primaryColor.withAlpha(51)
+                                        : primaryColor.withAlpha(25)),
                             borderRadius: BorderRadius.circular(30),
                           ),
                           child: Text(
@@ -928,11 +930,11 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       color:
                           highContrastMode
                               ? (isDarkMode
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.black.withOpacity(0.1))
+                                  ? Colors.white.withAlpha(25)
+                                  : Colors.black.withAlpha(25))
                               : (isDarkMode
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.black.withOpacity(0.05)),
+                                  ? Colors.white.withAlpha(25)
+                                  : Colors.black.withAlpha(12)),
                     ),
                     child: IconButton(
                       onPressed: () {
@@ -986,7 +988,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8A4FFF).withOpacity(0.1),
+                    color: const Color(0xFF8A4FFF).withAlpha(25),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -1193,7 +1195,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 ? null // No shadows in high contrast mode
                 : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withAlpha(15),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -1212,7 +1214,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 color: (isDarkMode
                         ? const Color(0xFF8A4FFF)
                         : const Color(0xFFE53935))
-                    .withOpacity(0.1),
+                    .withAlpha(25),
               ),
             ),
           ),
@@ -1232,7 +1234,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                           color: (isDarkMode
                                   ? const Color(0xFF8A4FFF)
                                   : const Color(0xFFE53935))
-                              .withOpacity(0.3),
+                              .withAlpha(76),
                           blurRadius: 15,
                           spreadRadius: 2,
                           offset: const Offset(0, 4),
@@ -1290,11 +1292,11 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                         color:
                             highContrastMode
                                 ? (isDarkMode
-                                    ? Colors.black.withOpacity(0.7)
-                                    : Colors.white.withOpacity(0.9))
+                                    ? Colors.black.withAlpha(178)
+                                    : Colors.white.withAlpha(229))
                                 : (isDarkMode
-                                    ? const Color(0xFF0F172A).withOpacity(0.7)
-                                    : Colors.white.withOpacity(0.9)),
+                                    ? const Color(0xFF0F172A).withAlpha(178)
+                                    : Colors.white.withAlpha(229)),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: LocalizedText(
@@ -1363,7 +1365,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       ? null // No shadows in high contrast mode
                       : [
                         BoxShadow(
-                          color: const Color(0xFFE53935).withOpacity(0.3),
+                          color: const Color(0xFFE53935).withAlpha(76),
                           blurRadius: 12,
                           spreadRadius: 1,
                           offset: const Offset(0, 6),
@@ -1374,7 +1376,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(14),
-                splashColor: Colors.white.withOpacity(0.1),
+                splashColor: Colors.white.withAlpha(25),
                 highlightColor: Colors.transparent,
                 onTap: () {
                   _playButtonPressAnimation();
@@ -1448,7 +1450,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                           color:
                               highContrastMode
                                   ? Colors.white
-                                  : Colors.white.withOpacity(0.2),
+                                  : Colors.white.withAlpha(51),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -1494,7 +1496,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                           color:
                               highContrastMode
                                   ? Colors.white
-                                  : Colors.white.withOpacity(0.2),
+                                  : Colors.white.withAlpha(51),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -1676,10 +1678,10 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       backgroundColor = color;
       textColor = Colors.white;
       iconColor = Colors.white;
-      iconBackgroundColor = Colors.white.withOpacity(0.2);
+      iconBackgroundColor = Colors.white.withAlpha(51);
       boxShadow = [
         BoxShadow(
-          color: color.withOpacity(0.25),
+          color: color.withAlpha(63),
           blurRadius: 10,
           spreadRadius: 0,
           offset: const Offset(0, 4),
@@ -1800,8 +1802,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 context,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color:
-                    highContrastMode ? textColor : textColor.withOpacity(0.8),
+                color: highContrastMode ? textColor : textColor.withAlpha(204),
               ),
             ),
           ],
@@ -1848,7 +1849,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 ? null // No shadows in high contrast mode
                 : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withAlpha(20),
                     blurRadius: 15,
                     offset: const Offset(0, 6),
                   ),
@@ -1901,10 +1902,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                             BoxShadow(
                               color:
                                   isDarkMode
-                                      ? const Color(0xFF8A4FFF).withOpacity(0.3)
-                                      : const Color(
-                                        0xFFE53935,
-                                      ).withOpacity(0.2),
+                                      ? const Color(0xFF8A4FFF).withAlpha(76)
+                                      : const Color(0xFFE53935).withAlpha(51),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -2083,8 +2082,12 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                     BoxShadow(
                                       color:
                                           isDarkMode
-                                              ? Colors.black.withOpacity(0.25)
-                                              : primaryColor.withOpacity(0.15),
+                                              ? Colors.black.withValues(
+                                                alpha: 63,
+                                              )
+                                              : primaryColor.withValues(
+                                                alpha: 38,
+                                              ),
                                       blurRadius: 10,
                                       spreadRadius: 0,
                                       offset: const Offset(0, 4),
@@ -2222,7 +2225,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Dismiss',
-      barrierColor: Colors.black87.withOpacity(0.6),
+      barrierColor: Colors.black87.withAlpha(153),
       transitionDuration: const Duration(milliseconds: 400),
       pageBuilder:
           (context, animation1, animation2) =>
@@ -2262,7 +2265,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                         height: 120,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: emotionColor.withOpacity(0.1),
+                          color: emotionColor.withAlpha(25),
                         ),
                       ),
                     ),
@@ -2274,7 +2277,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                         height: 150,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: emotionColor.withOpacity(0.15),
+                          color: emotionColor.withAlpha(38),
                         ),
                       ),
                     ),
@@ -2296,7 +2299,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                   color:
                                       (isDarkMode
                                           ? Colors.white10
-                                          : Colors.black.withOpacity(0.05)),
+                                          : Colors.black.withAlpha(12)),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
@@ -2447,8 +2450,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                             backgroundColor: emotionColor,
                                             foregroundColor: Colors.white,
                                             elevation: 4,
-                                            shadowColor: emotionColor
-                                                .withOpacity(0.4),
+                                            shadowColor: emotionColor.withAlpha(
+                                              102,
+                                            ),
                                             padding: const EdgeInsets.symmetric(
                                               vertical: 12,
                                             ),
@@ -2498,8 +2502,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                             backgroundColor:
                                                 isDarkMode
                                                     ? Colors.white10
-                                                    : Colors.black.withOpacity(
-                                                      0.05,
+                                                    : Colors.black.withValues(
+                                                      alpha: 12,
                                                     ),
                                             foregroundColor:
                                                 isDarkMode
@@ -2724,7 +2728,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   ? null // No shadows in high contrast mode
                   : [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withAlpha(12),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -2739,7 +2743,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 color:
                     highContrastMode
                         ? (isDarkMode ? Colors.white : Colors.black)
-                        : color.withOpacity(0.15),
+                        : color.withAlpha(38),
                 borderRadius: BorderRadius.circular(10),
                 border:
                     highContrastMode
@@ -2851,8 +2855,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   BoxShadow(
                     color:
                         isDarkMode
-                            ? const Color(0xFF2A205D).withOpacity(0.4)
-                            : primaryColor.withOpacity(0.15),
+                            ? const Color(0xFF2A205D).withAlpha(102)
+                            : primaryColor.withAlpha(38),
                     blurRadius: 12,
                     spreadRadius: 0,
                     offset: const Offset(0, 6),
@@ -2872,7 +2876,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 height: 70,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withAlpha(25),
                 ),
               ),
             ),
@@ -2884,7 +2888,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withAlpha(12),
                 ),
               ),
             ),
@@ -2901,7 +2905,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       color:
                           highContrastMode
                               ? (isDarkMode ? Colors.white : Colors.black)
-                              : Colors.white.withOpacity(0.2),
+                              : Colors.white.withAlpha(51),
                       shape: BoxShape.circle,
                       border:
                           highContrastMode
@@ -2952,8 +2956,10 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                     ? AccessibilityUtils.getAccessibleSurfaceColor(
                                       context,
                                     )
-                                    : Colors.white.withOpacity(
-                                      isDarkMode ? 0.1 : 0.8,
+                                    : Colors.white.withValues(
+                                      alpha:
+                                          ((isDarkMode ? 0.1 : 0.8) * 255)
+                                              .round(),
                                     ),
                             borderRadius: BorderRadius.circular(10),
                             border:
@@ -2971,7 +2977,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                     ? null // No shadows in high contrast mode
                                     : [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.03),
+                                        color: Colors.black.withValues(
+                                          alpha: 7,
+                                        ),
                                         blurRadius: 6,
                                         spreadRadius: 0,
                                         offset: const Offset(0, 2),
@@ -3045,7 +3053,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 ? null // No shadows in high contrast mode
                 : [
                   BoxShadow(
-                    color: const Color(0xFF9B1C1C).withOpacity(0.3),
+                    color: const Color(0xFF9B1C1C).withAlpha(76),
                     blurRadius: 12,
                     spreadRadius: 0,
                     offset: const Offset(0, 6),
@@ -3065,7 +3073,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 height: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withAlpha(12),
                 ),
               ),
             ),
@@ -3077,7 +3085,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 height: 70,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withAlpha(12),
                 ),
               ),
             ),
@@ -3097,9 +3105,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                           color:
                               highContrastMode
                                   ? (isDarkMode
-                                      ? Colors.white.withOpacity(0.2)
-                                      : Colors.black.withOpacity(0.2))
-                                  : Colors.white.withOpacity(0.2),
+                                      ? Colors.white.withAlpha(51)
+                                      : Colors.black.withAlpha(51))
+                                  : Colors.white.withAlpha(51),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -3134,9 +3142,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       color:
                           highContrastMode
                               ? (isDarkMode
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.black.withOpacity(0.1))
-                              : Colors.white.withOpacity(0.1),
+                                  ? Colors.white.withAlpha(25)
+                                  : Colors.black.withAlpha(25))
+                              : Colors.white.withAlpha(25),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
@@ -3174,9 +3182,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       color:
                           highContrastMode
                               ? (isDarkMode
-                                  ? Colors.white.withOpacity(0.8)
-                                  : Colors.black.withOpacity(0.8))
-                              : Colors.white.withOpacity(0.8),
+                                  ? Colors.white.withAlpha(204)
+                                  : Colors.black.withAlpha(204))
+                              : Colors.white.withAlpha(204),
                     ),
                   ),
                 ],
@@ -3200,9 +3208,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       color:
           highContrastMode
               ? (isDarkMode
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.black.withOpacity(0.1))
-              : Colors.white.withOpacity(0.1),
+                  ? Colors.white.withAlpha(25)
+                  : Colors.black.withAlpha(25))
+              : Colors.white.withAlpha(25),
     );
   }
 
@@ -3221,9 +3229,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
             color:
                 highContrastMode
                     ? (isDarkMode
-                        ? Colors.white.withOpacity(0.1)
-                        : Colors.black.withOpacity(0.1))
-                    : Colors.white.withOpacity(0.1),
+                        ? Colors.white.withAlpha(25)
+                        : Colors.black.withAlpha(25))
+                    : Colors.white.withAlpha(25),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -3247,9 +3255,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 color:
                     highContrastMode
                         ? (isDarkMode
-                            ? Colors.white.withOpacity(0.8)
-                            : Colors.black.withOpacity(0.8))
-                        : Colors.white.withOpacity(0.8),
+                            ? Colors.white.withAlpha(204)
+                            : Colors.black.withAlpha(204))
+                        : Colors.white.withAlpha(204),
               ),
             ),
             const SizedBox(height: 1),
@@ -3276,9 +3284,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
               color:
                   highContrastMode
                       ? (isDarkMode
-                          ? Colors.white.withOpacity(0.2)
-                          : Colors.black.withOpacity(0.2))
-                      : Colors.white.withOpacity(0.2),
+                          ? Colors.white.withAlpha(51)
+                          : Colors.black.withAlpha(51))
+                      : Colors.white.withAlpha(51),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -3609,7 +3617,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
         context: context,
         barrierDismissible: true,
         barrierLabel: 'Dismiss',
-        barrierColor: Colors.black87.withOpacity(0.6),
+        barrierColor: Colors.black87.withAlpha(153),
         transitionDuration: const Duration(milliseconds: 400),
         pageBuilder:
             (context, animation1, animation2) =>
@@ -3649,7 +3657,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                           height: 100,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: resourceColor.withOpacity(0.1),
+                            color: resourceColor.withAlpha(25),
                           ),
                         ),
                       ),
@@ -3661,7 +3669,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                           height: 120,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: resourceColor.withOpacity(0.15),
+                            color: resourceColor.withAlpha(38),
                           ),
                         ),
                       ),
@@ -3678,7 +3686,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: resourceColor.withOpacity(0.15),
+                                    color: resourceColor.withAlpha(38),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Icon(
@@ -3709,7 +3717,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                       color:
                                           (isDarkMode
                                               ? Colors.white10
-                                              : Colors.black.withOpacity(0.05)),
+                                              : Colors.black.withValues(
+                                                alpha: 12,
+                                              )),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
@@ -3729,7 +3739,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               child: Divider(
-                                color: resourceColor.withOpacity(0.2),
+                                color: resourceColor.withAlpha(51),
                                 thickness: 1,
                               ),
                             ),
@@ -3783,7 +3793,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                     backgroundColor: resourceColor,
                                     foregroundColor: Colors.white,
                                     elevation: 4,
-                                    shadowColor: resourceColor.withOpacity(0.4),
+                                    shadowColor: resourceColor.withValues(
+                                      alpha: 102,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -4013,9 +4025,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
         margin: const EdgeInsets.only(bottom: 14.0),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: resourceColor.withOpacity(0.08),
+          color: resourceColor.withAlpha(20),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: resourceColor.withOpacity(0.15), width: 1),
+          border: Border.all(color: resourceColor.withAlpha(38), width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -4023,7 +4035,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: resourceColor.withOpacity(0.15),
+                color: resourceColor.withAlpha(38),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.check, color: resourceColor, size: 14),
@@ -4076,7 +4088,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withAlpha(25),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
@@ -4275,14 +4287,14 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
         decoration: BoxDecoration(
           color:
               isDarkMode
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.1),
+                  ? Colors.white.withAlpha(25)
+                  : Colors.grey.withAlpha(25),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
                 isDarkMode
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.grey.withOpacity(0.2),
+                    ? Colors.white.withAlpha(25)
+                    : Colors.grey.withAlpha(51),
           ),
         ),
         child: Column(
@@ -4430,8 +4442,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       filled: true,
                       fillColor:
                           isDarkMode
-                              ? Colors.white.withOpacity(0.1)
-                              : Colors.grey.withOpacity(0.1),
+                              ? Colors.white.withAlpha(25)
+                              : Colors.grey.withAlpha(25),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -4445,8 +4457,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       filled: true,
                       fillColor:
                           isDarkMode
-                              ? Colors.white.withOpacity(0.1)
-                              : Colors.grey.withOpacity(0.1),
+                              ? Colors.white.withAlpha(25)
+                              : Colors.grey.withAlpha(25),
                     ),
                     keyboardType: TextInputType.phone,
                   ),
@@ -4461,8 +4473,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       filled: true,
                       fillColor:
                           isDarkMode
-                              ? Colors.white.withOpacity(0.1)
-                              : Colors.grey.withOpacity(0.1),
+                              ? Colors.white.withAlpha(25)
+                              : Colors.grey.withAlpha(25),
                     ),
                     maxLines: 3,
                   ),

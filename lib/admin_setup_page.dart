@@ -165,9 +165,9 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
+                      color: Colors.red.withAlpha(25),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                      border: Border.all(color: Colors.red.withAlpha(76)),
                     ),
                     child: Text(
                       _errorMessage!,

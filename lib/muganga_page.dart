@@ -386,10 +386,10 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                 : LinearGradient(
                   colors: [
                     isDarkMode
-                        ? const Color(0xFF2D3748).withOpacity(0.8)
+                        ? const Color(0xFF2D3748).withAlpha(204)
                         : const Color(0xFFF5F7FA),
                     isDarkMode
-                        ? const Color(0xFF1E293B).withOpacity(0.9)
+                        ? const Color(0xFF1E293B).withAlpha(229)
                         : const Color(0xFFEDF2F7),
                   ],
                   begin: Alignment.topLeft,
@@ -405,7 +405,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                 ? null
                 : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withAlpha(25),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -415,8 +415,8 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
               highContrastMode
                   ? (isDarkMode ? Colors.white : Colors.black)
                   : (isDarkMode
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.black.withOpacity(0.05)),
+                      ? Colors.white.withAlpha(25)
+                      : Colors.black.withAlpha(12)),
           width: highContrastMode ? 2.0 : 1.0,
         ),
       ),
@@ -428,7 +428,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.1),
+                color: accentColor.withAlpha(25),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -512,10 +512,10 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                 : LinearGradient(
                   colors: [
                     isDarkMode
-                        ? const Color(0xFF2D3748).withOpacity(0.8)
+                        ? const Color(0xFF2D3748).withAlpha(204)
                         : const Color(0xFFF5F7FA),
                     isDarkMode
-                        ? const Color(0xFF1E293B).withOpacity(0.9)
+                        ? const Color(0xFF1E293B).withAlpha(229)
                         : const Color(0xFFEDF2F7),
                   ],
                   begin: Alignment.topLeft,
@@ -531,7 +531,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                 ? null
                 : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withAlpha(25),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -541,8 +541,8 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
               highContrastMode
                   ? (isDarkMode ? Colors.white : Colors.black)
                   : (isDarkMode
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.black.withOpacity(0.05)),
+                      ? Colors.white.withAlpha(25)
+                      : Colors.black.withAlpha(12)),
           width: highContrastMode ? 2.0 : 1.0,
         ),
       ),
@@ -553,14 +553,14 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFFFF9800).withOpacity(0.2),
+              color: const Color(0xFFFF9800).withAlpha(51),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
               ),
               border: Border(
                 bottom: BorderSide(
-                  color: const Color(0xFFFF9800).withOpacity(0.3),
+                  color: const Color(0xFFFF9800).withAlpha(76),
                   width: 1,
                 ),
               ),
@@ -593,7 +593,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -631,8 +631,8 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                 Divider(
                   color:
                       isDarkMode
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.black.withOpacity(0.1),
+                          ? Colors.white.withAlpha(25)
+                          : Colors.black.withAlpha(25),
                 ),
                 const SizedBox(height: 16),
                 // Status info
@@ -641,14 +641,14 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                   decoration: BoxDecoration(
                     color:
                         isDarkMode
-                            ? Colors.black.withOpacity(0.2)
-                            : Colors.white.withOpacity(0.5),
+                            ? Colors.black.withAlpha(51)
+                            : Colors.white.withAlpha(127),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color:
                           isDarkMode
-                              ? Colors.white.withOpacity(0.05)
-                              : Colors.black.withOpacity(0.05),
+                              ? Colors.white.withAlpha(12)
+                              : Colors.black.withAlpha(12),
                     ),
                   ),
                   child: Column(
@@ -658,7 +658,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.1),
+                              color: Colors.blue.withAlpha(25),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -696,8 +696,8 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                           decoration: BoxDecoration(
                             color:
                                 isDarkMode
-                                    ? Colors.white.withOpacity(0.05)
-                                    : Colors.black.withOpacity(0.05),
+                                    ? Colors.white.withAlpha(12)
+                                    : Colors.black.withAlpha(12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -819,15 +819,12 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.green.withOpacity(0.1),
-            Colors.green.withOpacity(0.05),
-          ],
+          colors: [Colors.green.withAlpha(25), Colors.green.withAlpha(12)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.green.withOpacity(0.3), width: 1.0),
+        border: Border.all(color: Colors.green.withAlpha(76), width: 1.0),
       ),
       child: Column(
         children: [
@@ -836,7 +833,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.2),
+              color: Colors.green.withAlpha(51),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -866,7 +863,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.psychology, size: 32, color: Colors.green),
@@ -896,8 +893,8 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                     decoration: BoxDecoration(
                       color:
                           isDarkMode
-                              ? Colors.white.withOpacity(0.05)
-                              : Colors.black.withOpacity(0.05),
+                              ? Colors.white.withAlpha(12)
+                              : Colors.black.withAlpha(12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -960,12 +957,12 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.red.withOpacity(0.1), Colors.red.withOpacity(0.05)],
+          colors: [Colors.red.withAlpha(25), Colors.red.withAlpha(12)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red.withOpacity(0.3), width: 1.0),
+        border: Border.all(color: Colors.red.withAlpha(76), width: 1.0),
       ),
       child: Column(
         children: [
@@ -974,7 +971,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.2),
+              color: Colors.red.withAlpha(51),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -1004,7 +1001,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.error_outline, size: 32, color: Colors.red),
@@ -1083,15 +1080,12 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.orange.withOpacity(0.1),
-            Colors.orange.withOpacity(0.05),
-          ],
+          colors: [Colors.orange.withAlpha(25), Colors.orange.withAlpha(12)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1.0),
+        border: Border.all(color: Colors.orange.withAlpha(76), width: 1.0),
       ),
       child: Column(
         children: [
@@ -1100,7 +1094,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.2),
+              color: Colors.orange.withAlpha(51),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -1130,7 +1124,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.schedule, size: 32, color: Colors.orange),
@@ -1274,12 +1268,12 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                       decoration: BoxDecoration(
                         color: Theme.of(
                           context,
-                        ).colorScheme.primaryContainer.withOpacity(0.1),
+                        ).colorScheme.primaryContainer.withAlpha(25),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: Theme.of(
                             context,
-                          ).colorScheme.primary.withOpacity(0.3),
+                          ).colorScheme.primary.withAlpha(76),
                         ),
                       ),
                       child: Column(
@@ -1303,7 +1297,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                                 decoration: BoxDecoration(
                                   color: _getStatusColor(
                                     _subscriptionData!['status'] as String?,
-                                  ).withOpacity(0.2),
+                                  ).withAlpha(51),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -1356,7 +1350,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                             size: 48,
                             color: Theme.of(
                               context,
-                            ).colorScheme.onSurface.withOpacity(0.3),
+                            ).colorScheme.onSurface.withAlpha(76),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -1364,7 +1358,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                             style: TextStyle(
                               color: Theme.of(
                                 context,
-                              ).colorScheme.onSurface.withOpacity(0.6),
+                              ).colorScheme.onSurface.withAlpha(153),
                             ),
                           ),
                         ],
@@ -1396,7 +1390,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
               '$label:',
               style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withAlpha(178),
               ),
             ),
           ),
@@ -1457,10 +1451,10 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
             decoration: BoxDecoration(
               color:
                   isDone
-                      ? Colors.green.withOpacity(0.1)
+                      ? Colors.green.withAlpha(25)
                       : isDarkMode
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.black.withOpacity(0.05),
+                      ? Colors.white.withAlpha(25)
+                      : Colors.black.withAlpha(12),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -1723,7 +1717,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF8A4FFF).withOpacity(0.4),
+                      color: const Color(0xFF8A4FFF).withAlpha(102),
                       blurRadius: 20,
                       spreadRadius: 5,
                       offset: const Offset(0, 10),
@@ -1743,13 +1737,13 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                               colors: [
-                                const Color(0xFF6E40C9).withOpacity(0.8),
-                                const Color(0xFF8A4FFF).withOpacity(0.8),
+                                const Color(0xFF6E40C9).withAlpha(204),
+                                const Color(0xFF8A4FFF).withAlpha(204),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withAlpha(51),
                               width: 1.5,
                             ),
                           ),
@@ -1770,9 +1764,9 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                                 height: 80,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withAlpha(51),
                                   border: Border.all(
-                                    color: Colors.white.withOpacity(0.5),
+                                    color: Colors.white.withAlpha(127),
                                     width: 2,
                                   ),
                                 ),
@@ -1807,7 +1801,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withAlpha(229),
                                   height: 1.5,
                                 ),
                               ),
@@ -1815,10 +1809,10 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                               // Transaction ID field with glass effect
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.15),
+                                  color: Colors.white.withAlpha(38),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: Colors.white.withOpacity(0.3),
+                                    color: Colors.white.withAlpha(76),
                                     width: 1,
                                   ),
                                 ),
@@ -1831,7 +1825,9 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                                   decoration: InputDecoration(
                                     hintText: 'Transaction ID',
                                     hintStyle: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
+                                      color: Colors.white.withValues(
+                                        alpha: 178,
+                                      ),
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 16,
@@ -1840,7 +1836,9 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                                     border: InputBorder.none,
                                     prefixIcon: Icon(
                                       Icons.receipt_long,
-                                      color: Colors.white.withOpacity(0.7),
+                                      color: Colors.white.withValues(
+                                        alpha: 178,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1850,10 +1848,10 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.1),
+                                  color: Colors.white.withAlpha(25),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white.withAlpha(51),
                                     width: 1,
                                   ),
                                 ),
@@ -1862,7 +1860,9 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
+                                        color: Colors.white.withValues(
+                                          alpha: 51,
+                                        ),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
@@ -1877,7 +1877,9 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                                         'pleaseWaitForOurTeamToConfirmYourTransaction',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          color: Colors.white.withOpacity(0.9),
+                                          color: Colors.white.withValues(
+                                            alpha: 229,
+                                          ),
                                           height: 1.4,
                                         ),
                                       ),
@@ -1891,10 +1893,10 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Colors.red.withOpacity(0.1),
+                                    color: Colors.red.withAlpha(25),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: Colors.red.withOpacity(0.3),
+                                      color: Colors.red.withAlpha(76),
                                       width: 1,
                                     ),
                                   ),
@@ -1927,7 +1929,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.white.withOpacity(0.2),
+                                      color: Colors.white.withAlpha(51),
                                       blurRadius: 15,
                                       spreadRadius: 0,
                                     ),
@@ -2095,7 +2097,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                           shape: BoxShape.circle,
                           gradient: RadialGradient(
                             colors: [
-                              Colors.white.withOpacity(0.1),
+                              Colors.white.withAlpha(25),
                               Colors.transparent,
                             ],
                           ),
@@ -2112,7 +2114,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                           shape: BoxShape.circle,
                           gradient: RadialGradient(
                             colors: [
-                              Colors.white.withOpacity(0.05),
+                              Colors.white.withAlpha(12),
                               Colors.transparent,
                             ],
                           ),
@@ -2128,7 +2130,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withAlpha(51),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -2261,7 +2263,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                 ? null // No shadows in high contrast mode
                 : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withAlpha(12),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),

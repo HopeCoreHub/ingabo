@@ -426,7 +426,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                 ? null
                 : [
                   BoxShadow(
-                    color: accentColor.withOpacity(0.25),
+                    color: accentColor.withAlpha(63),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -445,9 +445,9 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                   color:
                       highContrastMode
                           ? (isDarkMode
-                              ? Colors.white.withOpacity(0.2)
-                              : Colors.black.withOpacity(0.2))
-                          : Colors.white.withOpacity(0.2),
+                              ? Colors.white.withAlpha(51)
+                              : Colors.black.withAlpha(51))
+                          : Colors.white.withAlpha(51),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -525,11 +525,9 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                     ? (isSelected
                         ? (isDarkMode ? Colors.white : Colors.black)
                         : (isDarkMode
-                            ? Colors.white.withOpacity(0.3)
-                            : Colors.black.withOpacity(0.3)))
-                    : (isSelected
-                        ? Colors.white
-                        : Colors.white.withOpacity(0.3)),
+                            ? Colors.white.withAlpha(76)
+                            : Colors.black.withAlpha(76)))
+                    : (isSelected ? Colors.white : Colors.white.withAlpha(76)),
             border:
                 highContrastMode && isSelected
                     ? Border.all(
@@ -581,9 +579,9 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                   color:
                       highContrastMode
                           ? (isDarkMode
-                              ? Colors.white.withOpacity(0.3)
-                              : Colors.black.withOpacity(0.3))
-                          : accentColor.withOpacity(0.3),
+                              ? Colors.white.withAlpha(76)
+                              : Colors.black.withAlpha(76))
+                          : accentColor.withAlpha(76),
                 ),
                 child: Icon(
                   Icons.smart_toy_outlined,
@@ -722,9 +720,9 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
               color:
                   highContrastMode
                       ? (isDarkMode
-                          ? Colors.white.withOpacity(0.7)
-                          : Colors.black.withOpacity(0.7))
-                      : accentColor.withOpacity(0.7),
+                          ? Colors.white.withAlpha(178)
+                          : Colors.black.withAlpha(178))
+                      : accentColor.withAlpha(178),
             ),
             child: AnimatedBuilder(
               animation: _typingAnimController,
@@ -883,14 +881,18 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                                     Icon(
                                       Icons.flag_outlined,
                                       size: 12,
-                                      color: Colors.white.withOpacity(0.6),
+                                      color: Colors.white.withValues(
+                                        alpha: 153,
+                                      ),
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       'Report',
                                       style: TextStyle(
                                         fontSize: 10,
-                                        color: Colors.white.withOpacity(0.6),
+                                        color: Colors.white.withValues(
+                                          alpha: 153,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -973,7 +975,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                 ? null
                 : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withAlpha(12),
                     blurRadius: 10,
                     offset: const Offset(0, -5),
                   ),
@@ -988,8 +990,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                 color:
                     highContrastMode
                         ? (isDarkMode
-                            ? Colors.white.withOpacity(0.1)
-                            : Colors.black.withOpacity(0.1))
+                            ? Colors.white.withAlpha(25)
+                            : Colors.black.withAlpha(25))
                         : (isDarkMode ? Colors.black : const Color(0xFFF1F5F9)),
                 borderRadius: BorderRadius.circular(24),
                 border:

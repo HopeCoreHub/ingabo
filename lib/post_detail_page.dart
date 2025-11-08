@@ -152,14 +152,14 @@ class _PostDetailPageState extends State<PostDetailPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [accentColor, accentColor.withOpacity(0.7)],
+          colors: [accentColor, accentColor.withAlpha(178)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withOpacity(0.3),
+            color: accentColor.withAlpha(76),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -172,7 +172,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withAlpha(51),
             ),
             child: Center(
               child: Text(
@@ -211,14 +211,14 @@ class _PostDetailPageState extends State<PostDetailPage> {
         decoration: BoxDecoration(
           color:
               widget.post.isSyncedWithCloud
-                  ? Colors.green.withOpacity(0.2)
-                  : Colors.orange.withOpacity(0.2),
+                  ? Colors.green.withAlpha(51)
+                  : Colors.orange.withAlpha(51),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
                 widget.post.isSyncedWithCloud
-                    ? Colors.green.withOpacity(0.3)
-                    : Colors.orange.withOpacity(0.3),
+                    ? Colors.green.withAlpha(76)
+                    : Colors.orange.withAlpha(76),
             width: 1,
           ),
         ),

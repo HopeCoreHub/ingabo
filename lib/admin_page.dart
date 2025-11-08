@@ -337,20 +337,20 @@ class _SubscriptionListState extends State<SubscriptionList> {
         if (isDarkMode) {
           // Dark mode colors
           if (subscription['status'] == 'approved') {
-            cardColor = Colors.green.withOpacity(0.1);
+            cardColor = Colors.green.withValues(alpha: ((0.1 * 255).round()));
           } else if (subscription['status'] == 'rejected') {
-            cardColor = Colors.red.withOpacity(0.1);
+            cardColor = Colors.red.withValues(alpha: ((0.1 * 255).round()));
           } else {
-            cardColor = Colors.orange.withOpacity(0.1);
+            cardColor = Colors.orange.withValues(alpha: ((0.1 * 255).round()));
           }
         } else {
           // Light mode colors
           if (subscription['status'] == 'approved') {
-            cardColor = Colors.green.withOpacity(0.05);
+            cardColor = Colors.green.withValues(alpha: ((0.05 * 255).round()));
           } else if (subscription['status'] == 'rejected') {
-            cardColor = Colors.red.withOpacity(0.05);
+            cardColor = Colors.red.withValues(alpha: ((0.05 * 255).round()));
           } else {
-            cardColor = Colors.orange.withOpacity(0.05);
+            cardColor = Colors.orange.withValues(alpha: ((0.05 * 255).round()));
           }
         }
 
@@ -360,7 +360,9 @@ class _SubscriptionListState extends State<SubscriptionList> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
-              color: _getStatusColor(subscription['status']).withOpacity(0.3),
+              color: _getStatusColor(
+                subscription['status'],
+              ).withValues(alpha: ((0.3 * 255).round())),
               width: 1,
             ),
           ),
@@ -378,12 +380,12 @@ class _SubscriptionListState extends State<SubscriptionList> {
                   decoration: BoxDecoration(
                     color: _getStatusColor(
                       subscription['status'],
-                    ).withOpacity(0.1),
+                    ).withAlpha(25),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: _getStatusColor(
                         subscription['status'],
-                      ).withOpacity(0.3),
+                      ).withAlpha(76),
                     ),
                   ),
                   child: Text(
@@ -451,14 +453,14 @@ class _SubscriptionListState extends State<SubscriptionList> {
                   decoration: BoxDecoration(
                     color:
                         isDarkMode
-                            ? Colors.black.withOpacity(0.2)
-                            : Colors.white.withOpacity(0.7),
+                            ? Colors.black.withAlpha(51)
+                            : Colors.white.withAlpha(178),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color:
                           isDarkMode
-                              ? Colors.white.withOpacity(0.05)
-                              : Colors.black.withOpacity(0.05),
+                              ? Colors.white.withAlpha(12)
+                              : Colors.black.withAlpha(12),
                     ),
                   ),
                   child: Column(

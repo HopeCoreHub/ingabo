@@ -339,9 +339,9 @@ class _ContentModerationPageState extends State<ContentModerationPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withAlpha(25),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.red.withOpacity(0.3)),
+                  border: Border.all(color: Colors.red.withAlpha(76)),
                 ),
                 child: Text(
                   contentTypeLabel,
@@ -356,9 +356,9 @@ class _ContentModerationPageState extends State<ContentModerationPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: Colors.orange.withAlpha(25),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  border: Border.all(color: Colors.orange.withAlpha(76)),
                 ),
                 child: Text(
                   reasonLabel,

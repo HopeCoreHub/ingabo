@@ -148,8 +148,8 @@ class _PostCreationDialogState extends State<PostCreationDialog>
                   BoxShadow(
                     color:
                         isDarkMode
-                            ? const Color(0xFF8A4FFF).withOpacity(0.3)
-                            : const Color(0xFFE53935).withOpacity(0.3),
+                            ? const Color(0xFF8A4FFF).withAlpha(76)
+                            : const Color(0xFFE53935).withAlpha(76),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -336,9 +336,9 @@ class _PostCreationDialogState extends State<PostCreationDialog>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accentColor,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: accentColor.withOpacity(0.5),
+                    disabledBackgroundColor: accentColor.withAlpha(127),
                     elevation: 2,
-                    shadowColor: accentColor.withOpacity(0.3),
+                    shadowColor: accentColor.withAlpha(76),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

@@ -423,7 +423,7 @@ class _AuthPageState extends State<AuthPage>
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8A4FFF).withOpacity(0.1),
+                    color: const Color(0xFF8A4FFF).withAlpha(25),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -627,9 +627,9 @@ class _AuthPageState extends State<AuthPage>
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
+        color: Colors.red.withAlpha(25),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.withOpacity(0.3)),
+        border: Border.all(color: Colors.red.withAlpha(76)),
       ),
       child: Row(
         children: [
@@ -652,9 +652,9 @@ class _AuthPageState extends State<AuthPage>
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Colors.green.withAlpha(25),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.green.withOpacity(0.3)),
+        border: Border.all(color: Colors.green.withAlpha(76)),
       ),
       child: Row(
         children: [
@@ -1044,7 +1044,7 @@ class _AuthPageState extends State<AuthPage>
         style: ElevatedButton.styleFrom(
           backgroundColor: accentColor,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: accentColor.withOpacity(0.5),
+          disabledBackgroundColor: accentColor.withAlpha(127),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -1148,7 +1148,7 @@ class _AuthPageState extends State<AuthPage>
             height: 300,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF8A4FFF).withOpacity(0.2),
+              color: const Color(0xFF8A4FFF).withAlpha(51),
             ),
           ),
         ),
@@ -1160,7 +1160,7 @@ class _AuthPageState extends State<AuthPage>
             height: 250,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFA855F7).withOpacity(0.15),
+              color: const Color(0xFFA855F7).withAlpha(38),
             ),
           ),
         ),
@@ -1182,7 +1182,7 @@ class _AuthPageState extends State<AuthPage>
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFA855F7).withOpacity(0.3),
+                color: const Color(0xFFA855F7).withAlpha(76),
                 blurRadius: 20,
                 spreadRadius: 5,
               ),
@@ -1204,8 +1204,9 @@ class _AuthPageState extends State<AuthPage>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: (isDarkMode ? Colors.black : Colors.grey.shade200)
-                .withOpacity(0.3),
+            color: (isDarkMode ? Colors.black : Colors.grey.shade200).withAlpha(
+              76,
+            ),
             borderRadius: BorderRadius.circular(30),
           ),
           child: Text(

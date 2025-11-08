@@ -352,7 +352,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.15),
+                    color: accentColor.withAlpha(38),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -468,14 +468,14 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [accentColor, accentColor.withOpacity(0.7)],
+          colors: [accentColor, accentColor.withAlpha(178)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withOpacity(0.25),
+            color: accentColor.withAlpha(63),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -489,11 +489,8 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
             height: 42,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.2),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.5),
-                width: 2,
-              ),
+              color: Colors.white.withAlpha(51),
+              border: Border.all(color: Colors.white.withAlpha(127), width: 2),
             ),
             child: Center(
               child: Text(
@@ -526,7 +523,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
                       ? 'You are browsing as a guest'
                       : 'Logged in as ${authService.userId}',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withAlpha(204),
                     fontSize: 12,
                   ),
                 ),
@@ -537,7 +534,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
             duration: ThemeProvider.animationDurationMedium,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withAlpha(38),
             ),
             child: IconButton(
               onPressed: _handleLogout,
@@ -618,7 +615,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withAlpha(10),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -691,8 +688,8 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
               style: TextStyle(
                 color:
                     isDarkMode
-                        ? Colors.white.withOpacity(0.8)
-                        : Colors.black87.withOpacity(0.8),
+                        ? Colors.white.withAlpha(204)
+                        : Colors.black87.withAlpha(204),
                 fontSize: 12,
               ),
             ),

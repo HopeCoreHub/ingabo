@@ -542,8 +542,8 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF3B82F6).withOpacity(0.1),
-                          const Color(0xFF3B82F6).withOpacity(0.05),
+                          const Color(0xFF3B82F6).withAlpha(25),
+                          const Color(0xFF3B82F6).withAlpha(12),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -669,7 +669,7 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
+              color: statusColor.withAlpha(25),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 20, color: statusColor),
@@ -700,7 +700,7 @@ class _MobileDashboardPageState extends State<MobileDashboardPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
+              color: statusColor.withAlpha(25),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(

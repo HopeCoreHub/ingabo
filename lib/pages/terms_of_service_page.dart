@@ -136,7 +136,7 @@ class TermsOfServicePage extends StatelessWidget {
         color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05),
+          color: isDarkMode ? Colors.white12 : Colors.black.withAlpha(12),
         ),
       ),
       child: Column(
@@ -298,8 +298,7 @@ class TermsOfServicePage extends StatelessWidget {
                 isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color:
-                  isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05),
+              color: isDarkMode ? Colors.white12 : Colors.black.withAlpha(12),
             ),
           ),
           child: Column(
@@ -394,7 +393,7 @@ class TermsOfServicePage extends StatelessWidget {
         color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05),
+          color: isDarkMode ? Colors.white12 : Colors.black.withAlpha(12),
         ),
       ),
       child: Column(

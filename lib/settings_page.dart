@@ -328,7 +328,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 ? null // No shadows in high contrast mode
                 : [
                   BoxShadow(
-                    color: const Color(0xFF8A4FFF).withOpacity(0.25),
+                    color: const Color(0xFF8A4FFF).withAlpha(63),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -456,7 +456,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 color:
                     highContrastMode
                         ? (isDarkMode ? Colors.white : Colors.black)
-                        : Colors.white.withOpacity(0.2),
+                        : Colors.white.withAlpha(51),
                 borderRadius: BorderRadius.circular(16),
                 border:
                     highContrastMode
@@ -509,7 +509,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
               color:
                   highContrastMode
                       ? (isDarkMode ? Colors.white : Colors.black)
-                      : accentColor.withOpacity(0.15),
+                      : accentColor.withAlpha(38),
               borderRadius: BorderRadius.circular(8),
               border:
                   highContrastMode
@@ -687,8 +687,10 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 : Colors.grey,
         inactiveTrackColor:
             highContrastMode
-                ? (isDarkMode ? Colors.black : Colors.white).withOpacity(0.5)
-                : Colors.grey.withOpacity(0.3),
+                ? (isDarkMode ? Colors.black : Colors.white).withValues(
+                  alpha: 127,
+                )
+                : Colors.grey.withAlpha(76),
       ),
     );
   }
@@ -981,7 +983,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                     ),
                     tileColor:
                         isSelected
-                            ? accentColor.withOpacity(0.1)
+                            ? accentColor.withAlpha(25)
                             : Colors.transparent,
                     leading:
                         isSelected
@@ -1161,7 +1163,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                     ),
                     tileColor:
                         isSelected
-                            ? accentColor.withOpacity(0.1)
+                            ? accentColor.withAlpha(25)
                             : Colors.transparent,
                     leading:
                         isSelected
@@ -1355,7 +1357,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                   color:
                       highContrastMode
                           ? AccessibilityUtils.getAccessibleBorderColor(context)
-                          : accentColor.withOpacity(0.5),
+                          : accentColor.withAlpha(127),
                   width: highContrastMode ? 2.0 : 1,
                 ),
               ),
@@ -1451,7 +1453,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         decoration: BoxDecoration(
           color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.red.withOpacity(0.5), width: 1),
+          border: Border.all(color: Colors.red.withAlpha(127), width: 1),
         ),
         child: Row(
           children: [
@@ -1561,7 +1563,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 ? null // No shadows in high contrast mode
                 : [
                   BoxShadow(
-                    color: const Color(0xFF6B1D1D).withOpacity(0.3),
+                    color: const Color(0xFF6B1D1D).withAlpha(76),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
@@ -1601,9 +1603,9 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
               color:
                   highContrastMode
                       ? (isDarkMode
-                          ? Colors.white.withOpacity(0.2)
-                          : Colors.black.withOpacity(0.2))
-                      : Colors.white.withOpacity(0.2),
+                          ? Colors.white.withAlpha(51)
+                          : Colors.black.withAlpha(51))
+                      : Colors.white.withAlpha(51),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -1612,9 +1614,9 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 color:
                     highContrastMode
                         ? (isDarkMode
-                            ? Colors.white.withOpacity(0.9)
-                            : Colors.black.withOpacity(0.9))
-                        : Colors.white.withOpacity(0.9),
+                            ? Colors.white.withAlpha(229)
+                            : Colors.black.withAlpha(229))
+                        : Colors.white.withAlpha(229),
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
               ),
@@ -1643,7 +1645,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                         ? null
                         : [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withAlpha(51),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -1784,9 +1786,11 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.red.withOpacity(isDarkMode ? 0.2 : 0.1),
+          color: Colors.red.withValues(
+            alpha: ((isDarkMode ? 0.2 : 0.1) * 255).round(),
+          ),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.red.withOpacity(0.5)),
+          border: Border.all(color: Colors.red.withAlpha(127)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1838,17 +1842,17 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
           color:
               highContrastMode
                   ? (isDarkMode
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.black.withOpacity(0.1))
-                  : Colors.white.withOpacity(0.1),
+                      ? Colors.white.withAlpha(25)
+                      : Colors.black.withAlpha(25))
+                  : Colors.white.withAlpha(25),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
                 highContrastMode
                     ? (isDarkMode
-                        ? Colors.white.withOpacity(0.2)
-                        : Colors.black.withOpacity(0.2))
-                    : Colors.white.withOpacity(0.2),
+                        ? Colors.white.withAlpha(51)
+                        : Colors.black.withAlpha(51))
+                    : Colors.white.withAlpha(51),
             width: 1,
           ),
         ),
@@ -1885,9 +1889,9 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                     color:
                         highContrastMode
                             ? (isDarkMode
-                                ? Colors.white.withOpacity(0.2)
-                                : Colors.black.withOpacity(0.2))
-                            : Colors.white.withOpacity(0.2),
+                                ? Colors.white.withAlpha(51)
+                                : Colors.black.withAlpha(51))
+                            : Colors.white.withAlpha(51),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Icon(
@@ -1961,8 +1965,8 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
             'Built with love for survivors and their healing journey ❤️',
             style: TextStyle(
               fontSize: 12,
-              color: (isDarkMode ? Colors.white : Colors.black).withOpacity(
-                0.5,
+              color: (isDarkMode ? Colors.white : Colors.black).withValues(
+                alpha: 127,
               ),
             ),
             textAlign: TextAlign.center,
@@ -1984,9 +1988,9 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withAlpha(25),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              border: Border.all(color: Colors.blue.withAlpha(76)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2047,9 +2051,9 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withAlpha(25),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.green.withOpacity(0.3)),
+                    border: Border.all(color: Colors.green.withAlpha(76)),
                   ),
                   child: Row(
                     children: [
@@ -2102,10 +2106,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                         ? const Color(0xFF1E293B)
                         : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: accentColor.withOpacity(0.5),
-                  width: 1,
-                ),
+                border: Border.all(color: accentColor.withAlpha(127), width: 1),
               ),
               child: Row(
                 children: [

@@ -266,7 +266,7 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                 decoration: BoxDecoration(
                   color:
                       isDarkMode
-                          ? Colors.grey.shade800.withOpacity(0.3)
+                          ? Colors.grey.shade800.withAlpha(76)
                           : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(8),
                   border:
@@ -309,7 +309,7 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withAlpha(25),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.orange),
                   ),
@@ -336,9 +336,9 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withAlpha(25),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                  border: Border.all(color: Colors.blue.withAlpha(76)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -559,8 +559,7 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                           : Colors.grey.shade300),
               width: isSelected ? 2 : 1,
             ),
-            color:
-                isSelected ? Colors.red.withOpacity(0.1) : Colors.transparent,
+            color: isSelected ? Colors.red.withAlpha(25) : Colors.transparent,
           ),
           child: Row(
             children: [
