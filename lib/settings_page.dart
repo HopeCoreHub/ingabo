@@ -1505,13 +1505,13 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
               ),
               TextButton(
                 onPressed: () async {
-                  Navigator.pop(context); // Close dialog
+                  final navigator = Navigator.of(context);
+                  navigator.pop(); // Close dialog
                   await authService.logout();
 
                   // Navigate to auth page
                   if (mounted) {
-                    Navigator.pushReplacement(
-                      context,
+                    navigator.pushReplacement(
                       MaterialPageRoute(builder: (context) => const AuthPage()),
                     );
                   }
@@ -1909,11 +1909,13 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    final messenger = ScaffoldMessenger.of(context);
     try {
       if (await canLaunchUrl(launchUri)) {
         await launchUrl(launchUri);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Could not launch phone call to $phoneNumber'),
             duration: const Duration(seconds: 2),
@@ -1922,7 +1924,8 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       }
     } catch (e) {
       debugPrint('Error making phone call: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Error making phone call: $e'),
           duration: const Duration(seconds: 2),

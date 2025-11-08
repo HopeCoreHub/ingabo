@@ -1978,16 +1978,19 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
                                             });
 
                                             try {
+                                              final navigator = Navigator.of(
+                                                context,
+                                              );
+                                              final messenger =
+                                                  ScaffoldMessenger.of(context);
                                               await _saveSubscriptionToDatabase(
                                                 context,
                                                 transactionId,
                                               );
 
                                               if (mounted) {
-                                                Navigator.pop(context);
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
+                                                navigator.pop();
+                                                messenger.showSnackBar(
                                                   SnackBar(
                                                     content: Row(
                                                       children: [

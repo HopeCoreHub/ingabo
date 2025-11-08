@@ -183,10 +183,13 @@ class _ReplyDialogState extends State<ReplyDialog> {
       _isSubmitting = true;
     });
 
+    final navigator = Navigator.of(context);
     // Simulate network delay
     Future.delayed(const Duration(milliseconds: 500), () {
       widget.onReply(replyText);
-      Navigator.of(context).pop();
+      if (mounted) {
+        navigator.pop();
+      }
     });
   }
 }

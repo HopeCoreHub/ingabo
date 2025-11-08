@@ -4113,11 +4113,13 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
   // New method to make phone calls
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    final messenger = ScaffoldMessenger.of(context);
     try {
       if (await canLaunchUrl(launchUri)) {
         await launchUrl(launchUri);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Could not launch phone call to $phoneNumber'),
             duration: const Duration(seconds: 2),
@@ -4126,7 +4128,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       }
     } catch (e) {
       debugPrint('Error making phone call: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Error making phone call: $e'),
           duration: const Duration(seconds: 2),
@@ -4347,12 +4350,13 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       path: phoneNumber,
       queryParameters: {'body': message},
     );
-
+    final messenger = ScaffoldMessenger.of(context);
     try {
       if (await canLaunchUrl(smsUri)) {
         await launchUrl(smsUri);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Could not launch SMS to $phoneNumber'),
             duration: const Duration(seconds: 2),
@@ -4361,7 +4365,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       }
     } catch (e) {
       debugPrint('Error sending SMS: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Error sending SMS: $e'),
           duration: const Duration(seconds: 2),
