@@ -9,11 +9,6 @@ import '../services/auth_service.dart';
 class OnboardingSplash extends StatefulWidget {
   const OnboardingSplash({super.key});
 
-  static Future<void> markAsCompleted() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_completed', true);
-  }
-
   @override
   State<OnboardingSplash> createState() => _OnboardingSplashState();
 }
@@ -105,9 +100,8 @@ class _OnboardingSplashState extends State<OnboardingSplash>
     super.dispose();
   }
 
-  Future<void> _completeOnboarding() async {
-    await OnboardingSplash.markAsCompleted();
-    // Navigate to main app
+  void _navigateToMainApp() {
+    // Navigate to main app after splash screen
     if (mounted) {
       final authService = Provider.of<AuthService>(context, listen: false);
       final isAdminUser = authService.isAdmin();
@@ -129,10 +123,10 @@ class _OnboardingSplashState extends State<OnboardingSplash>
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
 
-    // Auto-complete after animations
+    // Auto-navigate to main app after animations complete
     Future.delayed(const Duration(milliseconds: 3000), () {
       if (mounted) {
-        _completeOnboarding();
+        _navigateToMainApp();
       }
     });
 

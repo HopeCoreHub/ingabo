@@ -34,10 +34,7 @@ import 'utils/accessibility_utils.dart';
 import 'widgets/ai_content_policy_notice.dart';
 import 'widgets/onboarding_splash.dart';
 
-Future<bool> _checkOnboardingStatus() async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.getBool('onboarding_completed') ?? false;
-}
+// Removed onboarding check - splash screen shows every time
 
 void main() async {
   // Ensure Flutter is initialized
@@ -193,54 +190,7 @@ class MyApp extends StatelessWidget {
         title: 'HopeCore Hub',
         theme: themeStyleProvider.getThemeWithAccessibility(context),
         routes: {'/admin_setup': (context) => const AdminSetupPage()},
-        home: FutureBuilder<bool>(
-          future: _checkOnboardingStatus(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
-
-            // Show onboarding if not completed
-            if (snapshot.data == false) {
-              return const OnboardingSplash();
-            }
-
-            // Show main app
-            return Consumer<AuthService>(
-              builder: (context, authService, child) {
-                // Show loading indicator while checking auth state
-                if (authService.isLoading) {
-                  return Scaffold(
-                    body: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                // Determine initial index based on admin status
-                final isAdminUser = authService.isAdmin();
-                final initialIndex = isAdminUser ? 1 : 0; // Home page index
-
-                // Force the app to respond to auth state changes
-                // If logged in, show main app, otherwise show auth page or guest mode
-                if (authService.isLoggedIn) {
-                  debugPrint('User is logged in as ${authService.username}');
-                  return MainNavigationWrapper(
-                    selectedIndex: initialIndex,
-                    child: const HopeCoreHub(),
-                  );
-                } else {
-                  // Show guest mode - we could also redirect to auth page here
-                  debugPrint('User is in guest mode');
-                  return MainNavigationWrapper(
-                    selectedIndex: initialIndex,
-                    child: const HopeCoreHub(),
-                  );
-                }
-              },
-            );
-          },
-        ),
+        home: const OnboardingSplash(),
       ),
     );
   }
