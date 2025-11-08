@@ -324,7 +324,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
         backgroundColor:
             (highContrastMode && isDarkMode)
                 ? Colors.black
-                : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+                : (isDarkMode ? Colors.black : Colors.white),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -333,14 +333,14 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
       backgroundColor:
           (highContrastMode && isDarkMode)
               ? Colors.black
-              : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+              : (isDarkMode ? Colors.black : Colors.white),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
         child: AppBar(
           backgroundColor:
               (highContrastMode && isDarkMode)
                   ? Colors.black
-                  : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+                  : (isDarkMode ? Colors.black : Colors.white),
           elevation: 0,
           automaticallyImplyLeading: false,
           titleSpacing: 0,

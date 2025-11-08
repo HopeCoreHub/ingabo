@@ -105,7 +105,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
       backgroundColor:
           (highContrastMode && isDarkMode)
               ? Colors.black
-              : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+              : (isDarkMode ? Colors.black : Colors.white),
       body: SafeArea(
         child:
             _isLoading
@@ -1493,7 +1493,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
       context: context,
       builder: (context) {
         return Dialog(
-          backgroundColor: const Color(0xFF111827),
+          backgroundColor: Colors.black,
           insetPadding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -2273,7 +2273,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
               color:
                   highContrastMode
                       ? (isDarkMode ? Colors.white : Colors.black)
-                      : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+                      : (isDarkMode ? Colors.black : Colors.white),
               borderRadius: BorderRadius.circular(10),
               border:
                   highContrastMode

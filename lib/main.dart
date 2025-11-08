@@ -1073,7 +1073,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       backgroundColor:
           highContrastMode
               ? (isDarkMode ? Colors.black : Colors.white)
-              : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+              : (isDarkMode ? Colors.black : Colors.white),
       body: SafeArea(
         child: ScrollConfiguration(
           behavior: CustomScrollBehavior(),

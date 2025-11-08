@@ -107,7 +107,7 @@ class ThemeProvider extends ChangeNotifier {
   ThemeData getTheme(BuildContext context) {
     if (_isDarkMode) {
       return ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF111827),
+        scaffoldBackgroundColor: Colors.black,
         primaryColor: const Color(0xFF8A4FFF),
         colorScheme: ColorScheme.dark(
           primary: const Color(0xFF8A4FFF),

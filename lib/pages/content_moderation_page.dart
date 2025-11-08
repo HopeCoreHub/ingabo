@@ -113,12 +113,12 @@ class _ContentModerationPageState extends State<ContentModerationPage> {
       backgroundColor:
           highContrastMode && isDarkMode
               ? Colors.black
-              : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+              : (isDarkMode ? Colors.black : Colors.white),
       appBar: AppBar(
         backgroundColor:
             highContrastMode && isDarkMode
                 ? Colors.black
-                : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+                : (isDarkMode ? Colors.black : Colors.white),
         elevation: 0,
         leading: IconButton(
           icon: Icon(

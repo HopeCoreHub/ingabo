@@ -19,7 +19,7 @@ class AdminPage extends BaseStatelessScreen {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: isDarkMode ? const Color(0xFF111827) : Colors.white,
+        backgroundColor: isDarkMode ? Colors.black : Colors.white,
         appBar: AppBar(
           title: const Text('Admin Dashboard'),
           backgroundColor: isDarkMode ? const Color(0xFF1E293B) : accentColor,

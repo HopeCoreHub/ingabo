@@ -231,10 +231,7 @@ class _PostCreationDialogState extends State<PostCreationDialog>
                   borderSide: BorderSide(color: accentColor, width: 2),
                 ),
                 filled: true,
-                fillColor:
-                    isDarkMode
-                        ? const Color(0xFF111827)
-                        : const Color(0xFFF1F5F9),
+                fillColor: isDarkMode ? Colors.black : const Color(0xFFF1F5F9),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 16,
@@ -285,10 +282,7 @@ class _PostCreationDialogState extends State<PostCreationDialog>
                   borderSide: BorderSide(color: accentColor, width: 2),
                 ),
                 filled: true,
-                fillColor:
-                    isDarkMode
-                        ? const Color(0xFF111827)
-                        : const Color(0xFFF1F5F9),
+                fillColor: isDarkMode ? Colors.black : const Color(0xFFF1F5F9),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 16,

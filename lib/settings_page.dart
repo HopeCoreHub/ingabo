@@ -85,7 +85,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       backgroundColor:
           (highContrastMode && isDarkMode)
               ? Colors.black
-              : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+              : (isDarkMode ? Colors.black : Colors.white),
       appBar: AppBar(
         backgroundColor:
             (highContrastMode && isDarkMode)
@@ -819,7 +819,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
             color:
                 highContrastMode
                     ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-                    : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+                    : (isDarkMode ? Colors.black : Colors.white),
             borderRadius: BorderRadius.circular(8),
             border:
                 highContrastMode
@@ -1074,7 +1074,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
             color:
                 highContrastMode
                     ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-                    : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+                    : (isDarkMode ? Colors.black : Colors.white),
             borderRadius: BorderRadius.circular(8),
             border:
                 highContrastMode

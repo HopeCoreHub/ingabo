@@ -572,7 +572,7 @@ class _AuthPageState extends State<AuthPage>
         isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF111827) : Colors.white,
+      backgroundColor: isDarkMode ? Colors.black : Colors.white,
       body: Stack(
         children: [
           _buildBackgroundDecoration(isDarkMode),

@@ -127,10 +127,7 @@ class _ReplyDialogState extends State<ReplyDialog> {
                   borderSide: BorderSide(color: accentColor),
                 ),
                 filled: true,
-                fillColor:
-                    isDarkMode
-                        ? const Color(0xFF111827)
-                        : const Color(0xFFF1F5F9),
+                fillColor: isDarkMode ? Colors.black : const Color(0xFFF1F5F9),
               ),
             ),
             const SizedBox(height: 16),

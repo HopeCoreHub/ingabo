@@ -383,7 +383,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
       backgroundColor:
           (highContrastMode && isDarkMode)
               ? Colors.black
-              : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+              : (isDarkMode ? Colors.black : Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -403,7 +403,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
     final accentColor =
-        isDarkMode ? const Color(0xFFA855F7) : const Color(0xFFE53935);
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -564,7 +564,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
     final accentColor =
-        isDarkMode ? const Color(0xFFA855F7) : const Color(0xFFE53935);
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -654,7 +654,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
     final accentColor =
-        isDarkMode ? const Color(0xFFA855F7) : const Color(0xFFE53935);
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -950,7 +950,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
     final accentColor =
-        isDarkMode ? const Color(0xFFA855F7) : const Color(0xFFE53935);
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -990,9 +990,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                         ? (isDarkMode
                             ? Colors.white.withOpacity(0.1)
                             : Colors.black.withOpacity(0.1))
-                        : (isDarkMode
-                            ? const Color(0xFF111827)
-                            : const Color(0xFFF1F5F9)),
+                        : (isDarkMode ? Colors.black : const Color(0xFFF1F5F9)),
                 borderRadius: BorderRadius.circular(24),
                 border:
                     highContrastMode
