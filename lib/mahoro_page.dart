@@ -1006,7 +1006,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
               ),
               child: TextField(
                 controller: _messageController,
-                maxLines: null,
+                maxLines: 5,
                 minLines: 1,
                 keyboardType: TextInputType.multiline,
                 textInputAction: TextInputAction.newline,

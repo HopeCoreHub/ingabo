@@ -3584,7 +3584,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                         _buildDivider(),
                         const SizedBox(height: 8),
                         _buildEmergencyContact(
-                          'Rwanda National Police:',
+                          'Rwanda Investigation Bureau (RIB):',
                           '3512',
                           Icons.local_police,
                         ),

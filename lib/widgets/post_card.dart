@@ -121,37 +121,6 @@ class PostCard extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Like button
-                            InkWell(
-                              onTap: onLike,
-                              borderRadius: BorderRadius.circular(8),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      hasLiked ? Icons.favorite : Icons.favorite_border,
-                                      size: 16,
-                                      color: hasLiked
-                                          ? Colors.red
-                                          : (isDarkMode ? Colors.white60 : Colors.black54),
-                                    ),
-                                    if (post.likes > 0) ...[
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${post.likes}',
-                                        style: TextStyle(
-                                          color: isDarkMode ? Colors.white60 : Colors.black54,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
                             // Reply button
                             InkWell(
                               onTap: onReply,

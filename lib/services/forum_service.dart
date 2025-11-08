@@ -24,11 +24,23 @@ class ForumService {
   }
 
   ForumService._internal() {
-    // Always add some guaranteed posts directly to the in-memory cache
-    _addInitialPosts();
+    // Clear all posts and start fresh
+    _clearAllPosts();
 
     // Then try to load from Firebase Realtime Database
     _loadPostsFromRealtimeDB();
+  }
+
+  // Clear all posts from database and local cache
+  Future<void> _clearAllPosts() async {
+    try {
+      await _realtimeDB.deleteAllPosts();
+      _posts.clear();
+      _replies.clear();
+      debugPrint('All posts and replies cleared');
+    } catch (e) {
+      debugPrint('Error clearing posts: $e');
+    }
   }
 
   // Add initial posts directly to the cache to ensure content is always available

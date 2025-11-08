@@ -351,7 +351,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
               Expanded(
                 child: TextField(
                   controller: _messageController,
-                  maxLines: null,
+                  maxLines: 5,
                   minLines: 1,
                   textInputAction: TextInputAction.newline,
                   keyboardType: TextInputType.multiline,

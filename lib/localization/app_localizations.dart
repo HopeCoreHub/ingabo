@@ -41,6 +41,7 @@ class AppLocalizations {
       'selectFontSize': 'Select Font Size',
       'languageAudio': 'Language Audio',
       'dataPerformance': 'Data Performance',
+      'dailyAffirmations': 'Daily Affirmations',
       'chooseLanguageDescription': 'Choose your preferred language',
       'chooseFontFamilyDescription':
           'Choose a font that feels comfortable to read',

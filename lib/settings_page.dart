@@ -419,53 +419,49 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: () {
-              // Show edit profile or login dialog
-              if (isGuest) {
+          if (isGuest)
+            GestureDetector(
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const AuthPage()),
                 );
-              } else {
-                // Show edit profile dialog or navigate to profile page
-              }
-            },
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: highContrastMode ? 12 : 10,
-                vertical: highContrastMode ? 7 : 5,
-              ),
-              decoration: BoxDecoration(
-                color:
-                    highContrastMode
-                        ? (isDarkMode ? Colors.white : Colors.black)
-                        : Colors.white.withAlpha(51),
-                borderRadius: BorderRadius.circular(16),
-                border:
-                    highContrastMode
-                        ? Border.all(
-                          color: AccessibilityUtils.getAccessibleBorderColor(
-                            context,
-                          ),
-                          width: 2.0,
-                        )
-                        : null,
-              ),
-              child: Text(
-                isGuest ? 'Sign In' : 'Edit Profile',
-                style: AccessibilityUtils.getTextStyle(
-                  context,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: highContrastMode ? 12 : 10,
+                  vertical: highContrastMode ? 7 : 5,
+                ),
+                decoration: BoxDecoration(
                   color:
                       highContrastMode
-                          ? (isDarkMode ? Colors.black : Colors.white)
-                          : Colors.white,
+                          ? (isDarkMode ? Colors.white : Colors.black)
+                          : Colors.white.withAlpha(51),
+                  borderRadius: BorderRadius.circular(16),
+                  border:
+                      highContrastMode
+                          ? Border.all(
+                            color: AccessibilityUtils.getAccessibleBorderColor(
+                              context,
+                            ),
+                            width: 2.0,
+                          )
+                          : null,
+                ),
+                child: Text(
+                  'Sign In',
+                  style: AccessibilityUtils.getTextStyle(
+                    context,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color:
+                        highContrastMode
+                            ? (isDarkMode ? Colors.black : Colors.white)
+                            : Colors.white,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -518,7 +514,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
           ),
           SizedBox(width: highContrastMode ? 12 : 10),
           LocalizedText(
-            title.toLowerCase().replaceAll(' & ', ''),
+            title,
             style: AccessibilityUtils.getTextStyle(
               context,
               fontSize: 16,
@@ -1532,8 +1528,8 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         gradient:
             highContrastMode
                 ? null // No gradients in high contrast mode
-                : const LinearGradient(
-                  colors: [Color(0xFF6B1D1D), Color(0xFF8B2121)],
+                : LinearGradient(
+                  colors: [const Color(0xFF9B1C1C), const Color(0xFF771D1D)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -1554,9 +1550,10 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 ? null // No shadows in high contrast mode
                 : [
                   BoxShadow(
-                    color: const Color(0xFF6B1D1D).withAlpha(76),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
+                    color: const Color(0xFF9B1C1C).withAlpha(76),
+                    blurRadius: 12,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 6),
                   ),
                 ],
       ),
@@ -1564,20 +1561,35 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.emergency,
-                color:
-                    highContrastMode
-                        ? (isDarkMode ? Colors.white : Colors.black)
-                        : Colors.white,
-                size: 24,
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color:
+                      highContrastMode
+                          ? (isDarkMode
+                              ? Colors.white.withAlpha(51)
+                              : Colors.black.withAlpha(51))
+                          : Colors.white.withAlpha(51),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.phone_enabled,
+                  color:
+                      highContrastMode
+                          ? (isDarkMode ? Colors.black : Colors.white)
+                          : Colors.white,
+                  size: 18,
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Text(
                 'Emergency Contacts',
-                style: TextStyle(
-                  fontSize: 18,
+                style: AccessibilityUtils.getTextStyle(
+                  context,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color:
                       highContrastMode
@@ -1616,7 +1628,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
           const SizedBox(height: 16),
           _buildEmergencyContact('Isange One Stop Center', '3029'),
           const SizedBox(height: 8),
-          _buildEmergencyContact('Rwanda National Police', '3512'),
+          _buildEmergencyContact('Rwanda Investigation Bureau (RIB)', '3512'),
           const SizedBox(height: 8),
           _buildEmergencyContact('HopeCore Team', '+250780332779'),
           const SizedBox(height: 16),
