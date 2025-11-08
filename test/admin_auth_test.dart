@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ingabo/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_test/src/binding.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -14,26 +15,28 @@ void main() {
       const MethodChannel channel = MethodChannel(
         'plugins.flutter.io/firebase_core',
       );
-      channel.setMockMethodCallHandler((MethodCall methodCall) async {
-        return <String, dynamic>{'name': '[DEFAULT]'};
-      });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+            return <String, dynamic>{'name': '[DEFAULT]'};
+          });
 
       // Mock Firebase Auth
       const MethodChannel authChannel = MethodChannel(
         'plugins.flutter.io/firebase_auth',
       );
-      authChannel.setMockMethodCallHandler((MethodCall methodCall) async {
-        switch (methodCall.method) {
-          case 'Auth#registerIdTokenListener':
-          case 'Auth#registerAuthStateListener':
-            return <String, dynamic>{'handle': 1};
-          case 'Auth#signInWithEmailAndPassword':
-            // Simulate Firebase Auth failure to test local auth
-            throw PlatformException(code: 'network-request-failed');
-          default:
-            return null;
-        }
-      });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(authChannel, (MethodCall methodCall) async {
+            switch (methodCall.method) {
+              case 'Auth#registerIdTokenListener':
+              case 'Auth#registerAuthStateListener':
+                return <String, dynamic>{'handle': 1};
+              case 'Auth#signInWithEmailAndPassword':
+                // Simulate Firebase Auth failure to test local auth
+                throw PlatformException(code: 'network-request-failed');
+              default:
+                return null;
+            }
+          });
     });
 
     setUp(() async {

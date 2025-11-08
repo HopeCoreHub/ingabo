@@ -673,7 +673,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       child: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor:
+        activeThumbColor:
             highContrastMode
                 ? (isDarkMode ? Colors.black : Colors.white)
                 : Colors.white,

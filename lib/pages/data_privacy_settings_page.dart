@@ -370,7 +370,7 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: const Color(0xFF7C3AED),
+            activeThumbColor: const Color(0xFF7C3AED),
           ),
         ],
       ),

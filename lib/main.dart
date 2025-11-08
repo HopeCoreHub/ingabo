@@ -497,7 +497,11 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                 AnimatedContainer(
                   duration: ThemeProvider.animationDurationShort,
                   curve: ThemeProvider.animationCurveSnappy,
-                  transform: Matrix4.identity()..scale(isSelected ? 1.2 : 1.0),
+                  transform: Matrix4.diagonal3Values(
+                    isSelected ? 1.2 : 1.0,
+                    isSelected ? 1.2 : 1.0,
+                    1.0,
+                  ),
                   transformAlignment: Alignment.center,
                   child: Icon(
                     icon,
