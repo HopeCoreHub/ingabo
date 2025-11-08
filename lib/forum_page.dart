@@ -22,11 +22,13 @@ class ForumPage extends BaseScreen {
 
 class _ForumPageState extends BaseScreenState<ForumPage> {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _messageController = TextEditingController();
   late ForumService _forumService;
   List<Post> _posts = [];
   bool _isLoading = true;
   String _searchQuery = '';
   bool _isCheckingAuth = true;
+  bool _isSendingMessage = false;
 
   @override
   void initState() {
@@ -54,6 +56,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _messageController.dispose();
     super.dispose();
   }
 
@@ -203,6 +206,204 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     } else {
       _posts = await _forumService.searchPosts(_searchQuery);
     }
+  }
+
+  Future<void> _handleSendMessage() async {
+    final content = _messageController.text.trim();
+    if (content.isEmpty || _isSendingMessage) return;
+
+    setState(() {
+      _isSendingMessage = true;
+    });
+
+    try {
+      // Create post without title (WhatsApp-style)
+      await _handleCreatePost('', content);
+      _messageController.clear();
+    } catch (e) {
+      debugPrint('Error sending message: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSendingMessage = false;
+        });
+      }
+    }
+  }
+
+  void _showSearchDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Search Posts',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Search...',
+                    hintStyle: TextStyle(
+                      color: isDarkMode ? Colors.white54 : Colors.black54,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: isDarkMode ? Colors.white54 : Colors.black54,
+                    ),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.clear,
+                              color: isDarkMode ? Colors.white54 : Colors.black54,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                                _filterPosts();
+                              });
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: isDarkMode
+                        ? Colors.white.withAlpha(25)
+                        : Colors.grey.withAlpha(25),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                      _filterPosts();
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(
+                        'Close',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : Colors.black54,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMessageInput() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(25),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _messageController,
+                  maxLines: null,
+                  minLines: 1,
+                  textInputAction: TextInputAction.newline,
+                  keyboardType: TextInputType.multiline,
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                    fontSize: 15,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Type a message...',
+                    hintStyle: TextStyle(
+                      color: isDarkMode ? Colors.white54 : Colors.black54,
+                    ),
+                    filled: true,
+                    fillColor: isDarkMode
+                        ? Colors.white.withAlpha(25)
+                        : Colors.grey.withAlpha(25),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: _isSendingMessage
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Icon(Icons.send, color: Colors.white),
+                  onPressed: _isSendingMessage ? null : _handleSendMessage,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _handleCreatePost(String title, String content) async {
@@ -374,8 +575,8 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
                         color: accentColor,
                       ),
                     ).withEntranceAnimation(),
-                    LocalizedText(
-                      'safeSpaceToShare',
+                    Text(
+                      'Your Safe Space to Heal',
                       style: TextStyle(
                         fontSize: 12,
                         color: isDarkMode ? Colors.white70 : Colors.black54,
@@ -388,19 +589,22 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
               ],
             ),
           ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                Icons.search,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
+              onPressed: () {
+                // Show search dialog or expand search
+                _showSearchDialog();
+              },
+            ),
+          ],
         ),
       ),
       body: Column(
         children: [
-          _buildUserInfoCard().withEntranceAnimation(
-            delay: const Duration(milliseconds: 200),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: _buildSearchBar().withEntranceAnimation(
-              delay: const Duration(milliseconds: 300),
-            ),
-          ),
           Expanded(
             child:
                 _isLoading
@@ -447,7 +651,8 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
           ),
         ],
       ),
-      floatingActionButton: _buildCreatePostButton(),
+      // WhatsApp-style text input at bottom
+      bottomNavigationBar: _buildMessageInput(),
     );
   }
 
