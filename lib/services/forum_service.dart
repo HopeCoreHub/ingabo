@@ -384,6 +384,7 @@ class ForumService {
       authorId: getCurrentUserId(),
       authorName: getCurrentUsername(),
       createdAt: DateTime.now(),
+      isAnonymous: true, // All replies are anonymous
     );
 
     try {

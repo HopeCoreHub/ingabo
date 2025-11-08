@@ -465,7 +465,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
             index: items.length,
             onTap: () => _navigateToPostDetail(post),
             onLike: () => _handleLikePost(post),
-            onReply: () => _navigateToPostDetail(post, focusReply: true),
+            onReply: _handleReply,
             onDelete: isAuthor ? () => _handleDeletePost(post) : null,
             onEdit: isAuthor ? () => _handleEditPost(post) : null,
           ),
@@ -696,6 +696,37 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<void> _handleReply(String postId, String content) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _forumService.addReply(postId, content);
+      if (!mounted) return;
+      
+      // Refresh posts to show updated reply count
+      final updatedPosts = await _forumService.getPosts();
+      setState(() {
+        _posts = updatedPosts;
+      });
+      
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Reply sent successfully'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Error sending reply: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      rethrow;
     }
   }
 
