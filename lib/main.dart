@@ -182,12 +182,16 @@ class MyApp extends StatelessWidget {
       themeProvider: themeProvider,
       accessibilityProvider: accessibilityProvider,
     );
+    
+    final isDarkMode = themeProvider.isDarkMode;
 
     return LocalizationWrapper(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'HopeCore Hub',
-        theme: themeStyleProvider.getThemeWithAccessibility(context),
+        theme: themeStyleProvider.getThemeWithAccessibility(context).copyWith(
+          scaffoldBackgroundColor: isDarkMode ? Colors.black : Colors.white,
+        ),
         routes: {'/admin_setup': (context) => const AdminSetupPage()},
         home: const OnboardingSplash(),
       ),
