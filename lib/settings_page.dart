@@ -1585,16 +1585,21 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                'Emergency Contacts',
-                style: AccessibilityUtils.getTextStyle(
-                  context,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color:
-                      highContrastMode
-                          ? (isDarkMode ? Colors.white : Colors.black)
-                          : Colors.white,
+              Flexible(
+                child: Text(
+                  'Emergency Contacts',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: AccessibilityUtils.getTextStyle(
+                    context,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color:
+                        highContrastMode
+                            ? (isDarkMode ? Colors.white : Colors.black)
+                            : Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -1860,14 +1865,18 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                color:
-                    highContrastMode
-                        ? (isDarkMode ? Colors.white70 : Colors.black87)
-                        : Colors.white70,
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14,
+                  color:
+                      highContrastMode
+                          ? (isDarkMode ? Colors.white70 : Colors.black87)
+                          : Colors.white70,
+                ),
               ),
             ),
             Row(

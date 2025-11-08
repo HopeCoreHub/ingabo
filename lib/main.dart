@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'theme_provider.dart';
 import 'theme_style_provider.dart';
@@ -31,6 +32,12 @@ import 'admin_setup_page.dart';
 import 'dashboard_page.dart';
 import 'utils/accessibility_utils.dart';
 import 'widgets/ai_content_policy_notice.dart';
+import 'widgets/onboarding_splash.dart';
+
+Future<bool> _checkOnboardingStatus() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getBool('onboarding_completed') ?? false;
+}
 
 void main() async {
   // Ensure Flutter is initialized
@@ -186,33 +193,52 @@ class MyApp extends StatelessWidget {
         title: 'HopeCore Hub',
         theme: themeStyleProvider.getThemeWithAccessibility(context),
         routes: {'/admin_setup': (context) => const AdminSetupPage()},
-        home: Consumer<AuthService>(
-          builder: (context, authService, child) {
-            // Show loading indicator while checking auth state
-            if (authService.isLoading) {
-              return Scaffold(body: Center(child: CircularProgressIndicator()));
-            }
-
-            // Determine initial index based on admin status
-            final isAdminUser = authService.isAdmin();
-            final initialIndex = isAdminUser ? 1 : 0; // Home page index
-
-            // Force the app to respond to auth state changes
-            // If logged in, show main app, otherwise show auth page or guest mode
-            if (authService.isLoggedIn) {
-              debugPrint('User is logged in as ${authService.username}');
-              return MainNavigationWrapper(
-                selectedIndex: initialIndex,
-                child: const HopeCoreHub(),
-              );
-            } else {
-              // Show guest mode - we could also redirect to auth page here
-              debugPrint('User is in guest mode');
-              return MainNavigationWrapper(
-                selectedIndex: initialIndex,
-                child: const HopeCoreHub(),
+        home: FutureBuilder<bool>(
+          future: _checkOnboardingStatus(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Scaffold(
+                body: Center(child: CircularProgressIndicator()),
               );
             }
+
+            // Show onboarding if not completed
+            if (snapshot.data == false) {
+              return const OnboardingSplash();
+            }
+
+            // Show main app
+            return Consumer<AuthService>(
+              builder: (context, authService, child) {
+                // Show loading indicator while checking auth state
+                if (authService.isLoading) {
+                  return Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                // Determine initial index based on admin status
+                final isAdminUser = authService.isAdmin();
+                final initialIndex = isAdminUser ? 1 : 0; // Home page index
+
+                // Force the app to respond to auth state changes
+                // If logged in, show main app, otherwise show auth page or guest mode
+                if (authService.isLoggedIn) {
+                  debugPrint('User is logged in as ${authService.username}');
+                  return MainNavigationWrapper(
+                    selectedIndex: initialIndex,
+                    child: const HopeCoreHub(),
+                  );
+                } else {
+                  // Show guest mode - we could also redirect to auth page here
+                  debugPrint('User is in guest mode');
+                  return MainNavigationWrapper(
+                    selectedIndex: initialIndex,
+                    child: const HopeCoreHub(),
+                  );
+                }
+              },
+            );
           },
         ),
       ),
@@ -342,59 +368,40 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
 
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        final animation = _animationController.drive(
-          CurveTween(
-            curve: const Interval(0.6, 1.0, curve: Curves.easeOutBack),
+    // Remove animations to prevent flickering
+    return Container(
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(12),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: const Offset(0, -5),
           ),
-        );
-
-        // Ensure opacity is between 0.0 and 1.0
-        final opacityValue = animation.value.clamp(0.0, 1.0);
-
-        return Transform.translate(
-          offset: Offset(0, 20 - (20 * animation.value)),
-          child: Opacity(
-            opacity: opacityValue,
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(12),
-                    blurRadius: 10,
-                    spreadRadius: 0,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
-              ),
-              child: Container(
-                height: kBottomNavigationBarHeight + 20,
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AccessibilityUtils.getAccessibleSurfaceColor(context),
-                  borderRadius: BorderRadius.circular(16),
-                  border:
-                      AccessibilityUtils.isHighContrastEnabled(context)
-                          ? Border.all(
-                            color: AccessibilityUtils.getAccessibleBorderColor(
-                              context,
-                            ),
-                            width: 3.0, // Thicker border for navigation
-                          )
-                          : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: _buildNavItems(),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+        ],
+      ),
+      child: Container(
+        height: kBottomNavigationBarHeight + 20,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: AccessibilityUtils.getAccessibleSurfaceColor(context),
+          borderRadius: BorderRadius.circular(16),
+          border:
+              AccessibilityUtils.isHighContrastEnabled(context)
+                  ? Border.all(
+                    color: AccessibilityUtils.getAccessibleBorderColor(
+                      context,
+                    ),
+                    width: 3.0, // Thicker border for navigation
+                  )
+                  : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: _buildNavItems(),
+        ),
+      ),
     );
   }
 
@@ -3522,16 +3529,21 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'Emergency Contacts',
-                        style: AccessibilityUtils.getTextStyle(
-                          context,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color:
-                              highContrastMode
-                                  ? (isDarkMode ? Colors.white : Colors.black)
-                                  : Colors.white,
+                      Flexible(
+                        child: Text(
+                          'Emergency Contacts',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: AccessibilityUtils.getTextStyle(
+                            context,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color:
+                                highContrastMode
+                                    ? (isDarkMode ? Colors.white : Colors.black)
+                                    : Colors.white,
+                          ),
                         ),
                       ),
                     ],
@@ -3646,21 +3658,24 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
           ),
         ),
         const SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color:
-                    highContrastMode
-                        ? (isDarkMode
-                            ? Colors.white.withAlpha(204)
-                            : Colors.black.withAlpha(204))
-                        : Colors.white.withAlpha(204),
-              ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  color:
+                      highContrastMode
+                          ? (isDarkMode
+                              ? Colors.white.withAlpha(204)
+                              : Colors.black.withAlpha(204))
+                          : Colors.white.withAlpha(204),
+                ),
             ),
             const SizedBox(height: 1),
             Text(

@@ -100,12 +100,16 @@ class AiContentPolicyNotice extends StatelessWidget {
                       children: [
                         Icon(Icons.smart_toy, color: Colors.blue, size: 20),
                         const SizedBox(width: 8),
-                        Text(
-                          'AI-Generated Content Notice',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: isDarkMode ? Colors.white : Colors.black87,
+                        Expanded(
+                          child: Text(
+                            'AI-Generated Content Notice',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
                           ),
                         ),
                       ],
@@ -139,12 +143,16 @@ class AiContentPolicyNotice extends StatelessWidget {
                       children: [
                         Icon(Icons.flag, color: Colors.orange, size: 20),
                         const SizedBox(width: 8),
-                        Text(
-                          'Content Reporting',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: isDarkMode ? Colors.white : Colors.black87,
+                        Expanded(
+                          child: Text(
+                            'Content Reporting',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
                           ),
                         ),
                       ],
