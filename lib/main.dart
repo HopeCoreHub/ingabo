@@ -322,50 +322,10 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
             (context, animation, secondaryAnimation) =>
                 MainNavigationWrapper(selectedIndex: index, child: page),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          // Define animations for the page being navigated from
-          final secondaryCurvedAnimation = CurvedAnimation(
-            parent: secondaryAnimation,
-            curve: ThemeProvider.pageTransitionCurve,
-          );
-
-          // Define animations for the page being navigated to
-          final primaryCurvedAnimation = CurvedAnimation(
-            parent: animation,
-            curve: ThemeProvider.pageTransitionCurve,
-          );
-
-          return Stack(
-            children: [
-              // Fade and scale out the previous page
-              FadeTransition(
-                opacity: Tween<double>(
-                  begin: 1.0,
-                  end: 0.0,
-                ).animate(secondaryCurvedAnimation),
-                child: ScaleTransition(
-                  scale: Tween<double>(
-                    begin: 1.0,
-                    end: 0.95,
-                  ).animate(secondaryCurvedAnimation),
-                  child: Container(color: Colors.transparent),
-                ),
-              ),
-              // Fade in and slide in the new page
-              FadeTransition(
-                opacity: primaryCurvedAnimation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0.05, 0),
-                    end: Offset.zero,
-                  ).animate(primaryCurvedAnimation),
-                  child: child,
-                ),
-              ),
-            ],
-          );
+          return child; // No transition animation to prevent flickering
         },
-        transitionDuration: ThemeProvider.pageTransitionDuration,
-        reverseTransitionDuration: ThemeProvider.pageTransitionDuration,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
       ),
     );
   }
@@ -373,7 +333,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FadeTransition(opacity: _fadeAnimation, child: widget.child),
+      body: widget.child, // Remove FadeTransition to prevent flickering
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
@@ -653,9 +613,10 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
               (context, animation, secondaryAnimation) =>
                   MainNavigationWrapper(selectedIndex: index, child: page),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
+            return child; // No transition animation to prevent flickering
           },
-          transitionDuration: const Duration(milliseconds: 300),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
         ),
       );
     }
@@ -2219,9 +2180,10 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
               secondaryAnimation,
               child,
             ) {
-              return FadeTransition(opacity: animation, child: child);
+              return child; // No transition animation to prevent flickering
             },
-            transitionDuration: const Duration(milliseconds: 300),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
           ),
         );
       },

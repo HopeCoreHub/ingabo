@@ -951,114 +951,82 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
 
   Widget _buildFooter() {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final highContrastMode = accessibilityProvider.highContrastMode;
     final accentColor =
         isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color:
-            highContrastMode
-                ? (isDarkMode ? Colors.black : Colors.white)
-                : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
-        border:
-            highContrastMode
-                ? Border(
-                  top: BorderSide(
-                    color: isDarkMode ? Colors.white : Colors.black,
-                    width: 1.0,
-                  ),
-                )
-                : null,
-        boxShadow:
-            highContrastMode
-                ? null
-                : [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(12),
-                    blurRadius: 10,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color:
-                    highContrastMode
-                        ? (isDarkMode
-                            ? Colors.white.withAlpha(25)
-                            : Colors.black.withAlpha(25))
-                        : (isDarkMode ? Colors.black : const Color(0xFFF1F5F9)),
-                borderRadius: BorderRadius.circular(24),
-                border:
-                    highContrastMode
-                        ? Border.all(
-                          color: isDarkMode ? Colors.white : Colors.black,
-                          width: 1.0,
-                        )
-                        : null,
-              ),
-              child: TextField(
-                controller: _messageController,
-                maxLines: 5,
-                minLines: 1,
-                keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.newline,
-                decoration: InputDecoration(
-                  hintText: AppLocalizations.of(
-                    context,
-                  ).translate('typeMessage'),
-                  hintStyle: TextStyle(
-                    color:
-                        highContrastMode
-                            ? (isDarkMode ? Colors.white70 : Colors.black54)
-                            : (isDarkMode ? Colors.white38 : Colors.black38),
-                  ),
-                  border: InputBorder.none,
-                ),
-                style: TextStyle(
-                  color:
-                      highContrastMode
-                          ? (isDarkMode ? Colors.white : Colors.black)
-                          : (isDarkMode ? Colors.white : Colors.black87),
-                ),
-                onSubmitted: (text) {
-                  if (text.trim().isNotEmpty) {
-                    _handleSubmitted(text);
-                  }
-                },
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            decoration: BoxDecoration(
-              color:
-                  highContrastMode
-                      ? (isDarkMode ? Colors.white : Colors.black)
-                      : accentColor,
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              onPressed: () => _handleSubmitted(_messageController.text),
-              icon: Icon(
-                Icons.send_rounded,
-                color:
-                    highContrastMode
-                        ? (isDarkMode ? Colors.black : Colors.white)
-                        : Colors.white,
-              ),
-              tooltip: AppLocalizations.of(context).translate('send'),
-            ),
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(25),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
         ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _messageController,
+                  maxLines: 5,
+                  minLines: 1,
+                  textInputAction: TextInputAction.newline,
+                  keyboardType: TextInputType.multiline,
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                    fontSize: 15,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: AppLocalizations.of(
+                      context,
+                    ).translate('typeMessage'),
+                    hintStyle: TextStyle(
+                      color: isDarkMode ? Colors.white54 : Colors.black54,
+                    ),
+                    filled: true,
+                    fillColor: isDarkMode
+                        ? Colors.white.withAlpha(25)
+                        : Colors.grey.withAlpha(25),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: _isTyping
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Icon(Icons.send, color: Colors.white),
+                  onPressed: _isTyping ? null : () => _handleSubmitted(_messageController.text),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
