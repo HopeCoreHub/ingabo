@@ -178,6 +178,7 @@ class _PostCardState extends State<PostCard> {
                         fontSize: 14,
                       ),
                     ),
+                    const SizedBox(height: 8),
                     // Like count and action buttons in bottom right
                     Align(
                       alignment: Alignment.bottomRight,
@@ -254,55 +255,68 @@ class _PostCardState extends State<PostCard> {
                               ),
                             ),
                           ),
-                        // Flag/Report or Delete/Edit for own posts
-                        if (isAuthor) ...[
-                          const SizedBox(width: 8),
-                          // Edit button
-                          if (widget.onEdit != null)
+                          // Flag/Report or Delete/Edit for own posts
+                          if (isAuthor) ...[
+                            const SizedBox(width: 8),
+                            // Edit button
+                            if (widget.onEdit != null)
+                              InkWell(
+                                onTap: widget.onEdit,
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                  child: Icon(
+                                    Icons.edit_outlined,
+                                    size: 16,
+                                    color: isDarkMode ? Colors.white60 : Colors.black54,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            // Delete button
+                            if (widget.onDelete != null)
+                              InkWell(
+                                onTap: widget.onDelete,
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                  child: Icon(
+                                    Icons.delete_outline,
+                                    size: 16,
+                                    color: Colors.red.withAlpha(204),
+                                  ),
+                                ),
+                              ),
+                          ] else ...[
+                            const SizedBox(width: 8),
+                            // Flag/Report button
                             InkWell(
-                              onTap: widget.onEdit,
+                              onTap: () {
+                                final authService = Provider.of<AuthService>(context, listen: false);
+                                if (!authService.isLoggedIn) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Please log in to report content'),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                _showReportDialog(context);
+                              },
                               borderRadius: BorderRadius.circular(8),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                                 child: Icon(
-                                  Icons.edit_outlined,
+                                  Icons.flag_outlined,
                                   size: 16,
                                   color: isDarkMode ? Colors.white60 : Colors.black54,
                                 ),
                               ),
                             ),
-                          const SizedBox(width: 8),
-                          // Delete button
-                          if (widget.onDelete != null)
-                            InkWell(
-                              onTap: widget.onDelete,
-                              borderRadius: BorderRadius.circular(8),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                child: Icon(
-                                  Icons.delete_outline,
-                                  size: 16,
-                                  color: Colors.red.withAlpha(204),
-                                ),
-                              ),
-                            ),
-                        ] else ...[
-                          const SizedBox(width: 8),
-                          // Flag/Report button
-                          InkWell(
-                            onTap: () => _showReportDialog(context),
-                            borderRadius: BorderRadius.circular(8),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                              child: Icon(
-                                Icons.flag_outlined,
-                                size: 16,
-                                color: isDarkMode ? Colors.white60 : Colors.black54,
-                              ),
-                            ),
-                          ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ],
                 ),
