@@ -214,6 +214,43 @@ class FirebaseRealtimeService {
     }
   }
 
+  // Delete a post
+  Future<bool> deletePost(String postId) async {
+    try {
+      // Delete the post
+      await _postsRef.child(postId).remove();
+      
+      // Also delete associated replies
+      final repliesSnapshot = await _repliesRef.orderByChild('postId').equalTo(postId).get();
+      if (repliesSnapshot.exists) {
+        final repliesMap = repliesSnapshot.value as Map<dynamic, dynamic>;
+        for (var key in repliesMap.keys) {
+          await _repliesRef.child(key.toString()).remove();
+        }
+      }
+      
+      debugPrint('Post $postId deleted successfully from Realtime Database');
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting post from Realtime Database: $e');
+      return false;
+    }
+  }
+
+  // Update a post
+  Future<bool> updatePost(String postId, String newContent) async {
+    try {
+      await _postsRef.child(postId).update({
+        'content': newContent,
+      });
+      debugPrint('Post $postId updated successfully in Realtime Database');
+      return true;
+    } catch (e) {
+      debugPrint('Error updating post in Realtime Database: $e');
+      return false;
+    }
+  }
+
   // Like a reply
   Future<bool> likeReply(String replyId) async {
     try {

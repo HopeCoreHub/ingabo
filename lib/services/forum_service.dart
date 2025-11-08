@@ -483,6 +483,72 @@ class ForumService {
     return false;
   }
 
+  Future<void> deletePost(String postId) async {
+    if (!isLoggedIn()) {
+      throw Exception('User must be logged in to delete a post');
+    }
+
+    final userId = getCurrentUserId();
+    final postIndex = _posts.indexWhere((post) => post.id == postId);
+
+    if (postIndex == -1) {
+      throw Exception('Post not found');
+    }
+
+    final post = _posts[postIndex];
+    if (post.authorId != userId) {
+      throw Exception('You can only delete your own posts');
+    }
+
+    try {
+      // Delete from Realtime Database
+      await _realtimeDB.deletePost(postId);
+      debugPrint('Post deleted successfully from Realtime Database');
+    } catch (e) {
+      debugPrint('Error deleting post from Realtime Database: $e');
+      // Continue with local deletion even if cloud deletion fails
+    }
+
+    // Remove from local cache
+    _posts.removeAt(postIndex);
+
+    // Also delete associated replies
+    _replies.removeWhere((reply) => reply.postId == postId);
+  }
+
+  Future<Post> updatePost(String postId, String newContent) async {
+    if (!isLoggedIn()) {
+      throw Exception('User must be logged in to edit a post');
+    }
+
+    final userId = getCurrentUserId();
+    final postIndex = _posts.indexWhere((post) => post.id == postId);
+
+    if (postIndex == -1) {
+      throw Exception('Post not found');
+    }
+
+    final post = _posts[postIndex];
+    if (post.authorId != userId) {
+      throw Exception('You can only edit your own posts');
+    }
+
+    // Update local cache
+    final updatedPost = post.copyWith(content: newContent);
+    _posts[postIndex] = updatedPost;
+
+    try {
+      // Update in Realtime Database
+      await _realtimeDB.updatePost(postId, newContent);
+      debugPrint('Post updated successfully in Realtime Database');
+    } catch (e) {
+      debugPrint('Error updating post in Realtime Database: $e');
+      // Continue with local update even if cloud update fails
+    }
+
+    return updatedPost;
+  }
+
   Future<void> likeReply(String replyId) async {
     if (!isLoggedIn()) {
       throw Exception('User must be logged in to like a reply');

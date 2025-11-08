@@ -432,6 +432,273 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     );
   }
 
+  Widget _buildPostsList() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final currentUserId = authService.userId ?? '';
+
+    // Group posts by date
+    final Map<String, List<Post>> postsByDate = {};
+    String? lastDateKey;
+
+    for (final post in _posts) {
+      final dateKey = _getDateKey(post.createdAt);
+      if (dateKey != lastDateKey) {
+        postsByDate[dateKey] = [];
+        lastDateKey = dateKey;
+      }
+      postsByDate[dateKey]!.add(post);
+    }
+
+    // Build list with date separators
+    final List<Widget> items = [];
+    postsByDate.forEach((dateKey, posts) {
+      // Add date separator
+      items.add(_buildDateSeparator(dateKey, isDarkMode));
+      // Add posts for this date
+      for (final post in posts) {
+        final isAuthor = currentUserId == post.authorId;
+        items.add(
+          PostCard(
+            post: post,
+            index: items.length,
+            onTap: () => _navigateToPostDetail(post),
+            onLike: () => _handleLikePost(post),
+            onReply: () => _navigateToPostDetail(post, focusReply: true),
+            onDelete: isAuthor ? () => _handleDeletePost(post) : null,
+            onEdit: isAuthor ? () => _handleEditPost(post) : null,
+          ),
+        );
+      }
+    });
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: items.length,
+      itemBuilder: (context, index) => items[index],
+    );
+  }
+
+  Widget _buildDateSeparator(String dateKey, bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Divider(
+              color: isDarkMode ? Colors.white.withAlpha(61) : Colors.black.withAlpha(61),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              dateKey,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white60 : Colors.black54,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Divider(
+              color: isDarkMode ? Colors.white.withAlpha(61) : Colors.black.withAlpha(61),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getDateKey(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    final difference = today.difference(messageDate).inDays;
+
+    if (difference == 0) {
+      return 'Today';
+    } else if (difference == 1) {
+      return 'Yesterday';
+    } else if (difference < 7) {
+      // This week - show day name
+      final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      return days[dateTime.weekday - 1];
+    } else if (dateTime.year == now.year) {
+      // This year - show day and month
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return '${months[dateTime.month - 1]} ${dateTime.day}';
+    } else {
+      // Past year - show day, month, and year
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}';
+    }
+  }
+
+  Future<void> _handleDeletePost(Post post) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          title: Text(
+            'Delete Post',
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black87,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to delete this post? This action cannot be undone.',
+            style: TextStyle(
+              color: isDarkMode ? Colors.white70 : Colors.black54,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white60 : Colors.black54,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await _forumService.deletePost(post.id);
+      if (!mounted) return;
+      final updatedPosts = await _forumService.getPosts();
+      setState(() {
+        _posts = updatedPosts;
+      });
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Post deleted successfully'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Error deleting post: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleEditPost(Post post) async {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final TextEditingController contentController = TextEditingController(text: post.content);
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          title: Text(
+            'Edit Post',
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black87,
+            ),
+          ),
+          content: TextField(
+            controller: contentController,
+            maxLines: null,
+            minLines: 3,
+            autofocus: true,
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black87,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Edit your message...',
+              hintStyle: TextStyle(
+                color: isDarkMode ? Colors.white54 : Colors.black54,
+              ),
+              filled: true,
+              fillColor: isDarkMode
+                  ? Colors.white.withAlpha(25)
+                  : Colors.grey.withAlpha(25),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white60 : Colors.black54,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(contentController.text.trim()),
+              child: Text(
+                'Save',
+                style: TextStyle(
+                  color: isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == null || result.isEmpty) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _forumService.updatePost(post.id, result);
+      if (!mounted) return;
+      final updatedPosts = await _forumService.getPosts();
+      setState(() {
+        _posts = updatedPosts;
+      });
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Post updated successfully'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Error updating post: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _handleLikePost(Post post) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -618,35 +885,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
                       child:
                           _posts.isEmpty
                               ? _buildEmptyState()
-                              : StaggeredAnimationList(
-                                itemCount:
-                                    _posts.length +
-                                    1, // +1 for info card at bottom
-                                padding: const EdgeInsets.all(12),
-                                initialDelay: const Duration(milliseconds: 400),
-                                itemBuilder: (context, index) {
-                                  if (index == _posts.length) {
-                                    return _buildInfoCard();
-                                  }
-                                  final post = _posts[index];
-                                  return Padding(
-                                    padding: const EdgeInsets.only(
-                                      bottom: 12.0,
-                                    ),
-                                    child: PostCard(
-                                      post: post,
-                                      index: index,
-                                      onTap: () => _navigateToPostDetail(post),
-                                      onLike: () => _handleLikePost(post),
-                                      onReply:
-                                          () => _navigateToPostDetail(
-                                            post,
-                                            focusReply: true,
-                                          ),
-                                    ),
-                                  );
-                                },
-                              ),
+                              : _buildPostsList(),
                     ),
           ),
         ],
