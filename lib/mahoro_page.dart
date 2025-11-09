@@ -13,7 +13,6 @@ import 'localization/localized_text.dart';
 import 'localization/base_screen.dart';
 import 'services/content_reporting_service.dart';
 import 'widgets/content_report_dialog.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 
 class MahoroPage extends BaseScreen {
   const MahoroPage({super.key});
@@ -43,9 +42,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
   // Firebase instance
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // AI service - supports both Gemini and Claude
-  dynamic _aiService;
-  String _currentApiProvider = 'gemini'; // 'gemini' or 'claude'
+  // Claude service
+  late ClaudeService _claudeService;
 
   final Map<String, String> _languageNames = {
     'EN': 'English',
@@ -63,13 +61,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     },
   ];
 
-  // Get Gemini API key
-  Future<String?> _getGeminiApiKey() async {
-    return await AuthService.getGeminiApiKey();
-  }
-
-  // Get Claude API key
-  Future<String?> _getClaudeApiKey() async {
+  // Get API key securely
+  Future<String?> _getApiKey() async {
     return await AuthService.getApiKey();
   }
 
@@ -81,8 +74,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
       duration: const Duration(milliseconds: 700),
     )..repeat();
 
-    // Store API keys securely on first run
-    _storeApiKeys();
+    // Store API key securely on first run
+    _storeApiKey();
 
     // Create a new conversation ID
     _createNewConversation();
@@ -90,8 +83,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     // Load previous conversation if any
     _loadPreviousConversation();
 
-    // Initialize AI service (Gemini first, fallback to Claude)
-    _initializeAIService();
+    // Initialize Claude service
+    _initializeClaudeService();
   }
 
   Future<void> _createNewConversation() async {
@@ -220,59 +213,30 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     super.dispose();
   }
 
-  Future<void> _storeApiKeys() async {
-    // Check if we have Gemini API key
-    final geminiKey = await _getGeminiApiKey();
-    if (geminiKey == null || geminiKey.isEmpty) {
-      debugPrint("No Gemini API key found. Will try Claude API.");
-    } else {
-      debugPrint(
-        "Using existing Gemini API key: ${geminiKey.substring(0, 10)}... (length: ${geminiKey.length})",
-      );
-    }
-
-    // Check if we have Claude API key
-    final claudeKey = await _getClaudeApiKey();
-    if (claudeKey == null || claudeKey.isEmpty) {
-      // Store the Claude API key securely as fallback
+  Future<void> _storeApiKey() async {
+    final storedKey = await _getApiKey();
+    if (storedKey == null || storedKey.isEmpty) {
+      // Store the Claude API key securely
       final apiKey =
           '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';
       debugPrint(
-        "Storing Claude API key as fallback: ${apiKey.substring(0, 10)}... (length: ${apiKey.length})",
+        "Storing Claude API key: ${apiKey.substring(0, 10)}... (length: ${apiKey.length})",
       );
       await AuthService.storeApiKey(apiKey);
     } else {
       debugPrint(
-        "Using existing Claude API key: ${claudeKey.substring(0, 10)}... (length: ${claudeKey.length})",
+        "Using existing Claude API key: ${storedKey.substring(0, 10)}... (length: ${storedKey.length})",
       );
     }
   }
 
-  Future<void> _initializeAIService() async {
-    // Try Gemini first
-    final geminiKey = await _getGeminiApiKey();
-    if (geminiKey != null && geminiKey.isNotEmpty) {
-      try {
-        _aiService = GenerativeModel(
-          model: 'gemini-1.5-flash',
-          apiKey: geminiKey,
-        );
-        _currentApiProvider = 'gemini';
-        debugPrint("Initialized Gemini AI service");
-        return;
-      } catch (e) {
-        debugPrint("Failed to initialize Gemini: $e");
-      }
-    }
-
-    // Fallback to Claude
-    final claudeKey = await _getClaudeApiKey();
-    if (claudeKey != null && claudeKey.isNotEmpty) {
-      _aiService = ClaudeService(apiKey: claudeKey);
-      _currentApiProvider = 'claude';
+  Future<void> _initializeClaudeService() async {
+    final apiKey = await _getApiKey() ?? '';
+    if (apiKey.isNotEmpty) {
+      _claudeService = ClaudeService(apiKey: apiKey);
       debugPrint("Initialized Claude AI service");
     } else {
-      debugPrint("No API keys available");
+      debugPrint("No Claude API key available");
     }
   }
 
@@ -307,8 +271,17 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     _saveConversation();
   }
 
-  Future<String> _getAIResponse(String userMessage) async {
+  Future<String> _getAnthropicResponse(String userMessage) async {
     try {
+      // Get API key securely
+      final apiKey = await _getApiKey() ?? '';
+      if (apiKey.isEmpty) {
+        setState(() {
+          _isApiKeyValid = false;
+        });
+        return "API key not found. Please contact support.";
+      }
+
       // Prepare system prompt based on language
       String systemPrompt =
           "You are Mahoro, a supportive AI companion for mental health. ";
@@ -335,76 +308,34 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
               "Respond in English with empathy and care. Keep responses concise and helpful.";
       }
 
-      // Try Gemini first
-      if (_currentApiProvider == 'gemini' && _aiService is GenerativeModel) {
-        try {
-          debugPrint("Making API request to Gemini...");
-          final model = _aiService as GenerativeModel;
-          
-          final prompt = '$systemPrompt\n\nUser: $userMessage\n\nMahoro:';
-          final content = [Content.text(prompt)];
-          final response = await model.generateContent(content);
-          
-          final text = response.text;
-          if (text != null && text.isNotEmpty) {
-            debugPrint("Received response from Gemini");
-            return text;
-          } else {
-            throw Exception('Empty response from Gemini');
-          }
-        } catch (e) {
-          debugPrint('Gemini API Error: $e');
-          // Fallback to Claude if Gemini fails
-          debugPrint("Falling back to Claude API...");
-          await _fallbackToClaude();
-          return await _getAIResponse(userMessage); // Retry with Claude
+      try {
+        debugPrint("Making API request to Claude...");
+
+        // Reinitialize Claude service with the current API key
+        _claudeService = ClaudeService(apiKey: apiKey);
+
+        // Generate response using Claude
+        final response = await _claudeService.generateContent(
+          prompt: userMessage,
+          systemInstructions: systemPrompt,
+        );
+
+        debugPrint("Received response from Claude");
+        return response;
+      } catch (e) {
+        debugPrint('Claude API Error: $e');
+        if (e.toString().contains('authentication') || e.toString().contains('401')) {
+          setState(() {
+            _isApiKeyValid = false;
+          });
+          return "I'm having trouble with authentication. Please contact support.";
+        } else {
+          return "I'm having trouble connecting right now. Please try again later.";
         }
       }
-
-      // Use Claude
-      if (_currentApiProvider == 'claude' && _aiService is ClaudeService) {
-        try {
-          debugPrint("Making API request to Claude...");
-          final claudeService = _aiService as ClaudeService;
-
-          // Generate response using Claude
-          final response = await claudeService.generateContent(
-            prompt: userMessage,
-            systemInstructions: systemPrompt,
-          );
-
-          debugPrint("Received response from Claude");
-          return response;
-        } catch (e) {
-          debugPrint('Claude API Error: $e');
-          if (e.toString().contains('authentication') || e.toString().contains('401')) {
-            setState(() {
-              _isApiKeyValid = false;
-            });
-            return "I'm having trouble with authentication. Please contact support.";
-          } else {
-            return "I'm having trouble connecting right now. Please try again later.";
-          }
-        }
-      }
-
-      // No API service available
-      setState(() {
-        _isApiKeyValid = false;
-      });
-      return "API key not found. Please contact support.";
     } catch (e) {
       debugPrint('Exception: $e');
       return "I'm sorry, I encountered an error. Please try again.";
-    }
-  }
-
-  Future<void> _fallbackToClaude() async {
-    final claudeKey = await _getClaudeApiKey();
-    if (claudeKey != null && claudeKey.isNotEmpty) {
-      _aiService = ClaudeService(apiKey: claudeKey);
-      _currentApiProvider = 'claude';
-      debugPrint("Switched to Claude API");
     }
   }
 
@@ -420,8 +351,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     });
 
     try {
-      // Get response from AI (Gemini or Claude)
-      final response = await _getAIResponse(text);
+      // Get response from Claude
+      final response = await _getAnthropicResponse(text);
 
       if (mounted) {
         setState(() {
