@@ -1111,7 +1111,7 @@ class AppLocalizations {
           'Nyamuneka andika Nomero y\'Ubwishyu ifite agaciro',
 
       // Settings
-      'settings': 'Igenamiterere',
+      'settings': 'Igena',
       'darkMode': 'Ibara y\'Umukara',
       'language': 'Ururimi',
       'selectLanguage': 'Hitamo Ururimi',
@@ -1134,7 +1134,7 @@ class AppLocalizations {
 
       // Navigation
       'home': 'Ahabanza',
-      'forum': 'Ihuriro',
+      'forum': 'Urubuga',
       'mahoro': 'Mahoro',
       'muganga': 'Muganga',
 
@@ -1164,13 +1164,13 @@ class AppLocalizations {
       'editProfile': 'Guhindura Umwirondoro',
 
       // Forum
-      'safeSpaceToShare': 'Umwanya utekanye wo gusangira',
-      'noPostsYet': 'Nta nyandiko ziriho',
-      'beTheFirstToStartConversation': 'Ba uwambere utangiza ikiganiro',
-      'createPost': 'Kora Inyandiko',
-      'joinTheConvo': 'Injira mu Ntungane',
-      'search': 'Gushakisha',
-      'searchPosts': 'Shakisha inyandiko...',
+      'safeSpaceToShare': 'Your Safe Space to Heal',
+      'noPostsYet': 'Nta post zirashyirwamo',
+      'beTheFirstToStartConversation': 'Ba uwa mbere mu kwinikiza ikiganiro ',
+      'createPost': 'Andika Nawe',
+      'joinTheConvo': 'Join The Convo',
+      'search': 'Shakisha',
+      'searchPosts': 'Shakisha posts',
       'likes': 'Bikunda',
       'replies': 'Ibisubizo',
       'reply': 'Subiza',
@@ -1234,12 +1234,12 @@ class AppLocalizations {
       'quickActions': 'Ibikorwa Byihuse',
 
       // Home - Mood tracking
-      'howAreYouFeelingToday': 'Umerewe ute uyu munsi?',
-      'great': 'Neza Cyane',
+      'howAreYouFeelingToday': 'Mbwira, urumva umeze ute?',
+      'great': 'Neza cyane',
       'good': 'Neza',
-      'okay': 'Biraringaniye',
-      'sad': 'Mbi',
-      'bad': 'Bibi Cyane',
+      'okay': 'Ntaribi',
+      'sad': 'Ndababaye',
+      'bad': 'Nabi',
 
       // Home - Resources
       'resources': 'Ibyagufasha',
@@ -1306,7 +1306,7 @@ class AppLocalizations {
       // Emergency Contacts Footer
       'isangeOneStopCenterLabel': 'Isange One Stop Center:',
       'rwandaInvestigationBureauLabel': 'Ikigo cy\'Igihugu gishinzwe Ubugenzacyaha (RIB):',
-      'hopeCoreTeamLabel': 'Ingabo HopeCore:',
+      'hopeCoreTeamLabel': 'HopeCore Team:',
       'helpIsAvailable247': 'Ubutabazi n\'ubufasha birahari 24/7',
 
       // Daily Affirmation Section
@@ -1328,27 +1328,29 @@ class AppLocalizations {
       'youArePostingAsGuest': 'Urapostinga nk\'umushyitsi. Injiramo na konti kugira ngo ukomeze ikiganiro n\'abandi.',
       'title': 'Umutwe',
       'shareYourThoughts': 'Vuga ikikuri ku mutima, cg ugishe inama…',
-      'share': 'Sakaza',
+      'share': 'Sangiza',
       'edit': 'Hindura',
       'delete': 'Siba',
       'flagReport': 'Flag/Report',
       'deletePost': 'Siba Post',
       'areYouSureYouWantToDelete': 'Nibyo koko ushaka gusiba iyi post? Ibisibwe ntibigaruka.',
-      'postDeletedSuccessfully': 'Post yawe yasibwe.',
-      'errorDeletingPost': 'Ntibikunze gusiba post:',
+      'postDeletedSuccessfully': ' Post yawe yasibwe.',
+      'errorDeletingPost': 'Ntibikunze gusiba post: [error]',
       'editPost': 'Hindura Post',
       'editYourMessage': 'Hindura post yawe',
       'save': 'Emeza',
       'postUpdatedSuccessfully': 'Post yawe yahinduwe neza',
-      'errorUpdatingPost': 'Ntibikuze guhindura post:',
+      'errorUpdatingPost': 'Ntibikuze guhindura post: [error]',
       'replySentSuccessfully': 'Igisubizo cyawe cyoherejwe neza',
-      'errorSendingReply': 'Ntibikunze kohereza igisubizo:',
+      'errorSendingReply': 'Ntibikunze kohereza igisubizo: [error]',
       'typeAReply': 'Andika usubiza…',
       'youHaveAlreadyLikedThisPost': 'Iyi post already wayikunze',
-      'errorLikingPost': 'Ntibikunze gukunda iyi post',
+      'errorLikingPost': 'Ntibikunze gukunda iyi post [error]',
       'pleaseLogInToReply': 'Banza winjire kuri konti kugira ngo usubize',
       'pleaseLogInToLikePosts': 'Injira kuri konti ubone gukunda posts',
       'pleaseLogInToReportContent': 'Injira kugira ngo urepportinge post',
+      'createAPost': 'Andika Nawe',
+      'postingAsUsername': 'Urapostinga nka [username]',
       'today': 'Uyu munsi',
       'yesterday': 'Ejo',
       'monday': 'Kuwa Mbere',
@@ -1375,8 +1377,8 @@ class AppLocalizations {
       'youAreBrowsingAsGuest': 'Uri gukoresha nk\'umushyitsi',
       'loggedInAs': 'Winjiyemo nka',
       'errorLoadingPostsUsingFallback': 'Ntibikunze kuzana posts. Harakoresha iyagenwe.',
-      'errorCreatingPost': 'Ntibikuze gupostinga:',
-      'errorLoadingPosts': 'Ntibikunze kuzana posts:',
+      'errorCreatingPost': 'Ntibikuze gupostinga: [error]',
+      'errorLoadingPosts': 'Ntibikunze kuzana posts: [error]',
 
       // Mahoro AI Screen
       'aiSupportActive': 'AI Support Active',
@@ -1392,6 +1394,7 @@ class AppLocalizations {
       'imSorryIEncounteredAnError': 'I\'m sorry, I encountered an error. Please try again.',
       'report': 'Reportinga',
       'thankYouForReportingContent': 'Urakoze ku reportinga iyi message. Turabigenzura bwangu.',
+      'your247SupportCompanion': 'Ndi inshuti yawe ihari 24/7',
 
       // Muganga Therapy Screen
       'comingSoon': 'Iraza Vuba',
@@ -1415,6 +1418,22 @@ class AppLocalizations {
       'online': 'Online',
       'pageComingSoon': 'page coming soon',
       'pageIsNotYetImplemented': 'page is not yet implemented',
+      'dataPerformanceLabel': 'Uko ukoresha data zawe',
+      'appearanceLabel': 'Imigaragarire',
+      'accessibilityLabel': '',
+      'notificationsLabel': '',
+      'emergencyContactsLabel': 'Inimero z\'Ubutabazi',
+      'selectFontFamilyLabel': 'Hitamo Font',
+      'selectFontSizeLabel': 'Hitamo Ingano y\'Amagabo',
+      'fontSizeFollowsDevice': 'Ingano y\'amagambo ikurikiza igenamiterere rya telephone yawe.',
+      'highContrastModeLabel': 'Bonesha cyane',
+      'reduceMotionLabel': 'Gabanya Motions',
+      'textToSpeechLabel': 'Text-to-Speech',
+      'voiceToTextLabel': 'Voice-to-Text',
+      'darkModeLabel': 'Ijimisha',
+      'lowDataModeLabel': 'Gukoresha data nkeya',
+      'imageLazyLoadingLabel': 'Gabanya Motions',
+      'offlineModeLabel': 'Koresha nta interineti',
 
       // Content Reporting Dialog
       'reportContent': 'Report Content',
