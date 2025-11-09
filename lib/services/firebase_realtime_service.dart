@@ -115,13 +115,28 @@ class FirebaseRealtimeService {
             key.toString(),
             value as Map<dynamic, dynamic>,
           );
-          posts.add(post);
+          
+          // Filter out posts by guest/anonymous users
+          final authorId = post.authorId;
+          final authorName = post.authorName;
+          final isGuestPost = authorId == null || 
+                             authorId.isEmpty || 
+                             authorId == 'anonymous_user' ||
+                             authorName == 'Guest' || 
+                             authorName == 'Anonymous' ||
+                             authorName.isEmpty;
+          
+          if (!isGuestPost) {
+            posts.add(post);
+          } else {
+            debugPrint('Filtering out guest post: ${post.id} by $authorName');
+          }
         });
 
         // Sort by date (newest first)
         posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-        debugPrint('Retrieved ${posts.length} posts from Realtime Database');
+        debugPrint('Retrieved ${posts.length} posts from Realtime Database (guest posts filtered)');
         return posts;
       }
 
@@ -130,6 +145,55 @@ class FirebaseRealtimeService {
     } catch (e) {
       debugPrint('Error getting posts from Realtime Database: $e');
       return [];
+    }
+  }
+
+  // Delete all posts by guest users
+  Future<int> deleteAllGuestPosts() async {
+    try {
+      final snapshot = await _postsRef.get();
+      int deletedCount = 0;
+
+      if (snapshot.exists) {
+        final Map<dynamic, dynamic> postsMap =
+            snapshot.value as Map<dynamic, dynamic>;
+
+        for (var key in postsMap.keys) {
+          final postData = postsMap[key] as Map<dynamic, dynamic>;
+          final authorId = postData['authorId']?.toString() ?? '';
+          final authorName = postData['authorName']?.toString() ?? '';
+          
+          final isGuestPost = authorId.isEmpty || 
+                             authorId == 'anonymous_user' ||
+                             authorName == 'Guest' || 
+                             authorName == 'Anonymous' ||
+                             authorName.isEmpty;
+          
+          if (isGuestPost) {
+            final postId = key.toString();
+            // Delete the post
+            await _postsRef.child(postId).remove();
+            
+            // Delete associated replies
+            final repliesSnapshot = await _repliesRef.orderByChild('postId').equalTo(postId).get();
+            if (repliesSnapshot.exists) {
+              final repliesMap = repliesSnapshot.value as Map<dynamic, dynamic>;
+              for (var replyKey in repliesMap.keys) {
+                await _repliesRef.child(replyKey.toString()).remove();
+              }
+            }
+            
+            deletedCount++;
+            debugPrint('Deleted guest post: $postId');
+          }
+        }
+      }
+
+      debugPrint('Deleted $deletedCount guest posts from Realtime Database');
+      return deletedCount;
+    } catch (e) {
+      debugPrint('Error deleting guest posts from Realtime Database: $e');
+      return 0;
     }
   }
 

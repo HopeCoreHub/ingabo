@@ -108,17 +108,34 @@ class ForumService {
 
   String getCurrentUserId() {
     final authService = _authService ?? AuthService();
-    return authService.userId ?? 'anonymous_user';
+    final userId = authService.userId;
+    if (userId == null || userId.isEmpty) {
+      throw Exception('User must be logged in');
+    }
+    return userId;
   }
 
   String getCurrentUsername() {
     final authService = _authService ?? AuthService();
-    return authService.username ?? 'Anonymous';
+    final username = authService.username;
+    if (username == null || username.isEmpty || username == 'Guest' || username == 'Anonymous') {
+      throw Exception('User must be logged in');
+    }
+    return username;
   }
 
   bool isLoggedIn() {
     final authService = _authService ?? AuthService();
-    return authService.isLoggedIn;
+    if (!authService.isLoggedIn) return false;
+    final userId = authService.userId;
+    final username = authService.username;
+    // Check if user is actually logged in (not guest/anonymous)
+    return userId != null && 
+           userId.isNotEmpty && 
+           username != null && 
+           username.isNotEmpty &&
+           username != 'Guest' &&
+           username != 'Anonymous';
   }
 
   Future<List<Post>> getPosts() async {

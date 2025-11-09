@@ -107,79 +107,26 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
               ? Colors.black
               : (isDarkMode ? Colors.black : Colors.white),
       body: SafeArea(
-        child:
-            _isLoading
-                ? _buildLoadingState(isDarkMode, highContrastMode)
-                : _error != null
-                ? _buildErrorState(isDarkMode, highContrastMode, accentColor)
-                : SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      _buildHeader(
-                        isDarkMode,
-                        accentColor,
-                        context,
-                        highContrastMode,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildSubscriptionCard(
-                        context,
-                        isDarkMode,
-                        accentColor,
-                        highContrastMode,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildFeatureCard(
-                        icon: Icons.shield_outlined,
-                        title: 'certifiedTherapists',
-                        description: 'licensedMentalHealthProfessionals',
-                        isDarkMode: isDarkMode,
-                        accentColor: accentColor,
-                        context: context,
-                        highContrastMode: highContrastMode,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildFeatureCard(
-                        icon: Icons.calendar_today_outlined,
-                        title: 'flexibleScheduling',
-                        description: 'bookSessionsAtYourConvenience',
-                        isDarkMode: isDarkMode,
-                        accentColor: accentColor,
-                        context: context,
-                        highContrastMode: highContrastMode,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildFeatureCard(
-                        icon: Icons.timer_outlined,
-                        title: 'oneOnOneSessions',
-                        description: 'privateConfidentialTherapySessions',
-                        isDarkMode: isDarkMode,
-                        accentColor: accentColor,
-                        context: context,
-                        highContrastMode: highContrastMode,
-                      ),
-                      const SizedBox(height: 20),
-                      Divider(
-                        color:
-                            isDarkMode
-                                ? const Color(0xFF2D3748)
-                                : const Color(0xFFE2E8F0),
-                        thickness: 1,
-                        height: 20,
-                        indent: 20,
-                        endIndent: 20,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildPaymentInfo(
-                        isDarkMode,
-                        accentColor,
-                        context,
-                        highContrastMode,
-                      ),
-                      const SizedBox(height: 30),
-                    ],
-                  ),
-                ),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildHeader(
+                isDarkMode,
+                accentColor,
+                context,
+                highContrastMode,
+              ),
+              const SizedBox(height: 40),
+              _buildUpcomingServiceCard(
+                isDarkMode,
+                accentColor,
+                context,
+                highContrastMode,
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -200,8 +147,8 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
             child: Image.asset('assets/logo.png', fit: BoxFit.contain),
           ),
           const SizedBox(height: 16),
-          LocalizedText(
-            'mugangaTherapy',
+          Text(
+            'Muganga Therapy',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -212,14 +159,103 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
             ),
           ),
           const SizedBox(height: 8),
-          LocalizedText(
-            'professionalMentalHealthSupport',
+          Text(
+            'Professional Mental Health Support',
             style: TextStyle(
               fontSize: 16,
               color:
                   highContrastMode
                       ? (isDarkMode ? Colors.white70 : Colors.black87)
                       : (isDarkMode ? Colors.white70 : Colors.black54),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUpcomingServiceCard(
+    bool isDarkMode,
+    Color accentColor,
+    BuildContext context,
+    bool highContrastMode,
+  ) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: isDarkMode
+            ? Colors.white.withAlpha(25)
+            : Colors.grey.withAlpha(25),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDarkMode
+              ? Colors.white.withAlpha(51)
+              : Colors.black.withAlpha(25),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.construction_outlined,
+            size: 64,
+            color: accentColor,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Coming Soon',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Muganga Therapy is currently in development and will launch soon.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: isDarkMode ? Colors.white70 : Colors.black87,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'We are building the most affordable GenZ-friendly Mental Health Support in Rwanda.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: accentColor,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: accentColor.withAlpha(51),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: accentColor,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Stay tuned for updates!',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

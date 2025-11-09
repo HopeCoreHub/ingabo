@@ -127,9 +127,11 @@ class _OnboardingSplashState extends State<OnboardingSplash>
       }
     });
 
-    return Scaffold(
-      backgroundColor: isDarkMode ? Colors.black : Colors.white,
-      body: SafeArea(
+    return Container(
+      color: isDarkMode ? Colors.black : Colors.white,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -185,6 +187,7 @@ class _OnboardingSplashState extends State<OnboardingSplash>
             ],
           ),
         ),
+      ),
       ),
     );
   }

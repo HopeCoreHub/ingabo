@@ -38,6 +38,14 @@ import 'widgets/onboarding_splash.dart';
 void main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Set system UI overlay style to match app theme immediately
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+    ),
+  );
 
   debugPrint('Starting application initialization...');
 
