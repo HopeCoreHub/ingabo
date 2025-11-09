@@ -107,7 +107,6 @@ class AppLocalizations {
       'yourSupportCompanion': 'Your 24/7 support companion',
       'typeMessage': 'Type a message...',
       'send': 'Send',
-      'talkToMahoro': 'Talk to Mahoro',
 
       // Muganga
       'mugangaTherapy': 'Muganga Therapy',
@@ -154,6 +153,7 @@ class AppLocalizations {
       'recentPosts': 'Recent Posts',
       'viewAll': 'View All',
       'quickActions': 'Quick Actions',
+      'howAreYouToday': 'How are you today?',
 
       // Home - Mood tracking
       'howAreYouFeelingToday': 'How are you feeling today?',
@@ -224,6 +224,8 @@ class AppLocalizations {
       'imSorryYoureFeelingDown': 'I\'m sorry you\'re feeling down. Remember that it\'s okay to not be okay, and talking about it can help. Would you like some support?',
       'iCanSeeYoureHavingDifficultTime': 'I can see you\'re having a difficult time. Please remember you\'re not alone, and there are resources available to help you through this.',
       'thankYouForSharingHowYoureFeeling': 'Thank you for sharing how you\'re feeling. Would you like to talk more about it?',
+      'talkToMahoro': 'Talk to Mahoro',
+      'joinForum': 'Join Forum',
 
       // Emergency Contacts Footer
       'isangeOneStopCenterLabel': 'Isange One Stop Center:',
@@ -491,7 +493,6 @@ class AppLocalizations {
       'yourSupportCompanion': 'Votre compagnon de soutien 24/7',
       'typeMessage': 'Tapez un message...',
       'send': 'Envoyer',
-      'talkToMahoro': 'Parler à Mahoro',
 
       // Muganga
       'mugangaTherapy': 'Thérapie Muganga',
@@ -540,6 +541,7 @@ class AppLocalizations {
       'recentPosts': 'Publications Récentes',
       'viewAll': 'Voir Tout',
       'quickActions': 'Actions Rapides',
+      'howAreYouToday': 'Comment allez-vous aujourd\'hui?',
 
       // Home - Mood tracking
       'howAreYouFeelingToday': 'Comment vous sentez-vous aujourd\'hui?',
@@ -610,6 +612,8 @@ class AppLocalizations {
       'imSorryYoureFeelingDown': 'Je suis désolé que vous vous sentiez mal. Rappelez-vous qu\'il est normal de ne pas aller bien, et en parler peut aider. Souhaitez-vous du soutien?',
       'iCanSeeYoureHavingDifficultTime': 'Je vois que vous traversez une période difficile. N\'oubliez pas que vous n\'êtes pas seul, et il existe des ressources disponibles pour vous aider.',
       'thankYouForSharingHowYoureFeeling': 'Merci de partager ce que vous ressentez. Souhaitez-vous en parler davantage?',
+      'talkToMahoro': 'Parler à Mahoro',
+      'joinForum': 'Rejoindre le Forum',
 
       // Emergency Contacts Footer
       'isangeOneStopCenterLabel': 'Isange One Stop Center:',
@@ -789,6 +793,13 @@ class AppLocalizations {
       'contactsPermissionRequired': 'L\'autorisation d\'accès aux contacts est requise pour sélectionner depuis le répertoire.',
       'enableContactsPermission': 'Veuillez activer l\'autorisation d\'accès aux contacts dans les paramètres de l\'application.',
       'errorAccessingContacts': 'Erreur lors de l\'accès aux contacts:',
+      'mon': 'Lun',
+      'tue': 'Mar',
+      'wed': 'Mer',
+      'thu': 'Jeu',
+      'fri': 'Ven',
+      'sat': 'Sam',
+      'sun': 'Dim',
     },
     'Swahili': {
       // Transaction ID dialog
@@ -878,7 +889,6 @@ class AppLocalizations {
       'yourSupportCompanion': 'Msaidizi wako wa kila wakati',
       'typeMessage': 'Andika ujumbe...',
       'send': 'Tuma',
-      'talkToMahoro': 'Ongea na Mahoro',
 
       // Muganga
       'mugangaTherapy': 'Tiba ya Muganga',
@@ -995,6 +1005,8 @@ class AppLocalizations {
       'imSorryYoureFeelingDown': 'Samahani kwa kujisikia vibaya. Kumbuka kuwa si shida kujisikia vibaya, na kuzungumza kuhusu hilo kunaweza kusaidia. Ungependa msaada?',
       'iCanSeeYoureHavingDifficultTime': 'Naona una wakati mgumu. Tafadhali kumbuka kuwa huna peke yako, na kuna rasilimali zinazopatikana kukusaidia.',
       'thankYouForSharingHowYoureFeeling': 'Asante kwa kushiriki jinsi unavyojisikia. Ungependa kuzungumza zaidi kuhusu hilo?',
+      'talkToMahoro': 'Ongea na Mahoro',
+      'joinForum': 'Jiunge na Jukwaa',
 
       // Emergency Contacts Footer
       'isangeOneStopCenterLabel': 'Isange One Stop Center:',
@@ -1174,6 +1186,13 @@ class AppLocalizations {
       'contactsPermissionRequired': 'Ruhusa ya kufikia anwani inahitajika ili kuchagua kutoka kwenye kitabu cha simu.',
       'enableContactsPermission': 'Tafadhali wezesha ruhusa ya kufikia anwani katika mipangilio ya programu.',
       'errorAccessingContacts': 'Hitilafu katika kufikia anwani:',
+      'mon': 'Jtn',
+      'tue': 'Jnn',
+      'wed': 'Jtn',
+      'thu': 'Alh',
+      'fri': 'Ijm',
+      'sat': 'Jms',
+      'sun': 'Jpl',
     },
     'Kinyarwanda': {
       // Transaction ID dialog
@@ -1263,7 +1282,6 @@ class AppLocalizations {
       'yourSupportCompanion': 'Umufasha wawe w\'igihe cyose',
       'typeMessage': 'Andika ubutumwa...',
       'send': 'Ohereza',
-      'talkToMahoro': 'Vugana na Mahoro',
 
       // Muganga
       'mugangaTherapy': 'Ubuvuzi bwa Muganga',
@@ -1382,6 +1400,8 @@ class AppLocalizations {
       'imSorryYoureFeelingDown': 'Nyabusa ihangane kandi komera. Buriya kugira uwo ubwira ntako bisa. Wumva wifuza uwo wabwira?',
       'iCanSeeYoureHavingDifficultTime': 'Ndabyumva bambe uraremerewe. Ariko kandi nyabusa, nturi wenyine. Uru rubuga urufiteho umuryango n\'ubufasha bw\'ingeri nyinshi.',
       'thankYouForSharingHowYoureFeeling': 'Urakoze kumbwira uko umeze. Tubiganireho byimbitse?',
+      'talkToMahoro': 'Ganira na Mahoro',
+      'joinForum': 'Ganira n\'Urungano',
 
       // Emergency Contacts Footer
       'isangeOneStopCenterLabel': 'Isange One Stop Center:',
@@ -1554,8 +1574,15 @@ class AppLocalizations {
       'couldNotLaunchSMS': 'Could not launch SMS to',
       'errorSendingSMS': 'Error sending SMS:',
       'couldNotLaunchWhatsApp': 'Could not launch WhatsApp. Please make sure WhatsApp is installed.',
-      'errorSendingWhatsAppMessage': 'Error sending WhatsApp message:',
+      'errorSendingWhatsAppMessage': 'Error sending WhatsApp message: [error]',
       'close': 'Close',
+      'mon': 'Mon',
+      'tue': 'Tue',
+      'wed': 'Wed',
+      'thu': 'Thu',
+      'fri': 'Fri',
+      'sat': 'Sat',
+      'sun': 'Sun',
     },
   };
 
