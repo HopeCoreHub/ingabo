@@ -116,7 +116,7 @@ class AiContentPolicyNotice extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'This app includes AI-generated content from our Mahoro AI companion, powered by Google Gemini. The AI provides mental health support and guidance.',
+                      'This app includes AI-generated content from our Mahoro AI companion, powered by Claude AI. The AI provides mental health support and guidance.',
                       style: TextStyle(
                         fontSize: 14,
                         color: isDarkMode ? Colors.white70 : Colors.black87,
