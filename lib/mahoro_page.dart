@@ -310,6 +310,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
 
       try {
         debugPrint("Making API request to Claude...");
+        debugPrint("API Key available: ${apiKey.isNotEmpty}");
+        debugPrint("API Key length: ${apiKey.length}");
 
         // Reinitialize Claude service with the current API key
         _claudeService = ClaudeService(apiKey: apiKey);
@@ -320,17 +322,29 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
           systemInstructions: systemPrompt,
         );
 
-        debugPrint("Received response from Claude");
+        debugPrint("Received response from Claude (length: ${response.length})");
         return response;
       } catch (e) {
         debugPrint('Claude API Error: $e');
-        if (e.toString().contains('authentication') || e.toString().contains('401')) {
+        debugPrint('Error type: ${e.runtimeType}');
+        debugPrint('Error message: ${e.toString()}');
+        
+        if (e.toString().contains('authentication') || 
+            e.toString().contains('401') ||
+            e.toString().contains('API key')) {
           setState(() {
             _isApiKeyValid = false;
           });
           return "I'm having trouble with authentication. Please contact support.";
+        } else if (e.toString().contains('timeout') || 
+                   e.toString().contains('Network') ||
+                   e.toString().contains('internet')) {
+          return "I'm having trouble connecting to the internet. Please check your connection and try again.";
+        } else if (e.toString().contains('rate limit') || 
+                   e.toString().contains('429')) {
+          return "I'm receiving too many requests. Please wait a moment and try again.";
         } else {
-          return "I'm having trouble connecting right now. Please try again later.";
+          return "I'm having trouble connecting right now. Please try again later. If the problem persists, please contact support.";
         }
       }
     } catch (e) {
@@ -1094,6 +1108,12 @@ class ClaudeService {
     required String systemInstructions,
   }) async {
     try {
+      // Validate API key
+      if (_apiKey.isEmpty) {
+        debugPrint('Claude API Error: API key is empty');
+        throw Exception('API key is missing. Please contact support.');
+      }
+
       final url = Uri.parse('https://api.anthropic.com/v1/messages');
       
       final requestBody = {
@@ -1108,6 +1128,10 @@ class ClaudeService {
         ],
       };
 
+      debugPrint('Claude API: Making request to ${url.toString()}');
+      debugPrint('Claude API: API key prefix: ${_apiKey.substring(0, 10)}...');
+      debugPrint('Claude API: Request body length: ${jsonEncode(requestBody).length}');
+
       final response = await http.post(
         url,
         headers: {
@@ -1116,26 +1140,62 @@ class ClaudeService {
           'anthropic-version': '2023-06-01',
         },
         body: jsonEncode(requestBody),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          debugPrint('Claude API: Request timeout after 30 seconds');
+          throw Exception('Request timeout. Please check your internet connection and try again.');
+        },
       );
 
+      debugPrint('Claude API: Response status: ${response.statusCode}');
+      debugPrint('Claude API: Response body length: ${response.body.length}');
+
       if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        final content = responseData['content'] as List;
-        if (content.isNotEmpty) {
-          final textBlock = content[0] as Map<String, dynamic>;
-          return textBlock['text'] as String;
+        try {
+          final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+          final content = responseData['content'] as List;
+          if (content.isNotEmpty) {
+            final textBlock = content[0] as Map<String, dynamic>;
+            final text = textBlock['text'] as String;
+            debugPrint('Claude API: Successfully received response (length: ${text.length})');
+            return text;
+          }
+          debugPrint('Claude API: Empty content in response');
+          return 'No response generated.';
+        } catch (e) {
+          debugPrint('Claude API: Error parsing response: $e');
+          debugPrint('Claude API: Response body: ${response.body}');
+          throw Exception('Failed to parse API response. Please try again.');
         }
-        return 'No response generated.';
       } else if (response.statusCode == 401) {
-        debugPrint('Claude API authentication error: ${response.statusCode} - ${response.body}');
+        debugPrint('Claude API authentication error: ${response.statusCode}');
+        debugPrint('Claude API error body: ${response.body}');
         throw Exception('Authentication failed. Please check your API key.');
+      } else if (response.statusCode == 429) {
+        debugPrint('Claude API rate limit error: ${response.statusCode}');
+        throw Exception('Rate limit exceeded. Please wait a moment and try again.');
+      } else if (response.statusCode >= 500) {
+        debugPrint('Claude API server error: ${response.statusCode}');
+        debugPrint('Claude API error body: ${response.body}');
+        throw Exception('Server error. Please try again later.');
       } else {
-        debugPrint('Claude API error: ${response.statusCode} - ${response.body}');
+        debugPrint('Claude API error: ${response.statusCode}');
+        debugPrint('Claude API error body: ${response.body}');
         throw Exception('API request failed: ${response.statusCode}');
       }
+    } on http.ClientException catch (e) {
+      debugPrint('Claude API network error: $e');
+      throw Exception('Network error. Please check your internet connection and try again.');
+    } on FormatException catch (e) {
+      debugPrint('Claude API format error: $e');
+      throw Exception('Invalid response format. Please try again.');
     } catch (e) {
-      debugPrint('Claude API error: $e');
-      rethrow;
+      debugPrint('Claude API unexpected error: $e');
+      if (e.toString().contains('timeout')) {
+        rethrow;
+      }
+      throw Exception('An unexpected error occurred: ${e.toString()}');
     }
   }
 

@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:contacts_service/contacts_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'firebase_options.dart';
@@ -1652,7 +1654,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   isDarkMode: isDarkMode,
                   onTap: () {
                     Navigator.of(context).pop();
-                    _sendSms('0780332779', 'Hello, I need help regarding safety concern.');
+                    _sendSms('0780332779', 'Hello, I need help regarding a safety concern. Please contact me when you have a moment.');
                   },
                 ),
                 const SizedBox(height: 12),
@@ -1677,7 +1679,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   isWhatsApp: true,
                   onTap: () {
                     Navigator.of(context).pop();
-                    _sendWhatsApp('+250780332779', 'Hello, I need help regarding safety concern.');
+                    _sendWhatsApp('+250780332779', 'Hello, I need help regarding a safety concern. Please contact me when you have a moment.');
                   },
                 ),
                 const SizedBox(height: 24),
@@ -4512,16 +4514,18 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
 
   // New method to make phone calls
   Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    // Clean phone number - remove any non-digit characters except +
+    final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri launchUri = Uri(scheme: 'tel', path: cleanNumber);
     final messenger = ScaffoldMessenger.of(context);
     try {
       if (await canLaunchUrl(launchUri)) {
-        await launchUrl(launchUri);
+        await launchUrl(launchUri, mode: LaunchMode.externalApplication);
       } else {
         if (!mounted) return;
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Could not launch phone call to $phoneNumber'),
+            content: Text('Could not launch phone call to $cleanNumber'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -4745,20 +4749,22 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
   }
 
   Future<void> _sendSms(String phoneNumber, String message) async {
+    // Clean phone number - remove any non-digit characters except +
+    final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     final Uri smsUri = Uri(
       scheme: 'sms',
-      path: phoneNumber,
+      path: cleanNumber,
       queryParameters: {'body': message},
     );
     final messenger = ScaffoldMessenger.of(context);
     try {
       if (await canLaunchUrl(smsUri)) {
-        await launchUrl(smsUri);
+        await launchUrl(smsUri, mode: LaunchMode.externalApplication);
       } else {
         if (!mounted) return;
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Could not launch SMS to $phoneNumber'),
+            content: Text('Could not launch SMS to $cleanNumber'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -4811,7 +4817,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
     final TextEditingController numberController = TextEditingController();
     final TextEditingController messageController = TextEditingController(
       text:
-          'Hi, I need to talk. Could you please call me when you have a moment?',
+          'Hello, I need help regarding a safety concern. Please contact me when you have a moment.',
     );
 
     showDialog(
@@ -4849,6 +4855,29 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                     ],
                   ),
                   const SizedBox(height: 20),
+                  // Phonebook picker button
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      await _pickContactFromPhonebook(nameController, numberController);
+                    },
+                    icon: const Icon(Icons.contacts, color: Colors.white),
+                    label: const Text(
+                      'Pick from Phonebook',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8A4FFF),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(
@@ -4979,6 +5008,153 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
             ),
           ),
     );
+  }
+
+  // Method to pick contact from phonebook
+  Future<void> _pickContactFromPhonebook(
+    TextEditingController nameController,
+    TextEditingController numberController,
+  ) async {
+    try {
+      // Request contacts permission
+      final status = await Permission.contacts.request();
+      
+      if (status.isDenied) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contacts permission is required to pick from phonebook.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+
+      if (status.isPermanentlyDenied) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enable contacts permission in app settings.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+
+      // Get contacts
+      final Iterable<Contact> contacts = await ContactsService.getContacts(
+        withThumbnails: false,
+      );
+
+      if (!mounted) return;
+
+      // Show contact picker dialog
+      final Contact? selectedContact = await showDialog<Contact>(
+        context: context,
+        builder: (context) {
+          final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+          final isDarkMode = themeProvider.isDarkMode;
+          
+          return Dialog(
+            backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              constraints: const BoxConstraints(maxHeight: 500),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Select Contact',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close),
+                          color: isDarkMode ? Colors.white60 : Colors.black54,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: contacts.length,
+                      itemBuilder: (context, index) {
+                        final contact = contacts.elementAt(index);
+                        final phoneNumber = contact.phones?.isNotEmpty == true
+                            ? contact.phones!.first.value ?? ''
+                            : '';
+                        
+                        if (phoneNumber.isEmpty) return const SizedBox.shrink();
+                        
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: const Color(0xFF8A4FFF),
+                            child: Text(
+                              contact.displayName?.isNotEmpty == true
+                                  ? contact.displayName![0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          title: Text(
+                            contact.displayName ?? 'Unknown',
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          subtitle: Text(
+                            phoneNumber,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white70 : Colors.black54,
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.of(context).pop(contact);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
+      if (selectedContact != null) {
+        nameController.text = selectedContact.displayName ?? '';
+        final phoneNumber = selectedContact.phones?.isNotEmpty == true
+            ? selectedContact.phones!.first.value ?? ''
+            : '';
+        if (phoneNumber.isNotEmpty) {
+          // Clean phone number
+          final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+          numberController.text = cleanNumber;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking contact: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error accessing contacts: $e'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 }
 

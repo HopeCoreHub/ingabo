@@ -49,5 +49,7 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>NSContactsUsageDescription</key>
+	<string>We need access to your contacts to help you quickly select trusted contacts for emergency support.</string>
 </dict>
 </plist>
