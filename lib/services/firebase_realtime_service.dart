@@ -119,8 +119,7 @@ class FirebaseRealtimeService {
           // Filter out posts by guest/anonymous users
           final authorId = post.authorId;
           final authorName = post.authorName;
-          final isGuestPost = authorId == null || 
-                             authorId.isEmpty || 
+          final isGuestPost = authorId.isEmpty || 
                              authorId == 'anonymous_user' ||
                              authorName == 'Guest' || 
                              authorName == 'Anonymous' ||
