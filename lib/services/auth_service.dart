@@ -662,16 +662,28 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  // Securely store API key
+  // Securely store Claude API key
   static Future<void> storeApiKey(String apiKey) async {
     final secureStorage = FlutterSecureStorage();
     await secureStorage.write(key: 'claude_api_key', value: apiKey);
   }
 
-  // Retrieve API key securely
+  // Retrieve Claude API key securely
   static Future<String?> getApiKey() async {
     final secureStorage = FlutterSecureStorage();
     return await secureStorage.read(key: 'claude_api_key');
+  }
+
+  // Securely store Gemini API key
+  static Future<void> storeGeminiApiKey(String apiKey) async {
+    final secureStorage = FlutterSecureStorage();
+    await secureStorage.write(key: 'gemini_api_key', value: apiKey);
+  }
+
+  // Retrieve Gemini API key securely
+  static Future<String?> getGeminiApiKey() async {
+    final secureStorage = FlutterSecureStorage();
+    return await secureStorage.read(key: 'gemini_api_key');
   }
 
   // Check if current user is admin with specific credentials
