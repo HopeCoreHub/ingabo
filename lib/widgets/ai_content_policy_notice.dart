@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme_provider.dart';
 import '../accessibility_provider.dart';
+import '../localization/localized_text.dart';
 
 class AiContentPolicyNotice extends StatelessWidget {
   static const String _policyNoticeShownKey = 'ai_content_policy_notice_shown';
@@ -229,7 +230,7 @@ class AiContentPolicyNotice extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Text('I Understand'),
+          child: LocalizedText('iUnderstand'),
         ),
       ],
     );

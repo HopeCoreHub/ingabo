@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../theme_provider.dart';
 import '../models/post_model.dart';
 import '../services/auth_service.dart';
+import '../localization/app_localizations.dart';
+import '../localization/localized_text.dart';
 
 class ReplyDialog extends StatefulWidget {
   final Post post;
@@ -140,7 +142,7 @@ class _ReplyDialogState extends State<ReplyDialog> {
                     foregroundColor:
                         isDarkMode ? Colors.white70 : Colors.black54,
                   ),
-                  child: const Text('Cancel'),
+                  child: LocalizedText('cancel'),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
@@ -165,7 +167,7 @@ class _ReplyDialogState extends State<ReplyDialog> {
                               ),
                             ),
                           )
-                          : const Text('Submit'),
+                          : LocalizedText('submit'),
                 ),
               ],
             ),

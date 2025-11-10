@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme_provider.dart';
 import '../services/auth_service.dart';
+import '../localization/app_localizations.dart';
+import '../localization/localized_text.dart';
 
 class PostCreationDialog extends StatefulWidget {
   final Function(String, String) onCreatePost;
@@ -325,9 +327,9 @@ class _PostCreationDialogState extends State<PostCreationDialog>
                       vertical: 12,
                     ),
                   ),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                  child: LocalizedText(
+                    'cancel',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -359,9 +361,9 @@ class _PostCreationDialogState extends State<PostCreationDialog>
                               ),
                             ),
                           )
-                          : const Text(
-                            'Post',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                          : LocalizedText(
+                            'post',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                 ),
               ],

@@ -1485,12 +1485,12 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Logout'),
-            content: const Text('Are you sure you want to logout?'),
+            title: LocalizedText('logout'),
+            content: LocalizedText('areYouSureYouWantToLogout'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: LocalizedText('cancel'),
               ),
               TextButton(
                 onPressed: () async {
@@ -1931,7 +1931,11 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         if (!mounted) return;
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Could not launch phone call to $phoneNumber'),
+            content: Text(
+              AppLocalizations.of(context)
+                  .translate('couldNotLaunchPhoneCall')
+                  .replaceAll('[number]', phoneNumber),
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -1941,7 +1945,11 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Error making phone call: $e'),
+          content: Text(
+            AppLocalizations.of(context)
+                .translate('errorMakingPhoneCall')
+                .replaceAll('[error]', e.toString()),
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -2157,8 +2165,282 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => _showClaudeApiKeyDialog(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color:
+                    isDarkMode
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: accentColor.withAlpha(127), width: 1),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.vpn_key, color: accentColor, size: 20),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Claude API Key',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            'Manage Mahoro AI API key',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color:
+                                  isDarkMode ? Colors.white60 : Colors.black54,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: isDarkMode ? Colors.white54 : Colors.black54,
+                    size: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ]),
       ],
+    );
+  }
+
+  Future<void> _showClaudeApiKeyDialog() async {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final TextEditingController controller = TextEditingController();
+    bool obscureText = true;
+    bool hasExistingKey = false;
+
+    // Check if there's an existing key
+    final existingKey = await AuthService.getApiKey();
+    if (existingKey != null && existingKey.isNotEmpty) {
+      controller.text = existingKey;
+      hasExistingKey = true;
+    }
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.vpn_key,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  LocalizedText(
+                    'claudeApiKey',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white : Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LocalizedText(
+                      hasExistingKey
+                          ? 'updateClaudeApiKeyDescription'
+                          : 'enterClaudeApiKeyDescription',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context).translate('apiKeyLabel'),
+                        hintText: 'sk-ant-...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        filled: true,
+                        fillColor: isDarkMode
+                            ? Colors.white.withAlpha(25)
+                            : Colors.grey.withAlpha(25),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscureText ? Icons.visibility : Icons.visibility_off,
+                            color: isDarkMode ? Colors.white54 : Colors.black54,
+                          ),
+                          onPressed: () {
+                            setDialogState(() {
+                              obscureText = !obscureText;
+                            });
+                          },
+                        ),
+                      ),
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black87,
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                      ),
+                      autofocus: !hasExistingKey,
+                      obscureText: obscureText,
+                      maxLines: 3,
+                      minLines: 1,
+                    ),
+                    if (hasExistingKey) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withAlpha(25),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.orange.withAlpha(76),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.orange,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: LocalizedText(
+                                'updatingKeyWillAffectAllUsers',
+                                style: TextStyle(
+                                  color: isDarkMode ? Colors.white70 : Colors.black87,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ),
+                if (hasExistingKey)
+                  TextButton(
+                    onPressed: () async {
+                      await AuthService.storeApiKey('');
+                      if (mounted) {
+                        Navigator.of(dialogContext).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              AppLocalizations.of(context).translate('apiKeyRemoved'),
+                            ),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                    child: LocalizedText(
+                      'remove',
+                      style: const TextStyle(
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final key = controller.text.trim();
+                    if (key.isEmpty) {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context).translate('pleaseEnterValidApiKey'),
+                          ),
+                          backgroundColor: Colors.red,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                      return;
+                    }
+
+                    if (!key.startsWith('sk-ant-')) {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context).translate('invalidApiKeyFormat'),
+                          ),
+                          backgroundColor: Colors.orange,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                      return;
+                    }
+
+                    await AuthService.storeApiKey(key);
+                    if (mounted) {
+                      Navigator.of(dialogContext).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            hasExistingKey
+                                ? AppLocalizations.of(context).translate('apiKeyUpdatedSuccessfully')
+                                : AppLocalizations.of(context).translate('apiKeySaved'),
+                          ),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDarkMode
+                        ? const Color(0xFF8A4FFF)
+                        : const Color(0xFFE53935),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: LocalizedText(hasExistingKey ? 'update' : 'save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

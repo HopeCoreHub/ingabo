@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'theme_provider.dart';
 import 'accessibility_provider.dart';
 import 'services/auth_service.dart';
@@ -14,6 +15,9 @@ import 'localization/base_screen.dart';
 import 'services/content_reporting_service.dart';
 import 'widgets/content_report_dialog.dart';
 
+const String _envClaudeApiKey =
+    String.fromEnvironment('CLAUDE_API_KEY', defaultValue: '');
+
 class MahoroPage extends BaseScreen {
   const MahoroPage({super.key});
 
@@ -25,14 +29,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     with SingleTickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   late AnimationController _typingAnimController;
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      text:
-          "Muraho! I'm Mahoro, your supportive AI companion. How can I help you today? You can speak to me in Kinyarwanda, English, Swahili, or French.",
-      isUserMessage: false,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 1)),
-    ),
-  ];
+  List<ChatMessage> _messages = [];
   bool _isTyping = false;
   String _currentLanguage = 'EN';
   String _currentLanguageName = 'English';
@@ -43,7 +40,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // Claude service
-  late ClaudeService _claudeService;
+  ClaudeService? _claudeService;
 
   final Map<String, String> _languageNames = {
     'EN': 'English',
@@ -53,13 +50,16 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
   };
 
   // Conversation history for API
-  final List<Map<String, dynamic>> _conversationHistory = [
-    {
-      "role": "assistant",
-      "content":
-          "Muraho! I'm Mahoro, your supportive AI companion. How can I help you today? You can speak to me in Kinyarwanda, English, Swahili, or French.",
-    },
-  ];
+  List<Map<String, dynamic>> _conversationHistory = [];
+  
+  // Conversation storage consent
+  bool _conversationStorageConsent = false;
+  
+  // Maximum messages to keep in history (to prevent PII leakage and cost spikes)
+  static const int _maxHistoryMessages = 20;
+  
+  // Maximum conversation age in days (30 days)
+  static const int _maxConversationAgeDays = 30;
 
   // Get API key securely
   Future<String?> _getApiKey() async {
@@ -74,8 +74,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
       duration: const Duration(milliseconds: 700),
     )..repeat();
 
-    // Store API key securely on first run
-    _storeApiKey();
+    // Initialize greeting message with localized text
+    _initializeGreeting();
 
     // Create a new conversation ID
     _createNewConversation();
@@ -85,6 +85,22 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
 
     // Initialize Claude service
     _initializeClaudeService();
+  }
+
+  void _initializeGreeting() {
+    // Get localized greeting
+    final greeting = AppLocalizations.of(context).translate('murahoImMahoro');
+    _messages.add(
+      ChatMessage(
+        text: greeting,
+        isUserMessage: false,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 1)),
+      ),
+    );
+    _conversationHistory.add({
+      "role": "assistant",
+      "content": greeting,
+    });
   }
 
   Future<void> _createNewConversation() async {
@@ -118,6 +134,17 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
       final conversationDoc = querySnapshot.docs.first;
       final conversationData = conversationDoc.data();
 
+      // Check if conversation is too old (older than max age)
+      if (conversationData.containsKey('lastUpdated')) {
+        final lastUpdated = DateTime.parse(conversationData['lastUpdated'] as String);
+        final ageInDays = DateTime.now().difference(lastUpdated).inDays;
+        if (ageInDays > _maxConversationAgeDays) {
+          // Delete old conversation
+          await conversationDoc.reference.delete();
+          return;
+        }
+      }
+
       // Update conversation ID
       _conversationId = conversationDoc.id;
 
@@ -130,16 +157,20 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
         });
       }
 
-      // Get messages
+      // Get messages - limit to max history messages
       if (conversationData.containsKey('messages')) {
         final messages = conversationData['messages'] as List<dynamic>;
+        // Only keep the most recent messages
+        final recentMessages = messages.length > _maxHistoryMessages
+            ? messages.sublist(messages.length - _maxHistoryMessages)
+            : messages;
 
         setState(() {
           // Clear existing messages and history
           _messages.clear();
           _conversationHistory.clear();
 
-          for (var message in messages) {
+          for (var message in recentMessages) {
             final role = message['role'] as String;
             final content = message['content'] as String;
             final timestamp = DateTime.parse(message['timestamp'] as String);
@@ -173,15 +204,30 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
         return; // Can't save if user is not logged in
       }
 
+      // Only save if user has consented
+      if (!_conversationStorageConsent) {
+        return;
+      }
+
       final userId = authService.userId!;
 
-      // Create a list of message data to save
+      // Limit messages to prevent PII leakage and cost spikes
+      final messagesToSave = _messages.length > _maxHistoryMessages
+          ? _messages.sublist(_messages.length - _maxHistoryMessages)
+          : _messages;
+
+      // Create a list of message data to save (minimize stored data)
       final List<Map<String, dynamic>> messagesData = [];
 
-      for (var message in _messages) {
+      for (var message in messagesToSave) {
+        // Only store essential data - truncate very long messages
+        final content = message.text.length > 1000
+            ? '${message.text.substring(0, 1000)}...'
+            : message.text;
+        
         messagesData.add({
           'role': message.isUserMessage ? 'user' : 'assistant',
-          'content': message.text,
+          'content': content,
           'timestamp': message.timestamp.toIso8601String(),
         });
       }
@@ -197,12 +243,86 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
             'language': _currentLanguage,
             'messages': messagesData,
             'lastUpdated': DateTime.now().toIso8601String(),
+            'consentGiven': true,
           }, SetOptions(merge: true));
+
+      // Clean up old conversations (older than max age)
+      await _cleanupOldConversations(userId);
 
       debugPrint('Saved conversation to Firebase');
     } catch (e) {
       debugPrint('Error saving conversation to Firebase: $e');
       // Continue even if saving fails
+    }
+  }
+
+  Future<void> _cleanupOldConversations(String userId) async {
+    try {
+      final cutoffDate = DateTime.now().subtract(Duration(days: _maxConversationAgeDays));
+      final oldConversations = await _db
+          .collection('users')
+          .doc(userId)
+          .collection('mahoro_conversations')
+          .where('lastUpdated', isLessThan: cutoffDate.toIso8601String())
+          .get();
+
+      for (var doc in oldConversations.docs) {
+        await doc.reference.delete();
+      }
+
+      debugPrint('Cleaned up ${oldConversations.docs.length} old conversations');
+    } catch (e) {
+      debugPrint('Error cleaning up old conversations: $e');
+    }
+  }
+
+  Future<void> _requestConversationStorageConsent() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    if (!authService.isLoggedIn || authService.userId == null) {
+      return; // No need for consent if not logged in
+    }
+
+    // Check if consent was already given
+    final prefs = await SharedPreferences.getInstance();
+    final consentKey = 'mahoro_conversation_storage_consent_${authService.userId}';
+    final hasConsented = prefs.getBool(consentKey) ?? false;
+
+    if (hasConsented) {
+      setState(() {
+        _conversationStorageConsent = true;
+      });
+      return;
+    }
+
+    // Show consent dialog
+    if (!mounted) return;
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+        title: LocalizedText('conversationStorageConsentTitle'),
+        content: LocalizedText('conversationStorageConsentMessage'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: LocalizedText('decline'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: LocalizedText('accept'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSave == true) {
+      await prefs.setBool(consentKey, true);
+      setState(() {
+        _conversationStorageConsent = true;
+      });
     }
   }
 
@@ -213,30 +333,120 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     super.dispose();
   }
 
-  Future<void> _storeApiKey() async {
+  Future<void> _initializeClaudeService() async {
     final storedKey = await _getApiKey();
-    if (storedKey == null || storedKey.isEmpty) {
-      // Store the Claude API key securely
-      final apiKey =
-          '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';
+    final apiKey = _envClaudeApiKey.isNotEmpty
+        ? _envClaudeApiKey
+        : (storedKey != null && storedKey.isNotEmpty ? storedKey : null);
+
+    if (apiKey != null && apiKey.isNotEmpty) {
+      _claudeService = ClaudeService(apiKey: apiKey);
+      setState(() {
+        _isApiKeyValid = true;
+      });
       debugPrint(
-        "Storing Claude API key: ${apiKey.substring(0, 10)}... (length: ${apiKey.length})",
+        _envClaudeApiKey.isNotEmpty
+            ? "Initialized Claude AI service using environment key"
+            : "Initialized Claude AI service using stored key",
       );
-      await AuthService.storeApiKey(apiKey);
     } else {
-      debugPrint(
-        "Using existing Claude API key: ${storedKey.substring(0, 10)}... (length: ${storedKey.length})",
-      );
+      setState(() {
+        _isApiKeyValid = false;
+      });
+      debugPrint("No Claude API key available");
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _showMissingApiKeyDialog();
+        }
+      });
     }
   }
 
-  Future<void> _initializeClaudeService() async {
-    final apiKey = await _getApiKey() ?? '';
-    if (apiKey.isNotEmpty) {
-      _claudeService = ClaudeService(apiKey: apiKey);
-      debugPrint("Initialized Claude AI service");
+  Future<void> _showMissingApiKeyDialog() async {
+    if (_envClaudeApiKey.isNotEmpty) {
+      return;
+    }
+
+    if (!mounted) return;
+
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final TextEditingController controller = TextEditingController();
+
+    final enteredKey = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor:
+              isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: LocalizedText(
+            'claudeApiKeyRequired',
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              LocalizedText(
+                'mahoroNeedsValidApiKey',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white70 : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).translate('claudeApiKey'),
+                  hintText: 'sk-ant-...',
+                ),
+                autofocus: true,
+                obscureText: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: LocalizedText('cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(controller.text.trim());
+              },
+              child: LocalizedText('save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (enteredKey != null && enteredKey.isNotEmpty) {
+      await AuthService.storeApiKey(enteredKey);
+      setState(() {
+        _isApiKeyValid = true;
+        _claudeService = ClaudeService(apiKey: enteredKey);
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).translate('apiKeySaved'),
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     } else {
-      debugPrint("No Claude API key available");
+      setState(() {
+        _isApiKeyValid = false;
+      });
     }
   }
 
@@ -274,10 +484,17 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
   Future<String> _getAnthropicResponse(String userMessage) async {
     try {
       // Get API key securely
-      final apiKey = await _getApiKey() ?? '';
+      final apiKey = _envClaudeApiKey.isNotEmpty
+          ? _envClaudeApiKey
+          : (await _getApiKey() ?? '');
       if (apiKey.isEmpty) {
         setState(() {
           _isApiKeyValid = false;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _showMissingApiKeyDialog();
+          }
         });
         return "API key not found. Please contact support.";
       }
@@ -311,13 +528,12 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
       try {
         debugPrint("Making API request to Claude...");
         debugPrint("API Key available: ${apiKey.isNotEmpty}");
-        debugPrint("API Key length: ${apiKey.length}");
 
         // Reinitialize Claude service with the current API key
         _claudeService = ClaudeService(apiKey: apiKey);
 
         // Generate response using Claude
-        final response = await _claudeService.generateContent(
+        final response = await _claudeService!.generateContent(
           prompt: userMessage,
           systemInstructions: systemPrompt,
         );
@@ -335,26 +551,36 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
           setState(() {
             _isApiKeyValid = false;
           });
-          return "I'm having trouble with authentication. Please contact support.";
+          return AppLocalizations.of(context).translate('imHavingTroubleWithAuthentication');
         } else if (e.toString().contains('timeout') || 
                    e.toString().contains('Network') ||
                    e.toString().contains('internet')) {
-          return "I'm having trouble connecting to the internet. Please check your connection and try again.";
+          return AppLocalizations.of(context).translate('imHavingTroubleConnecting');
         } else if (e.toString().contains('rate limit') || 
                    e.toString().contains('429')) {
-          return "I'm receiving too many requests. Please wait a moment and try again.";
+          return AppLocalizations.of(context).translate('tooManyRequestsPleaseWait');
         } else {
-          return "I'm having trouble connecting right now. Please try again later. If the problem persists, please contact support.";
+          final baseMessage = AppLocalizations.of(context).translate('imHavingTroubleConnecting');
+          final emergencyGuidance = AppLocalizations.of(context).translate('ifInImmediateDangerCallEmergency');
+          return '$baseMessage $emergencyGuidance';
         }
       }
     } catch (e) {
       debugPrint('Exception: $e');
-      return "I'm sorry, I encountered an error. Please try again.";
+      final baseMessage = AppLocalizations.of(context).translate('imSorryIEncounteredAnError');
+      final emergencyGuidance = AppLocalizations.of(context).translate('ifInImmediateDangerCallEmergency');
+      return '$baseMessage $emergencyGuidance';
     }
   }
 
   void _handleSubmitted(String text) async {
     if (text.trim().isEmpty) return;
+
+    // Request consent for conversation storage on first message
+    final authService = Provider.of<AuthService>(context, listen: false);
+    if (authService.isLoggedIn && !_conversationStorageConsent) {
+      await _requestConversationStorageConsent();
+    }
 
     _messageController.clear();
     _addMessage(text, true);
@@ -374,6 +600,9 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
         });
 
         _addMessage(response, false);
+        
+        // Save conversation after adding message
+        _saveConversation();
       }
     } catch (e) {
       if (mounted) {
@@ -382,7 +611,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
         });
 
         _addMessage(
-          "I'm sorry, I encountered an error. Please try again.",
+          AppLocalizations.of(context).translate('imSorryIEncounteredAnError'),
           false,
         );
       }
@@ -634,10 +863,10 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Text(
+                      LocalizedText(
                         _isApiKeyValid
-                            ? 'AI Support Active'
-                            : 'API Connection Error',
+                            ? 'aiSupportActive'
+                            : 'apiConnectionError',
                         style: TextStyle(
                           fontSize: 10,
                           color:
@@ -656,6 +885,28 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
               ),
             ],
           ),
+          if (!_isApiKeyValid)
+            TextButton.icon(
+              onPressed: _showMissingApiKeyDialog,
+              icon: Icon(
+                Icons.vpn_key,
+                color:
+                    highContrastMode
+                        ? (isDarkMode ? Colors.white : Colors.black)
+                        : accentColor,
+                size: 18,
+              ),
+              label: LocalizedText(
+                'enterApiKey',
+                style: TextStyle(
+                  color:
+                      highContrastMode
+                          ? (isDarkMode ? Colors.white : Colors.black)
+                          : accentColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -902,8 +1153,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                                       ),
                                     ),
                                     const SizedBox(width: 4),
-                                    Text(
-                                      'Report',
+                                    LocalizedText(
+                                      'report',
                                       style: TextStyle(
                                         fontSize: 10,
                                         color: Colors.white.withValues(
@@ -1070,13 +1321,13 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
       // Show confirmation that report was submitted
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Thank you for reporting this content. We will review it promptly.',
+              AppLocalizations.of(context).translate('thankYouForReportingContent'),
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           ),
         );
       }

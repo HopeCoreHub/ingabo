@@ -779,8 +779,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                           width: 1,
                                         ),
                                       ),
-                                      child: Text(
-                                        'Guest Mode',
+                                      child: LocalizedText(
+                                        'guestMode',
                                         style: TextStyle(
                                           color: Colors.red,
                                           fontSize: 10,
@@ -937,8 +937,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text(
-                  'Guest Mode',
+                LocalizedText(
+                  'guestMode',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -946,8 +946,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'You\'re currently using the app as a guest. Sign in or create an account to access all features and save your progress.',
+                LocalizedText(
+                  'youreCurrentlyUsingAppAsGuest',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -1457,8 +1457,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Select who you\'d like to call for immediate assistance:',
+                LocalizedText(
+                  'selectWhoYoudLikeToCall',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -1466,11 +1466,11 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Emergency contacts with improved UI
+                // Emergency contacts with improved UI - using localized strings
                 _buildModernContactCard(
-                  title: 'Isange One Stop Center',
+                  title: AppLocalizations.of(context).translate('isangeOneStopCenter'),
                   number: '3029',
-                  description: 'Gender-based violence support',
+                  description: AppLocalizations.of(context).translate('genderBasedViolenceSupport'),
                   isDarkMode: isDarkMode,
                   onTap: () {
                     Navigator.of(context).pop();
@@ -1479,9 +1479,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 ),
                 const SizedBox(height: 12),
                 _buildModernContactCard(
-                  title: 'Rwanda Investigation Bureau (RIB)',
+                  title: AppLocalizations.of(context).translate('rwandaInvestigationBureau'),
                   number: '3512',
-                  description: 'Criminal investigations & safety',
+                  description: AppLocalizations.of(context).translate('criminalInvestigationsSafety'),
                   isDarkMode: isDarkMode,
                   onTap: () {
                     Navigator.of(context).pop();
@@ -1490,9 +1490,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 ),
                 const SizedBox(height: 12),
                 _buildModernContactCard(
-                  title: 'HopeCore Hub Team',
+                  title: AppLocalizations.of(context).translate('hopeCoreHubTeam'),
                   number: '0780332779',
-                  description: 'We\'ll help contact authorities',
+                  description: AppLocalizations.of(context).translate('wellHelpContactAuthorities'),
                   isDarkMode: isDarkMode,
                   onTap: () {
                     Navigator.of(context).pop();
@@ -1637,8 +1637,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Select who you\'d like to message for support:',
+                LocalizedText(
+                  'selectWhoYoudLikeToMessage',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -1648,20 +1648,20 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 const SizedBox(height: 24),
                 // HopeCore Hub Team (SMS)
                 _buildMessageOptionCard(
-                  title: 'HopeCore Hub Team',
+                  title: AppLocalizations.of(context).translate('hopeCoreHubTeam'),
                   number: '0780332779',
                   icon: Icons.chat_bubble_outline,
                   isDarkMode: isDarkMode,
                   onTap: () {
                     Navigator.of(context).pop();
-                    _sendSms('0780332779', 'Hello, I need help regarding a safety concern. Please contact me when you have a moment.');
+                    _sendSms('0780332779', AppLocalizations.of(context).translate('helloINeedHelpRegardingSafetyConcern'));
                   },
                 ),
                 const SizedBox(height: 12),
                 // Trusted Contact (from phonebook)
                 _buildMessageOptionCard(
-                  title: 'Trusted Contact',
-                  number: 'Add from phonebook',
+                  title: AppLocalizations.of(context).translate('trustedContact'),
+                  number: AppLocalizations.of(context).translate('addFromPhonebook'),
                   icon: Icons.contacts,
                   isDarkMode: isDarkMode,
                   onTap: () {
@@ -1672,14 +1672,14 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                 const SizedBox(height: 12),
                 // WhatsApp HopeCore Hub Team
                 _buildMessageOptionCard(
-                  title: 'WhatsApp HopeCore Hub Team',
+                  title: AppLocalizations.of(context).translate('whatsappHopeCoreHubTeam'),
                   number: '+250780332779',
                   icon: Icons.chat,
                   isDarkMode: isDarkMode,
                   isWhatsApp: true,
                   onTap: () {
                     Navigator.of(context).pop();
-                    _sendWhatsApp('+250780332779', 'Hello, I need help regarding a safety concern. Please contact me when you have a moment.');
+                    _sendWhatsApp('+250780332779', AppLocalizations.of(context).translate('helloINeedHelpRegardingSafetyConcern'));
                   },
                 ),
                 const SizedBox(height: 24),
@@ -1878,9 +1878,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                           ),
                         ),
                         icon: const Icon(Icons.phone, color: Colors.white),
-                        label: const Text(
-                          'Call',
-                          style: TextStyle(
+                        label: LocalizedText(
+                          'call',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -1904,9 +1904,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                           ),
                         ),
                         icon: const Icon(Icons.chat_bubble_outline),
-                        label: const Text(
-                          'Message',
-                          style: TextStyle(
+                        label: LocalizedText(
+                          'message',
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1969,8 +1969,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   child: Icon(Icons.bolt, color: Colors.white, size: 20),
                 ),
             const SizedBox(width: 8),
-            Text(
-              'Quick Access',
+            LocalizedText(
+              'quickAccess',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -2141,7 +2141,11 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('$title page coming soon'),
+              content: Text(
+                AppLocalizations.of(context).translate('pageComingSoon').replaceAll('[title]', title),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
               duration: const Duration(seconds: 1),
             ),
           );
@@ -3902,9 +3906,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       ),
                     ),
                     icon: const Icon(Icons.phone, color: Colors.white),
-                    label: const Text(
-                      'Make a Phone Call',
-                      style: TextStyle(
+                    label: LocalizedText(
+                      'makeAPhoneCall',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -3931,8 +3935,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       ),
                     ),
                     icon: const Icon(Icons.chat_bubble_outline),
-                    label: const Text(
-                      'Send a Text Message',
+                    label: LocalizedText(
+                      'sendATextMessage',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -4514,6 +4518,20 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
 
   // New method to make phone calls
   Future<void> _makePhoneCall(String phoneNumber) async {
+    // Guard against web/desktop platforms
+    if (kIsWeb) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).translate('phoneCallNotSupportedOnWeb'),
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     // Clean phone number - remove any non-digit characters except +
     final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     final Uri launchUri = Uri(scheme: 'tel', path: cleanNumber);
@@ -4525,7 +4543,11 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
         if (!mounted) return;
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Could not launch phone call to $cleanNumber'),
+            content: Text(
+              AppLocalizations.of(context)
+                  .translate('couldNotLaunchPhoneCall')
+                  .replaceAll('[number]', cleanNumber),
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -4535,8 +4557,17 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Error making phone call: $e'),
-          duration: const Duration(seconds: 2),
+          content: Text(
+            AppLocalizations.of(context).translate('errorMakingPhoneCall'),
+          ),
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: AppLocalizations.of(context).translate('sos'),
+            textColor: Colors.white,
+            onPressed: () {
+              // Navigate to SOS or show emergency dialog
+            },
+          ),
         ),
       );
     }
@@ -4749,6 +4780,20 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
   }
 
   Future<void> _sendSms(String phoneNumber, String message) async {
+    // Guard against web/desktop platforms
+    if (kIsWeb) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).translate('smsNotSupportedOnWeb'),
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     // Clean phone number - remove any non-digit characters except +
     final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     final Uri smsUri = Uri(
@@ -4764,7 +4809,11 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
         if (!mounted) return;
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Could not launch SMS to $cleanNumber'),
+            content: Text(
+              AppLocalizations.of(context)
+                  .translate('couldNotLaunchSms')
+                  .replaceAll('[number]', cleanNumber),
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -4774,8 +4823,17 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Error sending SMS: $e'),
-          duration: const Duration(seconds: 2),
+          content: Text(
+            AppLocalizations.of(context).translate('errorSendingSms'),
+          ),
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: AppLocalizations.of(context).translate('sos'),
+            textColor: Colors.white,
+            onPressed: () {
+              // Navigate to SOS or show emergency dialog
+            },
+          ),
         ),
       );
     }
@@ -4793,7 +4851,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
         if (!mounted) return;
         messenger.showSnackBar(
           SnackBar(
-            content: const Text('Could not launch WhatsApp. Please make sure WhatsApp is installed.'),
+            content: Text(
+              AppLocalizations.of(context).translate('couldNotLaunchWhatsapp'),
+            ),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -4803,7 +4863,11 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Error sending WhatsApp message: $e'),
+          content: Text(
+            AppLocalizations.of(context)
+                .translate('errorSendingWhatsappMessage')
+                .replaceAll('[error]', e.toString()),
+          ),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -4837,8 +4901,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Add Trusted Contact',
+                      LocalizedText(
+                        'addTrustedContact',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -4861,9 +4925,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                       await _pickContactFromPhonebook(nameController, numberController);
                     },
                     icon: const Icon(Icons.contacts, color: Colors.white),
-                    label: const Text(
-                      'Pick from Phonebook',
-                      style: TextStyle(
+                    label: LocalizedText(
+                      'pickFromPhonebook',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -4881,7 +4945,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(
-                      labelText: 'Contact Name',
+                      labelText: AppLocalizations.of(context).translate('contactName'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -4896,7 +4960,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   TextField(
                     controller: numberController,
                     decoration: InputDecoration(
-                      labelText: 'Phone Number',
+                      labelText: AppLocalizations.of(context).translate('phoneNumber'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -4912,7 +4976,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   TextField(
                     controller: messageController,
                     decoration: InputDecoration(
-                      labelText: 'Message',
+                      labelText: AppLocalizations.of(context).translate('message'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -4937,19 +5001,19 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                               _makePhoneCall(number);
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text(
-                                    'Please enter a valid phone number',
+                                    AppLocalizations.of(context).translate('pleaseEnterAValidPhoneNumber'),
                                   ),
-                                  duration: Duration(seconds: 2),
+                                  duration: const Duration(seconds: 2),
                                 ),
                               );
                             }
                           },
                           icon: const Icon(Icons.call, color: Colors.white),
-                          label: const Text(
-                            'Call',
-                            style: TextStyle(
+                          label: LocalizedText(
+                            'call',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -4975,19 +5039,19 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                               _sendSms(number, message);
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text(
-                                    'Please enter a valid phone number',
+                                    AppLocalizations.of(context).translate('pleaseEnterAValidPhoneNumber'),
                                   ),
-                                  duration: Duration(seconds: 2),
+                                  duration: const Duration(seconds: 2),
                                 ),
                               );
                             }
                           },
                           icon: const Icon(Icons.message, color: Colors.white),
-                          label: const Text(
-                            'Message',
-                            style: TextStyle(
+                          label: LocalizedText(
+                            'message',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -5022,9 +5086,11 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       if (status.isDenied) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Contacts permission is required to pick from phonebook.'),
-            duration: Duration(seconds: 3),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).translate('contactsPermissionRequired'),
+            ),
+            duration: const Duration(seconds: 3),
           ),
         );
         return;
@@ -5032,19 +5098,51 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
 
       if (status.isPermanentlyDenied) {
         if (!mounted) return;
+        final shouldOpenSettings = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: LocalizedText('contactsPermissionRequired'),
+            content: LocalizedText('pleaseEnableContactsPermission'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: LocalizedText('cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: LocalizedText('openSettings'),
+              ),
+            ],
+          ),
+        );
+        
+        if (shouldOpenSettings == true) {
+          await openAppSettings();
+        }
+        return;
+      }
+
+      // Get contacts with pagination to prevent UI freeze on large contact lists
+      // Load contacts in batches
+      Iterable<Contact> contacts = [];
+      try {
+        contacts = await ContactsService.getContacts(
+          withThumbnails: false,
+        );
+      } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please enable contacts permission in app settings.'),
-            duration: Duration(seconds: 3),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)
+                  .translate('errorAccessingContacts')
+                  .replaceAll('[error]', e.toString()),
+            ),
+            duration: const Duration(seconds: 3),
           ),
         );
         return;
       }
-
-      // Get contacts
-      final Iterable<Contact> contacts = await ContactsService.getContacts(
-        withThumbnails: false,
-      );
 
       if (!mounted) return;
 
@@ -5150,7 +5248,11 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error accessing contacts: $e'),
+          content: Text(
+            AppLocalizations.of(context)
+                .translate('errorAccessingContacts')
+                .replaceAll('[error]', e.toString()),
+          ),
           duration: const Duration(seconds: 3),
         ),
       );

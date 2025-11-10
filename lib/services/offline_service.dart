@@ -8,6 +8,14 @@ class OfflineService {
   static const String _forumPostsKey = 'offline_forum_posts';
   static const String _userProfileKey = 'offline_user_profile';
   static const String _resourcesKey = 'offline_resources';
+  
+  // Cache timestamp keys
+  static const String _forumPostsTimestampKey = 'offline_forum_posts_timestamp';
+  static const String _userProfileTimestampKey = 'offline_user_profile_timestamp';
+  static const String _resourcesTimestampKey = 'offline_resources_timestamp';
+  
+  // TTL in hours (default: 24 hours)
+  static const int _defaultTtlHours = 24;
 
   // Check if device is online
   Future<bool> isOnline() async {
@@ -15,24 +23,40 @@ class OfflineService {
     return !connectivityResults.contains(ConnectivityResult.none);
   }
 
-  // Cache forum posts
-  Future<void> cacheForumPosts(List<Map<String, dynamic>> posts) async {
+  // Cache forum posts with timestamp
+  Future<void> cacheForumPosts(List<Map<String, dynamic>> posts, {int? ttlHours}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = jsonEncode(posts);
+      final timestamp = DateTime.now().toIso8601String();
       await prefs.setString(_forumPostsKey, jsonString);
+      await prefs.setString(_forumPostsTimestampKey, timestamp);
     } catch (e) {
       debugPrint('Error caching forum posts: $e');
     }
   }
 
-  // Get cached forum posts
-  Future<List<Map<String, dynamic>>> getCachedForumPosts() async {
+  // Get cached forum posts (returns empty if expired)
+  Future<List<Map<String, dynamic>>> getCachedForumPosts({int? ttlHours}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_forumPostsKey);
+      final timestampString = prefs.getString(_forumPostsTimestampKey);
 
-      if (jsonString == null) {
+      if (jsonString == null || timestampString == null) {
+        return [];
+      }
+
+      // Check if cache is expired
+      final timestamp = DateTime.parse(timestampString);
+      final ttl = Duration(hours: ttlHours ?? _defaultTtlHours);
+      final now = DateTime.now();
+      
+      if (now.difference(timestamp) > ttl) {
+        // Cache expired, remove it
+        await prefs.remove(_forumPostsKey);
+        await prefs.remove(_forumPostsTimestampKey);
+        debugPrint('Forum posts cache expired, removed');
         return [];
       }
 
@@ -44,24 +68,40 @@ class OfflineService {
     }
   }
 
-  // Cache user profile
-  Future<void> cacheUserProfile(Map<String, dynamic> profile) async {
+  // Cache user profile with timestamp
+  Future<void> cacheUserProfile(Map<String, dynamic> profile, {int? ttlHours}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = jsonEncode(profile);
+      final timestamp = DateTime.now().toIso8601String();
       await prefs.setString(_userProfileKey, jsonString);
+      await prefs.setString(_userProfileTimestampKey, timestamp);
     } catch (e) {
       debugPrint('Error caching user profile: $e');
     }
   }
 
-  // Get cached user profile
-  Future<Map<String, dynamic>?> getCachedUserProfile() async {
+  // Get cached user profile (returns null if expired)
+  Future<Map<String, dynamic>?> getCachedUserProfile({int? ttlHours}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_userProfileKey);
+      final timestampString = prefs.getString(_userProfileTimestampKey);
 
-      if (jsonString == null) {
+      if (jsonString == null || timestampString == null) {
+        return null;
+      }
+
+      // Check if cache is expired
+      final timestamp = DateTime.parse(timestampString);
+      final ttl = Duration(hours: ttlHours ?? _defaultTtlHours);
+      final now = DateTime.now();
+      
+      if (now.difference(timestamp) > ttl) {
+        // Cache expired, remove it
+        await prefs.remove(_userProfileKey);
+        await prefs.remove(_userProfileTimestampKey);
+        debugPrint('User profile cache expired, removed');
         return null;
       }
 
@@ -73,24 +113,40 @@ class OfflineService {
     }
   }
 
-  // Cache resources
-  Future<void> cacheResources(Map<String, dynamic> resources) async {
+  // Cache resources with timestamp
+  Future<void> cacheResources(Map<String, dynamic> resources, {int? ttlHours}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = jsonEncode(resources);
+      final timestamp = DateTime.now().toIso8601String();
       await prefs.setString(_resourcesKey, jsonString);
+      await prefs.setString(_resourcesTimestampKey, timestamp);
     } catch (e) {
       debugPrint('Error caching resources: $e');
     }
   }
 
-  // Get cached resources
-  Future<Map<String, dynamic>> getCachedResources() async {
+  // Get cached resources (returns empty if expired)
+  Future<Map<String, dynamic>> getCachedResources({int? ttlHours}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_resourcesKey);
+      final timestampString = prefs.getString(_resourcesTimestampKey);
 
-      if (jsonString == null) {
+      if (jsonString == null || timestampString == null) {
+        return {};
+      }
+
+      // Check if cache is expired
+      final timestamp = DateTime.parse(timestampString);
+      final ttl = Duration(hours: ttlHours ?? _defaultTtlHours);
+      final now = DateTime.now();
+      
+      if (now.difference(timestamp) > ttl) {
+        // Cache expired, remove it
+        await prefs.remove(_resourcesKey);
+        await prefs.remove(_resourcesTimestampKey);
+        debugPrint('Resources cache expired, removed');
         return {};
       }
 
@@ -107,10 +163,31 @@ class OfflineService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_forumPostsKey);
+      await prefs.remove(_forumPostsTimestampKey);
       await prefs.remove(_userProfileKey);
+      await prefs.remove(_userProfileTimestampKey);
       await prefs.remove(_resourcesKey);
+      await prefs.remove(_resourcesTimestampKey);
     } catch (e) {
       debugPrint('Error clearing cache: $e');
+    }
+  }
+  
+  // Clean up expired cache entries
+  Future<void> cleanupExpiredCache() async {
+    try {
+      // Check and remove expired forum posts
+      await getCachedForumPosts();
+      
+      // Check and remove expired user profile
+      await getCachedUserProfile();
+      
+      // Check and remove expired resources
+      await getCachedResources();
+      
+      debugPrint('Cache cleanup completed');
+    } catch (e) {
+      debugPrint('Error cleaning up expired cache: $e');
     }
   }
 

@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../theme_provider.dart';
 import '../accessibility_provider.dart';
 import '../services/content_reporting_service.dart';
+import '../localization/app_localizations.dart';
+import '../localization/localized_text.dart';
 
 class ContentReportDialog extends StatefulWidget {
   final String contentId;
@@ -186,7 +188,12 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(
+          message,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          softWrap: true,
+        ),
         backgroundColor: Colors.red,
         behavior: SnackBarBehavior.floating,
       ),
@@ -523,7 +530,7 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                       strokeWidth: 2,
                     ),
                   )
-                  : const Text('Submit Report'),
+                  : LocalizedText('submitReport'),
         ),
       ],
     );
@@ -690,7 +697,7 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Text('OK'),
+          child: LocalizedText('ok'),
         ),
       ],
     );

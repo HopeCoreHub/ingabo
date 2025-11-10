@@ -8,6 +8,7 @@ import '../services/auth_service.dart';
 import '../services/content_reporting_service.dart';
 import 'content_report_dialog.dart';
 import '../localization/localized_text.dart';
+import '../localization/app_localizations.dart';
 
 class PostCard extends StatefulWidget {
   final Post post;
@@ -88,7 +89,11 @@ class _PostCardState extends State<PostCard> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error sending reply: ${e.toString()}'),
+            content: Text(
+              AppLocalizations.of(context)
+                  .translate('errorSendingReply')
+                  .replaceAll('[error]', e.toString()),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -191,8 +196,10 @@ class _PostCardState extends State<PostCard> {
                               final authService = Provider.of<AuthService>(context, listen: false);
                               if (!authService.isLoggedIn) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Please log in to like posts'),
+                                  SnackBar(
+                                    content: Text(
+                                      AppLocalizations.of(context).translate('pleaseLogInToLikePosts'),
+                                    ),
                                     backgroundColor: Colors.orange,
                                   ),
                                 );
@@ -234,8 +241,10 @@ class _PostCardState extends State<PostCard> {
                               final authService = Provider.of<AuthService>(context, listen: false);
                               if (!authService.isLoggedIn) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Please log in to reply'),
+                                  SnackBar(
+                                    content: Text(
+                                      AppLocalizations.of(context).translate('pleaseLogInToReply'),
+                                    ),
                                     backgroundColor: Colors.orange,
                                   ),
                                 );
@@ -295,8 +304,10 @@ class _PostCardState extends State<PostCard> {
                                 final authService = Provider.of<AuthService>(context, listen: false);
                                 if (!authService.isLoggedIn) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Please log in to report content'),
+                                    SnackBar(
+                                      content: Text(
+                                        AppLocalizations.of(context).translate('pleaseLogInToReportContent'),
+                                      ),
                                       backgroundColor: Colors.orange,
                                     ),
                                   );

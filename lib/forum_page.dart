@@ -11,6 +11,7 @@ import 'widgets/post_creation_dialog.dart';
 import 'auth_page.dart';
 import 'utils/animation_utils.dart';
 import 'localization/localized_text.dart';
+import 'localization/app_localizations.dart';
 import 'localization/base_screen.dart';
 
 class ForumPage extends BaseScreen {
@@ -26,6 +27,8 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
   late ForumService _forumService;
   List<Post> _posts = [];
   bool _isLoading = true;
+  bool _hasError = false;
+  String _errorMessage = '';
   String _searchQuery = '';
   bool _isCheckingAuth = true;
   bool _isSendingMessage = false;
@@ -117,6 +120,8 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     debugPrint('🔄 _loadPosts() called - setting loading state to true');
     setState(() {
       _isLoading = true;
+      _hasError = false;
+      _errorMessage = '';
     });
 
     try {
@@ -143,59 +148,47 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
 
       debugPrint('📊 Final posts count in UI: ${_posts.length}');
 
-      // If posts are still empty after trying to load them
+      // If posts are still empty after trying to load them, show error state
       if (_posts.isEmpty) {
         debugPrint(
-          '⚠️ Posts list is still empty after loading - creating fallback post',
+          '⚠️ Posts list is still empty after loading - showing error state',
         );
-
-        // Create some fallback posts directly
-        final hardcodedPost = Post(
-          id: 'fallback-post-1',
-          title: 'Welcome to the Community Forum',
-          content:
-              'This is a fallback post created directly in the UI when no posts could be loaded.',
-          authorId: 'system',
-          authorName: 'System',
-          createdAt: DateTime.now(),
-          likes: 0,
-          replies: [],
-          isAnonymous: true,
-        );
-
         setState(() {
-          _posts = [hardcodedPost];
+          _posts = [];
+          _isLoading = false;
+          _hasError = true;
+          _errorMessage = AppLocalizations.of(context).translate('errorLoadingPosts');
         });
-        debugPrint('✅ Added fallback post - final count: ${_posts.length}');
       }
     } catch (e) {
       debugPrint('Error loading posts in ForumPage: ${e.toString()}');
       if (mounted) {
+        setState(() {
+          _posts = [];
+          _isLoading = false;
+          _hasError = true;
+          _errorMessage = AppLocalizations.of(context)
+              .translate('errorLoadingPosts')
+              .replaceAll('[error]', e.toString());
+        });
+        
+        // Show error snackbar with retry option
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading posts. Using fallback content.'),
-            backgroundColor: Colors.orange,
+            content: Text(
+              AppLocalizations.of(context).translate('errorLoadingPostsRetry'),
+            ),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: AppLocalizations.of(context).translate('retry'),
+              textColor: Colors.white,
+              onPressed: () {
+                _loadPosts();
+              },
+            ),
+            duration: const Duration(seconds: 5),
           ),
         );
-
-        // Create a fallback post on error
-        final errorPost = Post(
-          id: 'error-post-1',
-          title: 'Welcome to the Forum',
-          content:
-              'Unable to load posts at the moment. Please try again later.',
-          authorId: 'system',
-          authorName: 'System',
-          createdAt: DateTime.now(),
-          likes: 0,
-          replies: [],
-          isAnonymous: true,
-        );
-
-        setState(() {
-          _posts = [errorPost];
-          _isLoading = false;
-        });
       }
     }
   }
@@ -248,8 +241,8 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Search Posts',
+                LocalizedText(
+                  'searchPostsLabel',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -264,7 +257,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
                     color: isDarkMode ? Colors.white : Colors.black87,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Search...',
+                    hintText: AppLocalizations.of(context).translate('searchLabel'),
                     hintStyle: TextStyle(
                       color: isDarkMode ? Colors.white54 : Colors.black54,
                     ),
@@ -360,7 +353,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
                     fontSize: 15,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Type a message...',
+                    hintText: AppLocalizations.of(context).translate('typeMessage'),
                     hintStyle: TextStyle(
                       color: isDarkMode ? Colors.white54 : Colors.black54,
                     ),
@@ -418,7 +411,14 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Error creating post: ${e.toString()}'),
+          content: Text(
+            AppLocalizations.of(context)
+                .translate('errorCreatingPost')
+                .replaceAll('[error]', e.toString()),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            softWrap: true,
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -576,17 +576,28 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
         _posts = updatedPosts;
       });
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Post deleted successfully'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).translate('postDeletedSuccessfully'),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     } catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Error deleting post: ${e.toString()}'),
+          content: Text(
+            AppLocalizations.of(context)
+                .translate('errorDeletingPost')
+                .replaceAll('[error]', e.toString()),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            softWrap: true,
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -919,9 +930,11 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
                           isDarkMode ? const Color(0xFF1E293B) : Colors.white,
                       displacement: 40,
                       child:
-                          _posts.isEmpty
-                              ? _buildEmptyState()
-                              : _buildPostsList(),
+                          _hasError
+                              ? _buildErrorState()
+                              : (_posts.isEmpty
+                                  ? _buildEmptyState()
+                                  : _buildPostsList()),
                     ),
           ),
         ],
@@ -1025,6 +1038,80 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 60,
+              color: Colors.red,
+            ),
+            const SizedBox(height: 16),
+            LocalizedText(
+              'errorLoadingPostsTitle',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _errorMessage.isNotEmpty
+                  ? _errorMessage
+                  : AppLocalizations.of(context).translate('errorLoadingPosts'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDarkMode ? Colors.white70 : Colors.black54,
+              ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                _loadPosts();
+              },
+              icon: const Icon(Icons.refresh),
+              label: LocalizedText('retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accentColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                // Show help message about emergency services
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      AppLocalizations.of(context).translate('ifInImmediateDangerCallEmergency'),
+                    ),
+                    duration: const Duration(seconds: 5),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              },
+              child: LocalizedText('ifInImmediateDanger'),
+            ),
+          ],
+        ),
       ),
     );
   }
