@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../theme_provider.dart';
 import '../models/post_model.dart';
 import '../services/auth_service.dart';
-import '../localization/app_localizations.dart';
 import '../localization/localized_text.dart';
 
 class ReplyDialog extends StatefulWidget {
@@ -36,7 +35,7 @@ class _ReplyDialogState extends State<ReplyDialog> {
 
     // Get first letter of username for avatar
     final String firstLetter = (authService.username ?? 'A')[0].toUpperCase();
-    final bool isGuest = authService.username == 'Guest';
+    final bool isGuest = authService.isGuest;
 
     return Dialog(
       backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,

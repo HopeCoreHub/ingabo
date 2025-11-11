@@ -8,7 +8,7 @@ class OfflineService {
   static const String _forumPostsKey = 'offline_forum_posts';
   static const String _userProfileKey = 'offline_user_profile';
   static const String _resourcesKey = 'offline_resources';
-  
+
   // Cache timestamp keys
   static const String _forumPostsTimestampKey = 'offline_forum_posts_timestamp';
   static const String _userProfileTimestampKey = 'offline_user_profile_timestamp';

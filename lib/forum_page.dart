@@ -944,6 +944,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildUserInfoCard() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final authService = Provider.of<AuthService>(context);
@@ -953,7 +954,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
 
     // Get first letter of username for avatar
     final String firstLetter = (authService.username ?? 'A')[0].toUpperCase();
-    final bool isGuest = authService.username == 'Guest';
+    final bool isGuest = authService.isGuest;
 
     return AnimatedContainer(
       duration: ThemeProvider.animationDurationMedium,
@@ -1170,6 +1171,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildSearchBar() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
@@ -1230,7 +1232,12 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     );
   }
 
-  Widget _buildInfoCard() {
+  // ignore: unused_element
+  Widget _buildInfoCard({
+    required String title,
+    required String content,
+    required IconData icon,
+  }) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final accentColor =
@@ -1246,11 +1253,11 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.favorite, color: accentColor, size: 16),
+          Icon(icon, color: accentColor, size: 16),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
-              'This is a safe, moderated space. All posts are anonymous and supportive.',
+              content,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color:
@@ -1266,6 +1273,7 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildCreatePostButton() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;

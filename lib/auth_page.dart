@@ -6,6 +6,7 @@ import 'services/auth_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'localization/app_localizations.dart';
 
 // Import main.dart to access MainNavigationWrapper and HopeCoreHub
 import 'main.dart';
@@ -266,7 +267,12 @@ class _AuthPageState extends State<AuthPage>
                 listen: false,
               );
               // Force authentication state update
-              authService.updateAuthState(true, user.id, user.name);
+              authService.updateAuthState(
+                true,
+                user.id,
+                user.name,
+                isGuest: false,
+              );
 
               _showSuccessMessage('Login successful!');
               // Navigate to home page with bottom navigation
@@ -380,6 +386,38 @@ class _AuthPageState extends State<AuthPage>
             _isSubmitting = false;
           });
         }
+      }
+    }
+  }
+
+  Future<void> _continueAsGuest() async {
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+
+    try {
+      await authService.continueAsGuest();
+
+      if (!mounted) return;
+
+      _showSuccessMessage(
+        AppLocalizations.of(context).translate('youAreBrowsingAsGuest'),
+      );
+      _navigateToHome();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = AppLocalizations.of(context)
+            .translate('imSorryIEncounteredAnError');
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
       }
     }
   }
@@ -608,6 +646,7 @@ class _AuthPageState extends State<AuthPage>
                           _buildSubmitButton(),
                           const SizedBox(height: 16),
                           _buildPasswordlessToggle(),
+                          _buildGuestAccessSection(isDarkMode),
                         ],
                       ),
                     ),
@@ -1067,6 +1106,61 @@ class _AuthPageState extends State<AuthPage>
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+      ),
+    );
+  }
+
+  Widget _buildGuestAccessSection(bool isDarkMode) {
+    final dividerColor = isDarkMode ? Colors.white12 : Colors.black12;
+
+    return Column(
+      children: [
+        const SizedBox(height: 32),
+        Row(
+          children: [
+            Expanded(child: Divider(color: dividerColor)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                AppLocalizations.of(context).translate('guestMode'),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: isDarkMode ? Colors.white70 : Colors.black87,
+                ),
+              ),
+            ),
+            Expanded(child: Divider(color: dividerColor)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildGuestButton(isDarkMode),
+      ],
+    );
+  }
+
+  Widget _buildGuestButton(bool isDarkMode) {
+    final foregroundColor = isDarkMode ? Colors.white : const Color(0xFF1F2933);
+    final borderColor = isDarkMode ? Colors.white24 : const Color(0xFF8A4FFF);
+
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: _isSubmitting ? null : _continueAsGuest,
+        icon: const Icon(Icons.person_outline),
+        label: Text(
+          AppLocalizations.of(context).translate('continueAsGuest'),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: foregroundColor,
+          side: BorderSide(color: borderColor, width: 1.5),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
       ),
     );
   }

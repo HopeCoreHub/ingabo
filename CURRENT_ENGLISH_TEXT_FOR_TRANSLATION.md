@@ -15,6 +15,11 @@ This document contains **ONLY** the English text currently used in the updated H
 
 - HopeCore Hub = HopeCore Hub
 - Igniting Hope = Igniting Hope
+- Skip tour = Simbuka inzira
+- Next = Komeza
+- Get started = Tangira
+- I have read and agree to the AI content guidelines. = Nabisomye kandi nemeye amabwiriza y'ibikorwa bya AI.
+- You must agree to continue using Mahoro AI. = Ugomba kubyemera kugira ngo ukoreshe Mahoro AI.
 
 ---
 

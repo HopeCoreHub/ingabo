@@ -7,16 +7,12 @@ import 'accessibility_provider.dart';
 import 'services/auth_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'localization/app_localizations.dart';
 import 'localization/localized_text.dart';
 import 'localization/base_screen.dart';
 import 'services/content_reporting_service.dart';
+import 'services/mahoro_proxy_service.dart';
 import 'widgets/content_report_dialog.dart';
-
-const String _envClaudeApiKey =
-    String.fromEnvironment('CLAUDE_API_KEY', defaultValue: '');
 
 class MahoroPage extends BaseScreen {
   const MahoroPage({super.key});
@@ -33,14 +29,13 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
   bool _isTyping = false;
   String _currentLanguage = 'EN';
   String _currentLanguageName = 'English';
-  bool _isApiKeyValid = true;
   String _conversationId = '';
 
   // Firebase instance
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Claude service
-  ClaudeService? _claudeService;
+  // Mahoro proxy service (calls Firebase Cloud Function)
+  final MahoroProxyService _proxyService = MahoroProxyService();
 
   final Map<String, String> _languageNames = {
     'EN': 'English',
@@ -61,10 +56,8 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
   // Maximum conversation age in days (30 days)
   static const int _maxConversationAgeDays = 30;
 
-  // Get API key securely
-  Future<String?> _getApiKey() async {
-    return await AuthService.getApiKey();
-  }
+  // Note: API key is now stored securely on Firebase Cloud Functions
+  // No need to get API key from device storage anymore
 
   @override
   void initState() {
@@ -83,8 +76,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     // Load previous conversation if any
     _loadPreviousConversation();
 
-    // Initialize Claude service
-    _initializeClaudeService();
+    // Proxy service is ready to use - no initialization needed
   }
 
   void _initializeGreeting() {
@@ -333,122 +325,7 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
     super.dispose();
   }
 
-  Future<void> _initializeClaudeService() async {
-    final storedKey = await _getApiKey();
-    final apiKey = _envClaudeApiKey.isNotEmpty
-        ? _envClaudeApiKey
-        : (storedKey != null && storedKey.isNotEmpty ? storedKey : null);
-
-    if (apiKey != null && apiKey.isNotEmpty) {
-      _claudeService = ClaudeService(apiKey: apiKey);
-      setState(() {
-        _isApiKeyValid = true;
-      });
-      debugPrint(
-        _envClaudeApiKey.isNotEmpty
-            ? "Initialized Claude AI service using environment key"
-            : "Initialized Claude AI service using stored key",
-      );
-    } else {
-      setState(() {
-        _isApiKeyValid = false;
-      });
-      debugPrint("No Claude API key available");
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _showMissingApiKeyDialog();
-        }
-      });
-    }
-  }
-
-  Future<void> _showMissingApiKeyDialog() async {
-    if (_envClaudeApiKey.isNotEmpty) {
-      return;
-    }
-
-    if (!mounted) return;
-
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-    final TextEditingController controller = TextEditingController();
-
-    final enteredKey = await showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor:
-              isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: LocalizedText(
-            'claudeApiKeyRequired',
-            style: TextStyle(
-              color: isDarkMode ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              LocalizedText(
-                'mahoroNeedsValidApiKey',
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white70 : Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context).translate('claudeApiKey'),
-                  hintText: 'sk-ant-...',
-                ),
-                autofocus: true,
-                obscureText: true,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: LocalizedText('cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(controller.text.trim());
-              },
-              child: LocalizedText('save'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (enteredKey != null && enteredKey.isNotEmpty) {
-      await AuthService.storeApiKey(enteredKey);
-      setState(() {
-        _isApiKeyValid = true;
-        _claudeService = ClaudeService(apiKey: enteredKey);
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context).translate('apiKeySaved'),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } else {
-      setState(() {
-        _isApiKeyValid = false;
-      });
-    }
-  }
+  // API key management removed - now handled by Firebase Cloud Functions
 
   void _setLanguage(String langCode) {
     setState(() {
@@ -483,22 +360,6 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
 
   Future<String> _getAnthropicResponse(String userMessage) async {
     try {
-      // Get API key securely
-      final apiKey = _envClaudeApiKey.isNotEmpty
-          ? _envClaudeApiKey
-          : (await _getApiKey() ?? '');
-      if (apiKey.isEmpty) {
-        setState(() {
-          _isApiKeyValid = false;
-        });
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _showMissingApiKeyDialog();
-          }
-        });
-        return "API key not found. Please contact support.";
-      }
-
       // Prepare system prompt based on language
       String systemPrompt =
           "You are Mahoro, a supportive AI companion for mental health. ";
@@ -525,48 +386,25 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
               "Respond in English with empathy and care. Keep responses concise and helpful.";
       }
 
-      try {
-        debugPrint("Making API request to Claude...");
-        debugPrint("API Key available: ${apiKey.isNotEmpty}");
+      debugPrint("Calling Mahoro via Firebase Cloud Function...");
 
-        // Reinitialize Claude service with the current API key
-        _claudeService = ClaudeService(apiKey: apiKey);
+      // Convert conversation history to the format expected by the function
+      final history = _conversationHistory.map((msg) => {
+        'role': msg['role'],
+        'content': msg['content'],
+      }).toList();
 
-        // Generate response using Claude
-        final response = await _claudeService!.generateContent(
-          prompt: userMessage,
-          systemInstructions: systemPrompt,
-        );
+      // Call the proxy service (which calls Firebase Cloud Function)
+      final response = await _proxyService.getResponse(
+        message: userMessage,
+        systemPrompt: systemPrompt,
+        conversationHistory: history,
+      );
 
-        debugPrint("Received response from Claude (length: ${response.length})");
-        return response;
-      } catch (e) {
-        debugPrint('Claude API Error: $e');
-        debugPrint('Error type: ${e.runtimeType}');
-        debugPrint('Error message: ${e.toString()}');
-        
-        if (e.toString().contains('authentication') || 
-            e.toString().contains('401') ||
-            e.toString().contains('API key')) {
-          setState(() {
-            _isApiKeyValid = false;
-          });
-          return AppLocalizations.of(context).translate('imHavingTroubleWithAuthentication');
-        } else if (e.toString().contains('timeout') || 
-                   e.toString().contains('Network') ||
-                   e.toString().contains('internet')) {
-          return AppLocalizations.of(context).translate('imHavingTroubleConnecting');
-        } else if (e.toString().contains('rate limit') || 
-                   e.toString().contains('429')) {
-          return AppLocalizations.of(context).translate('tooManyRequestsPleaseWait');
-        } else {
-          final baseMessage = AppLocalizations.of(context).translate('imHavingTroubleConnecting');
-          final emergencyGuidance = AppLocalizations.of(context).translate('ifInImmediateDangerCallEmergency');
-          return '$baseMessage $emergencyGuidance';
-        }
-      }
+      debugPrint("Received response from Mahoro (length: ${response.length})");
+      return response;
     } catch (e) {
-      debugPrint('Exception: $e');
+      debugPrint('Exception getting Mahoro response: $e');
       final baseMessage = AppLocalizations.of(context).translate('imSorryIEncounteredAnError');
       final emergencyGuidance = AppLocalizations.of(context).translate('ifInImmediateDangerCallEmergency');
       return '$baseMessage $emergencyGuidance';
@@ -857,16 +695,14 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
                       Container(
                         width: 6,
                         height: 6,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _isApiKeyValid ? Colors.green : Colors.red,
+                          color: Colors.green,
                         ),
                       ),
                       const SizedBox(width: 4),
                       LocalizedText(
-                        _isApiKeyValid
-                            ? 'aiSupportActive'
-                            : 'apiConnectionError',
+                        'aiSupportActive',
                         style: TextStyle(
                           fontSize: 10,
                           color:
@@ -885,28 +721,6 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
               ),
             ],
           ),
-          if (!_isApiKeyValid)
-            TextButton.icon(
-              onPressed: _showMissingApiKeyDialog,
-              icon: Icon(
-                Icons.vpn_key,
-                color:
-                    highContrastMode
-                        ? (isDarkMode ? Colors.white : Colors.black)
-                        : accentColor,
-                size: 18,
-              ),
-              label: LocalizedText(
-                'enterApiKey',
-                style: TextStyle(
-                  color:
-                      highContrastMode
-                          ? (isDarkMode ? Colors.white : Colors.black)
-                          : accentColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -1349,112 +1163,4 @@ class ChatMessage {
   }) : id = id ?? const Uuid().v4();
 }
 
-class ClaudeService {
-  final String _apiKey;
-
-  ClaudeService({required String apiKey}) : _apiKey = apiKey;
-
-  Future<String> generateContent({
-    required String prompt,
-    required String systemInstructions,
-  }) async {
-    try {
-      // Validate API key
-      if (_apiKey.isEmpty) {
-        debugPrint('Claude API Error: API key is empty');
-        throw Exception('API key is missing. Please contact support.');
-      }
-
-      final url = Uri.parse('https://api.anthropic.com/v1/messages');
-      
-      final requestBody = {
-        'model': 'claude-3-5-sonnet-20241022',
-        'max_tokens': 1024,
-        'system': systemInstructions,
-        'messages': [
-          {
-            'role': 'user',
-            'content': prompt,
-          },
-        ],
-      };
-
-      debugPrint('Claude API: Making request to ${url.toString()}');
-      debugPrint('Claude API: API key prefix: ${_apiKey.substring(0, 10)}...');
-      debugPrint('Claude API: Request body length: ${jsonEncode(requestBody).length}');
-
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': _apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: jsonEncode(requestBody),
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          debugPrint('Claude API: Request timeout after 30 seconds');
-          throw Exception('Request timeout. Please check your internet connection and try again.');
-        },
-      );
-
-      debugPrint('Claude API: Response status: ${response.statusCode}');
-      debugPrint('Claude API: Response body length: ${response.body.length}');
-
-      if (response.statusCode == 200) {
-        try {
-          final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-          final content = responseData['content'] as List;
-          if (content.isNotEmpty) {
-            final textBlock = content[0] as Map<String, dynamic>;
-            final text = textBlock['text'] as String;
-            debugPrint('Claude API: Successfully received response (length: ${text.length})');
-            return text;
-          }
-          debugPrint('Claude API: Empty content in response');
-          return 'No response generated.';
-        } catch (e) {
-          debugPrint('Claude API: Error parsing response: $e');
-          debugPrint('Claude API: Response body: ${response.body}');
-          throw Exception('Failed to parse API response. Please try again.');
-        }
-      } else if (response.statusCode == 401) {
-        debugPrint('Claude API authentication error: ${response.statusCode}');
-        debugPrint('Claude API error body: ${response.body}');
-        throw Exception('Authentication failed. Please check your API key.');
-      } else if (response.statusCode == 429) {
-        debugPrint('Claude API rate limit error: ${response.statusCode}');
-        throw Exception('Rate limit exceeded. Please wait a moment and try again.');
-      } else if (response.statusCode >= 500) {
-        debugPrint('Claude API server error: ${response.statusCode}');
-        debugPrint('Claude API error body: ${response.body}');
-        throw Exception('Server error. Please try again later.');
-      } else {
-        debugPrint('Claude API error: ${response.statusCode}');
-        debugPrint('Claude API error body: ${response.body}');
-        throw Exception('API request failed: ${response.statusCode}');
-      }
-    } on http.ClientException catch (e) {
-      debugPrint('Claude API network error: $e');
-      throw Exception('Network error. Please check your internet connection and try again.');
-    } on FormatException catch (e) {
-      debugPrint('Claude API format error: $e');
-      throw Exception('Invalid response format. Please try again.');
-    } catch (e) {
-      debugPrint('Claude API unexpected error: $e');
-      if (e.toString().contains('timeout')) {
-        rethrow;
-      }
-      throw Exception('An unexpected error occurred: ${e.toString()}');
-    }
-  }
-
-  Future<String> generateResponse(String prompt) async {
-    return await generateContent(
-      prompt: prompt,
-      systemInstructions:
-          "You are Mahoro, a supportive AI companion for mental health. Respond with empathy and care. Keep responses concise and helpful.",
-    );
-  }
-}
+// ClaudeService removed - now using MahoroProxyService which calls Firebase Cloud Functions

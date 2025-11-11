@@ -30,7 +30,6 @@ class SettingsPage extends BaseScreen {
 
 class _SettingsPageState extends BaseScreenState<SettingsPage> {
   bool _isAdmin = false;
-  bool _isCheckingAdmin = true;
 
   @override
   void initState() {
@@ -52,7 +51,6 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         if (mounted) {
           setState(() {
             _isAdmin = snapshot.exists && snapshot.value == true;
-            _isCheckingAdmin = false;
           });
         }
       } catch (e) {
@@ -60,7 +58,6 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         if (mounted) {
           setState(() {
             _isAdmin = false;
-            _isCheckingAdmin = false;
           });
         }
       }
@@ -68,7 +65,6 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       if (mounted) {
         setState(() {
           _isAdmin = false;
-          _isCheckingAdmin = false;
         });
       }
     }
@@ -147,6 +143,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     return buildScreen(context);
   }
 
+  // ignore: unused_element
   void _showSearchDialog() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final accessibilityProvider = Provider.of<AccessibilityProvider>(
@@ -273,12 +270,8 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
 
-    // Get user information
+    final bool isGuest = authService.isGuest || !authService.isLoggedIn;
     final username = authService.username ?? 'Guest User';
-
-    // Define isGuest based on authentication status
-    final bool isGuest =
-        !authService.isLoggedIn || authService.username == null;
 
     // Get first letter of username for avatar
     final String firstLetter = username[0].toUpperCase();
@@ -1308,6 +1301,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildDatabaseSection() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);

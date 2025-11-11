@@ -23,6 +23,7 @@ class AuthService extends ChangeNotifier {
   String? _username;
   bool _isLoading = true;
   bool _isEmailVerified = false;
+  bool _isGuest = false;
 
   factory AuthService() {
     return _instance;
@@ -52,6 +53,7 @@ class AuthService extends ChangeNotifier {
   String? get username => _username;
   bool get isLoading => _isLoading;
   bool get isEmailVerified => _isEmailVerified;
+  bool get isGuest => _isGuest;
 
   // Sync Firebase auth state with local auth state
   Future<void> _syncFirebaseAuthState(User? user) async {
@@ -60,6 +62,7 @@ class AuthService extends ChangeNotifier {
       _userId = user.uid;
       _username = user.displayName ?? user.email?.split('@')[0] ?? 'User';
       _isEmailVerified = user.emailVerified;
+      _isGuest = false;
 
       // Update SharedPreferences
       final prefs = await SharedPreferences.getInstance();
@@ -67,6 +70,7 @@ class AuthService extends ChangeNotifier {
       await prefs.setString('userId', _userId!);
       await prefs.setString('username', _username!);
       await prefs.setBool('isEmailVerified', _isEmailVerified);
+      await prefs.setBool('isGuest', false);
     } else {
       // Don't automatically log out if Firebase user is null
       // We might be using local auth only
@@ -78,11 +82,13 @@ class AuthService extends ChangeNotifier {
   Future<void> updateAuthState(
     bool isLoggedIn,
     String userId,
-    String username,
-  ) async {
+    String username, {
+    bool isGuest = false,
+  }) async {
     _isLoggedIn = isLoggedIn;
     _userId = userId;
     _username = username;
+    _isGuest = isGuest;
 
     // Update SharedPreferences
     final prefs = await SharedPreferences.getInstance();
@@ -91,11 +97,13 @@ class AuthService extends ChangeNotifier {
     if (isLoggedIn) {
       await prefs.setString('userId', userId);
       await prefs.setString('username', username);
+      await prefs.setBool('isGuest', isGuest);
       debugPrint('Auth state manually updated: User $username logged in');
     } else {
       await prefs.remove('userId');
       await prefs.remove('username');
       await prefs.remove('isEmailVerified');
+      await prefs.remove('isGuest');
       debugPrint('Auth state manually updated: User logged out');
     }
 
@@ -114,6 +122,7 @@ class AuthService extends ChangeNotifier {
       if (storedIsLoggedIn) {
         final storedUserId = prefs.getString('userId');
         final storedUsername = prefs.getString('username');
+        final storedIsGuest = prefs.getBool('isGuest') ?? false;
 
         if (storedUserId != null && storedUsername != null) {
           // We have stored credentials - update state if not already logged in
@@ -122,6 +131,7 @@ class AuthService extends ChangeNotifier {
             _userId = storedUserId;
             _username = storedUsername;
             _isEmailVerified = prefs.getBool('isEmailVerified') ?? false;
+            _isGuest = storedIsGuest;
 
             debugPrint(
               'Auth state reloaded: User $_username logged in from SharedPreferences',
@@ -142,12 +152,14 @@ class AuthService extends ChangeNotifier {
             firebaseUser.email?.split('@')[0] ??
             'User';
         _isEmailVerified = firebaseUser.emailVerified;
+        _isGuest = false; // Firebase users are not guests
 
         // Update SharedPreferences with Firebase values
         await prefs.setBool('isLoggedIn', true);
         await prefs.setString('userId', _userId!);
         await prefs.setString('username', _username!);
         await prefs.setBool('isEmailVerified', _isEmailVerified);
+        await prefs.setBool('isGuest', false);
 
         debugPrint(
           'Auth state reloaded: User $_username logged in from Firebase',
@@ -170,14 +182,17 @@ class AuthService extends ChangeNotifier {
       _userId = prefs.getString('userId');
       _username = prefs.getString('username');
       _isEmailVerified = prefs.getBool('isEmailVerified') ?? false;
+      _isGuest = prefs.getBool('isGuest') ?? false;
 
       // Try to sync with Firebase if we're logged in
       if (_isLoggedIn) {
         final firebaseUser = _auth.currentUser;
         if (firebaseUser != null) {
           _isEmailVerified = firebaseUser.emailVerified;
+          _isGuest = false; // Firebase users are not guests
           // Update SharedPreferences with latest email verification status
           await prefs.setBool('isEmailVerified', _isEmailVerified);
+          await prefs.setBool('isGuest', _isGuest);
         }
       }
     } catch (e) {
@@ -186,6 +201,7 @@ class AuthService extends ChangeNotifier {
       _userId = null;
       _username = null;
       _isEmailVerified = false;
+      _isGuest = false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -246,6 +262,7 @@ class AuthService extends ChangeNotifier {
           _userId = firebaseUser.uid;
           _username = firebaseUser.displayName ?? email.split('@')[0];
           _isEmailVerified = firebaseUser.emailVerified;
+          _isGuest = false;
 
           // Save auth state
           final prefs = await SharedPreferences.getInstance();
@@ -253,6 +270,7 @@ class AuthService extends ChangeNotifier {
           await prefs.setString('userId', _userId!);
           await prefs.setString('username', _username!);
           await prefs.setBool('isEmailVerified', _isEmailVerified);
+          await prefs.setBool('isGuest', false);
 
           notifyListeners();
           return true;
@@ -295,18 +313,47 @@ class AuthService extends ChangeNotifier {
       _isLoggedIn = true;
       _userId = user['id'];
       _username = user['name'];
+      _isGuest = false;
 
       // Save auth state
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
       await prefs.setString('userId', _userId!);
       await prefs.setString('username', _username!);
+      await prefs.setBool('isGuest', false);
 
       notifyListeners();
       return true;
     } catch (e) {
       debugPrint('Login error: $e');
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> continueAsGuest() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final guestId = 'guest_${_uuid.v4()}';
+
+      _isLoggedIn = true;
+      _isGuest = true;
+      _userId = guestId;
+      _username = 'Guest';
+      _isEmailVerified = false;
+
+      await prefs.setBool('isLoggedIn', true);
+      await prefs.setString('userId', guestId);
+      await prefs.setString('username', _username!);
+      await prefs.setBool('isGuest', true);
+      await prefs.remove('isEmailVerified');
+    } catch (e) {
+      debugPrint('Guest login error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -387,10 +434,12 @@ class AuthService extends ChangeNotifier {
         final reloadedUser = _auth.currentUser;
         if (reloadedUser != null) {
           _isEmailVerified = reloadedUser.emailVerified;
+          _isGuest = reloadedUser.isAnonymous; // Check if user is anonymous
 
           // Update SharedPreferences
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isEmailVerified', _isEmailVerified);
+          await prefs.setBool('isGuest', _isGuest);
 
           notifyListeners();
           return _isEmailVerified;
@@ -484,6 +533,7 @@ class AuthService extends ChangeNotifier {
       _userId = firebaseUser.uid;
       _username = firebaseUser.displayName ?? email.split('@')[0];
       _isEmailVerified = firebaseUser.emailVerified;
+      _isGuest = firebaseUser.isAnonymous; // Check if user is anonymous
 
       // Save auth state
       final prefs = await SharedPreferences.getInstance();
@@ -491,6 +541,7 @@ class AuthService extends ChangeNotifier {
       await prefs.setString('userId', _userId!);
       await prefs.setString('username', _username!);
       await prefs.setBool('isEmailVerified', _isEmailVerified);
+      await prefs.setBool('isGuest', _isGuest);
 
       // Clear the pending email
       await prefs.remove('pendingEmailLink');
@@ -544,6 +595,7 @@ class AuthService extends ChangeNotifier {
           _userId = firebaseUser.uid;
           _username = name;
           _isEmailVerified = false; // New users need to verify email
+          _isGuest = firebaseUser.isAnonymous; // Check if user is anonymous
 
           // Save auth state
           final prefs = await SharedPreferences.getInstance();
@@ -551,6 +603,7 @@ class AuthService extends ChangeNotifier {
           await prefs.setString('userId', _userId!);
           await prefs.setString('username', _username!);
           await prefs.setBool('isEmailVerified', _isEmailVerified);
+          await prefs.setBool('isGuest', _isGuest);
 
           notifyListeners();
           return RegistrationResult.success;
@@ -616,12 +669,14 @@ class AuthService extends ChangeNotifier {
       _isLoggedIn = true;
       _userId = userId;
       _username = name;
+      _isGuest = false; // Local users are not guests
 
       // Save auth state
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
       await prefs.setString('userId', _userId!);
       await prefs.setString('username', _username!);
+      await prefs.setBool('isGuest', false);
 
       notifyListeners();
       return RegistrationResult.success;
@@ -648,12 +703,14 @@ class AuthService extends ChangeNotifier {
       await prefs.remove('userId');
       await prefs.remove('username');
       await prefs.remove('isEmailVerified');
+      await prefs.remove('isGuest');
 
       // Update local state
       _isLoggedIn = false;
       _userId = null;
       _username = null;
       _isEmailVerified = false;
+      _isGuest = false;
     } catch (e) {
       debugPrint('Logout error: $e');
     } finally {

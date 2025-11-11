@@ -33,7 +33,9 @@ import 'admin_setup_page.dart';
 import 'dashboard_page.dart';
 import 'utils/accessibility_utils.dart';
 import 'widgets/ai_content_policy_notice.dart';
+import 'widgets/app_tour_overlay.dart';
 import 'widgets/onboarding_splash.dart';
+import 'services/app_launch_service.dart';
 
 // Removed onboarding check - splash screen shows every time
 
@@ -203,7 +205,7 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: isDarkMode ? Colors.black : Colors.white,
         ),
         routes: {'/admin_setup': (context) => const AdminSetupPage()},
-        home: const OnboardingSplash(),
+        home: const LaunchFlowScreen(),
       ),
     );
   }
@@ -224,31 +226,28 @@ class MainNavigationWrapper extends StatefulWidget {
   State<MainNavigationWrapper> createState() => _MainNavigationWrapperState();
 }
 
-class _MainNavigationWrapperState extends State<MainNavigationWrapper>
-    with SingleTickerProviderStateMixin {
+class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   late int _selectedIndex;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.selectedIndex;
-    _animationController = AnimationController(
-      vsync: this,
-      duration: ThemeProvider.animationDurationMedium,
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: ThemeProvider.animationCurveDefault,
-    );
-    _animationController.forward();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _runPostEntryExperience();
+    });
   }
 
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
+  Future<void> _runPostEntryExperience() async {
+    if (!mounted) return;
+    final consented = await AiContentPolicyNotice.ensureAccepted(context);
+    if (!consented || !mounted) return;
+
+    final hasCompletedTour = await AppLaunchService.hasCompletedAppTour();
+    if (!hasCompletedTour && mounted) {
+      await AppTourOverlay.show(context);
+      await AppLaunchService.markAppTourComplete();
+    }
   }
 
   void _navigateToPage(int index) {
@@ -487,7 +486,6 @@ class HopeCoreHub extends BaseScreen {
 
 class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
     with TickerProviderStateMixin {
-  int _selectedIndex = 0;
   late AnimationController _animationController;
   late AnimationController _sosPulseController;
   final ScrollController _scrollController = ScrollController();
@@ -506,11 +504,6 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
-
-    // Show content policy notice on first launch
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AiContentPolicyNotice.showIfNeeded(context);
-    });
   }
 
   @override
@@ -528,12 +521,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
     // Determine actual home index based on admin status
     int homeIndex = isAdminUser ? 1 : 0;
 
-    if (index == homeIndex) {
-      // Stay on home page
-      setState(() {
-        _selectedIndex = index;
-      });
-    } else {
+    if (index != homeIndex) {
       // Navigate to the appropriate page
       Widget page;
 
@@ -587,6 +575,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
     }
   }
 
+  // ignore: unused_element
   Widget _buildUserGreeting() {
     final authService = Provider.of<AuthService>(context, listen: true);
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -608,7 +597,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
 
     final username = authService.username ?? 'Guest';
     final String firstLetter = username[0].toUpperCase();
-    final bool isGuest = username == 'Guest' || !authService.isLoggedIn;
+    final bool isGuest = authService.isGuest || !authService.isLoggedIn;
 
     final primaryColor =
         isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
@@ -644,362 +633,83 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
             highContrastMode
                 ? null
                 : [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(15),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+                    BoxShadow(
+                      color: Colors.black.withAlpha(12),
+                      blurRadius: 20,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            // Background decoration (smaller and repositioned)
-            Positioned(
-              right: -15,
-              bottom: -15,
-              child: Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: primaryColor.withAlpha(25),
-                ),
-              ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        leading: CircleAvatar(
+          radius: 26,
+          backgroundColor: primaryColor.withAlpha(230),
+          child: Text(
+            firstLetter,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
             ),
-            Positioned(
-              left: -20,
-              top: -20,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: primaryColor.withAlpha(20),
-                ),
-              ),
+          ),
+        ),
+        title: Text(
+          isGuest
+              ? AppLocalizations.of(context).translate('guestUser')
+              : AppLocalizations.of(context).translate('welcomeBack'),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: highContrastMode
+                ? (isDarkMode ? Colors.white : Colors.black)
+                : (isDarkMode ? Colors.white : Colors.black87),
+          ),
+        ),
+        subtitle: Text(
+          isGuest
+              ? AppLocalizations.of(context)
+                  .translate('youreCurrentlyUsingAppAsGuest')
+              : '${AppLocalizations.of(context).translate('loggedInAs')} $username',
+          style: TextStyle(
+            fontSize: 13,
+            color: highContrastMode
+                ? (isDarkMode ? Colors.white70 : Colors.black54)
+                : (isDarkMode ? Colors.white70 : Colors.black54),
+            height: 1.4,
+          ),
+        ),
+        trailing: ElevatedButton(
+          onPressed: () {
+            if (isGuest) {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const AuthPage()),
+              );
+            } else {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryColor,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  // Avatar
-                  Container(
-                    width: 45,
-                    height: 45,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [primaryColor, primaryColor.withAlpha(204)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primaryColor.withAlpha(76),
-                          blurRadius: 8,
-                          spreadRadius: 1,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        firstLetter,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 22,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Text content
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            LocalizedText(
-                              'welcomeBack',
-                              style: TextStyle(
-                                color:
-                                    highContrastMode
-                                        ? (isDarkMode
-                                            ? Colors.white70
-                                            : Colors.black54)
-                                        : (isDarkMode
-                                            ? Colors.white70
-                                            : Colors.black54),
-                                fontWeight: FontWeight.w500,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              username,
-                              style: TextStyle(
-                                color:
-                                    highContrastMode
-                                        ? (isDarkMode
-                                            ? Colors.white
-                                            : Colors.black)
-                                        : (isDarkMode
-                                            ? Colors.white
-                                            : Colors.black87),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            if (isGuest)
-                              Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () => _showLoginPrompt(),
-                                    child: Container(
-                                      margin: const EdgeInsets.only(left: 8),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red.withAlpha(25),
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(
-                                          color: Colors.red.withValues(
-                                            alpha: 76,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: LocalizedText(
-                                        'guestMode',
-                                        style: TextStyle(
-                                          color: Colors.red,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      final authService =
-                                          Provider.of<AuthService>(
-                                            context,
-                                            listen: false,
-                                          );
-                                      authService.reloadAuthState();
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Refreshing login status...',
-                                          ),
-                                          duration: Duration(seconds: 1),
-                                          backgroundColor: primaryColor,
-                                        ),
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(4.0),
-                                      child: Icon(
-                                        Icons.refresh,
-                                        size: 14,
-                                        color: primaryColor,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                highContrastMode
-                                    ? (isDarkMode
-                                        ? Colors.white.withAlpha(25)
-                                        : Colors.black.withAlpha(25))
-                                    : (isDarkMode
-                                        ? primaryColor.withAlpha(51)
-                                        : primaryColor.withAlpha(25)),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Text(
-                            isGuest
-                                ? 'Log in to access all features'
-                                : 'How are you today?',
-                            style: TextStyle(
-                              color:
-                                  highContrastMode
-                                      ? (isDarkMode
-                                          ? Colors.white
-                                          : Colors.black)
-                                      : primaryColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Settings button
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color:
-                          highContrastMode
-                              ? (isDarkMode
-                                  ? Colors.white.withAlpha(25)
-                                  : Colors.black.withAlpha(25))
-                              : (isDarkMode
-                                  ? Colors.white.withAlpha(25)
-                                  : Colors.black.withAlpha(12)),
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const SettingsPage(),
-                          ),
-                        );
-                      },
-                      icon: Icon(
-                        Icons.settings_outlined,
-                        color:
-                            highContrastMode
-                                ? (isDarkMode ? Colors.white : Colors.black)
-                                : (isDarkMode
-                                    ? Colors.white70
-                                    : Colors.black54),
-                        size: 18,
-                      ),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
-              ),
+          ),
+          child: Text(
+            isGuest
+                ? AppLocalizations.of(context).translate('loginRegister')
+                : AppLocalizations.of(context).translate('settings'),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
             ),
-          ],
+          ),
         ),
       ),
-    );
-  }
-
-  // Show login prompt dialog when user clicks on Guest Mode indicator
-  void _showLoginPrompt() {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8A4FFF).withAlpha(25),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.person_outline,
-                    color: const Color(0xFF8A4FFF),
-                    size: 30,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                LocalizedText(
-                  'guestMode',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                LocalizedText(
-                  'youreCurrentlyUsingAppAsGuest',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const AuthPage(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8A4FFF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      'Login / Register',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    'Continue as Guest',
-                    style: TextStyle(
-                      color: isDarkMode ? Colors.white60 : Colors.black54,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -1137,171 +847,6 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
     );
   }
 
-  Widget _buildHeader() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
-    final highContrastMode = accessibilityProvider.highContrastMode;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient:
-            highContrastMode
-                ? null // No gradients in high contrast mode
-                : LinearGradient(
-                  colors:
-                      isDarkMode
-                          ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-                          : [const Color(0xFFF8FAFC), const Color(0xFFF1F5F9)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-        color:
-            highContrastMode
-                ? (isDarkMode ? Colors.black : Colors.white)
-                : null,
-        borderRadius: BorderRadius.circular(16),
-        border:
-            highContrastMode
-                ? Border.all(
-                  color: isDarkMode ? Colors.white : Colors.black,
-                  width: 2.0,
-                )
-                : null,
-        boxShadow:
-            highContrastMode
-                ? null // No shadows in high contrast mode
-                : [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(15),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -20,
-            bottom: -20,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: (isDarkMode
-                        ? const Color(0xFF8A4FFF)
-                        : const Color(0xFFE53935))
-                    .withAlpha(25),
-              ),
-            ),
-          ),
-          Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Hero(
-                  tag: 'app_logo',
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: (isDarkMode
-                                  ? const Color(0xFF8A4FFF)
-                                  : const Color(0xFFE53935))
-                              .withAlpha(76),
-                          blurRadius: 15,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Image.asset('assets/logo.png', fit: BoxFit.contain),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    highContrastMode
-                        ? Text(
-                          'HopeCore Hub',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : Colors.black,
-                          ),
-                        )
-                        : ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return LinearGradient(
-                              colors:
-                                  isDarkMode
-                                      ? [
-                                        const Color(0xFF8A4FFF),
-                                        const Color(0xFF6D28D9),
-                                      ]
-                                      : [
-                                        const Color(0xFFE53935),
-                                        const Color(0xFFD32F2F),
-                                      ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ).createShader(bounds);
-                          },
-                          child: const Text(
-                            'HopeCore Hub',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            highContrastMode
-                                ? (isDarkMode
-                                    ? Colors.black.withAlpha(178)
-                                    : Colors.white.withAlpha(229))
-                                : (isDarkMode
-                                    ? const Color(0xFF0F172A).withAlpha(178)
-                                    : Colors.white.withAlpha(229)),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: LocalizedText(
-                        'yourSafeSpaceForHealing',
-                        style: TextStyle(
-                          fontSize: 11,
-                          letterSpacing: 0.3,
-                          color:
-                              highContrastMode
-                                  ? (isDarkMode
-                                      ? Colors.white70
-                                      : Colors.black87)
-                                  : Colors.white70,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildEmergencyButton() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
@@ -1310,6 +855,13 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
       child: AnimatedBuilder(
         animation: _sosPulseController,
         builder: (context, child) {
+          final ringBaseColor =
+              isDarkMode ? const Color(0xFFFF8A80) : Colors.red;
+          final gradientStart =
+              isDarkMode ? const Color(0xFFD32F2F) : const Color(0xFFE53935);
+          final gradientEnd =
+              isDarkMode ? const Color(0xFFB71C1C) : const Color(0xFFC62828);
+
           // Pulsing scale animation
           final scale = 1.0 + (_sosPulseController.value * 0.1);
           
@@ -1330,7 +882,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.red.withAlpha((ring2Opacity * 255).round()),
+                    color:
+                        ringBaseColor.withAlpha((ring2Opacity * 255).round()),
                   ),
                 ),
               ),
@@ -1342,7 +895,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.red.withAlpha((ring1Opacity * 255).round()),
+                    color:
+                        ringBaseColor.withAlpha((ring1Opacity * 255).round()),
                   ),
                 ),
               ),
@@ -1359,19 +913,19 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                     height: 80,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFE53935), Color(0xFFC62828)],
+                      gradient: LinearGradient(
+                        colors: [gradientStart, gradientEnd],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.red.withAlpha(127),
+                          color: ringBaseColor.withAlpha(127),
                           blurRadius: 20,
                           spreadRadius: 5,
                         ),
                         BoxShadow(
-                          color: Colors.red.withAlpha(76),
+                          color: ringBaseColor.withAlpha(76),
                           blurRadius: 30,
                           spreadRadius: 10,
                         ),
@@ -2408,20 +1962,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
 
     // Get short text label for high contrast mode
     String getEmotionShortLabel(String key) {
-      switch (key) {
-        case 'great':
-          return 'Great';
-        case 'good':
-          return 'Good';
-        case 'okay':
-          return 'Okay';
-        case 'sad':
-          return 'Sad';
-        case 'bad':
-          return 'Bad';
-        default:
-          return 'Good';
-      }
+      return localizations.translate(key);
     }
 
     return AnimatedBuilder(
@@ -2803,7 +2344,8 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                           AnimatedTextKit(
                             animatedTexts: [
                               TypewriterAnimatedText(
-                                'How can we support you today?',
+                                localizations
+                                    .translate('howCanWeSupportYouToday'),
                                 textStyle: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -2823,7 +2365,7 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
 
                           // Message
                           Text(
-                            _getEmotionMessage(emotionKey),
+                            _getEmotionMessage(context, emotionKey),
                             style: TextStyle(
                               fontSize: 15,
                               color:
@@ -2870,9 +2412,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                                   BorderRadius.circular(12),
                                             ),
                                           ),
-                                          child: const Text(
-                                            'Talk to Mahoro',
-                                            style: TextStyle(
+                                          child: LocalizedText(
+                                            'talkToMahoro',
+                                            style: const TextStyle(
                                               fontSize: 15,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -2927,9 +2469,9 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
                                                   BorderRadius.circular(12),
                                             ),
                                           ),
-                                          child: const Text(
-                                            'Join Forum',
-                                            style: TextStyle(
+                                          child: LocalizedText(
+                                            'joinForum',
+                                            style: const TextStyle(
                                               fontSize: 15,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -2955,20 +2497,20 @@ class _HopeCoreHubState extends BaseScreenState<HopeCoreHub>
     );
   }
 
-  String _getEmotionMessage(String emotionKey) {
+  String _getEmotionMessage(BuildContext context, String emotionKey) {
+    final localizations = AppLocalizations.of(context);
     switch (emotionKey) {
       case 'great':
-        return "It's great to see you're feeling good! Would you like to share your positive experiences or learn ways to maintain this mood?";
+        return localizations.translate('itsGreatToSeeYoureFeelingGood');
       case 'good':
-        return "Sometimes we all feel a bit neutral. Would you like to talk about what's on your mind or explore ways to boost your mood?";
       case 'okay':
-        return "Sometimes we all feel a bit neutral. Would you like to talk about what's on your mind or explore ways to boost your mood?";
+        return localizations.translate('sometimesWeAllFeelNeutral');
       case 'sad':
-        return "I'm sorry you're feeling down. Remember that it's okay to not be okay, and talking about it can help. Would you like some support?";
+        return localizations.translate('imSorryYoureFeelingDown');
       case 'bad':
-        return "I can see you're having a difficult time. Please remember you're not alone, and there are resources available to help you through this.";
+        return localizations.translate('iCanSeeYoureHavingDifficultTime');
       default:
-        return "Thank you for sharing how you're feeling. Would you like to talk more about it?";
+        return localizations.translate('thankYouForSharingHowYoureFeeling');
     }
   }
 
@@ -5308,6 +4850,90 @@ class FadeSlideTransition extends StatelessWidget {
         );
       },
       child: child,
+    );
+  }
+}
+
+class LaunchFlowScreen extends StatefulWidget {
+  const LaunchFlowScreen({super.key});
+
+  @override
+  State<LaunchFlowScreen> createState() => _LaunchFlowScreenState();
+}
+
+class _LaunchFlowScreenState extends State<LaunchFlowScreen> {
+  bool _loadingPrefs = true;
+  bool _hasSeenOnboarding = false;
+  bool _skippingReturningUser = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLaunchState();
+  }
+
+  Future<void> _loadLaunchState() async {
+    final seen = await AppLaunchService.hasSeenOnboarding();
+    if (!mounted) return;
+    setState(() {
+      _hasSeenOnboarding = seen;
+      _loadingPrefs = false;
+    });
+  }
+
+  void _skipOnboardingForReturningUsers() {
+    if (_skippingReturningUser) return;
+    _skippingReturningUser = true;
+    AppLaunchService.markOnboardingComplete().then((_) {
+      if (mounted) {
+        setState(() {
+          _hasSeenOnboarding = true;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AuthService>(
+      builder: (context, authService, _) {
+        if (_loadingPrefs || authService.isLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (!_hasSeenOnboarding) {
+          if (authService.isLoggedIn) {
+            _skipOnboardingForReturningUsers();
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          return OnboardingSplash(
+            onFinished: () {
+              if (mounted) {
+                setState(() {
+                  _hasSeenOnboarding = true;
+                });
+              }
+            },
+          );
+        }
+
+        if (!authService.isLoggedIn) {
+          return const AuthPage();
+        }
+
+        final bool isAdmin = authService.isAdmin();
+        final int initialIndex = isAdmin ? 1 : 0;
+
+        return MainNavigationWrapper(
+          selectedIndex: initialIndex,
+          child: const HopeCoreHub(),
+        );
+      },
     );
   }
 }

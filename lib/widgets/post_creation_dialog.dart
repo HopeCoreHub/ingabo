@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme_provider.dart';
 import '../services/auth_service.dart';
-import '../localization/app_localizations.dart';
 import '../localization/localized_text.dart';
 
 class PostCreationDialog extends StatefulWidget {
@@ -63,7 +62,7 @@ class _PostCreationDialogState extends State<PostCreationDialog>
 
     // Get first letter of username for avatar
     final String firstLetter = (authService.username ?? 'A')[0].toUpperCase();
-    final bool isGuest = authService.username == 'Guest';
+    final bool isGuest = authService.isGuest;
 
     return ScaleTransition(
       scale: _scaleAnimation,
