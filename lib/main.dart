@@ -204,6 +204,8 @@ class MyApp extends StatelessWidget {
         theme: themeStyleProvider.getThemeWithAccessibility(context).copyWith(
           scaffoldBackgroundColor: isDarkMode ? Colors.black : Colors.white,
         ),
+        // iOS swipe back gesture: Automatically enabled by the system for navigation stacks.
+        // Explicit edge swipe detection added to Forum and Mahoro pages for keyboard dismissal.
         routes: {'/admin_setup': (context) => const AdminSetupPage()},
         home: const LaunchFlowScreen(),
       ),

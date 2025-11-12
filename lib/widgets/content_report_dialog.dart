@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../theme_provider.dart';
 import '../accessibility_provider.dart';
 import '../services/content_reporting_service.dart';
-import '../localization/app_localizations.dart';
 import '../localization/localized_text.dart';
 
 class ContentReportDialog extends StatefulWidget {

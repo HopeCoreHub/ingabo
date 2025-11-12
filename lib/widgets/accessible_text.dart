@@ -34,8 +34,6 @@ class AccessibleText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
 
     // Get accessible text style
     final accessibleStyle = AccessibilityUtils.getTextStyle(

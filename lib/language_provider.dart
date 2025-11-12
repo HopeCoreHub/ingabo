@@ -32,6 +32,7 @@ class LanguageProvider extends ChangeNotifier {
     try {
       // First try to get the language from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
+      // Default to English for new users (don't use system locale)
       _currentLanguage = prefs.getString('appLanguage') ?? 'English';
 
       // Try to get the user ID from SharedPreferences

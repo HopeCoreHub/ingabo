@@ -205,6 +205,9 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
     final content = _messageController.text.trim();
     if (content.isEmpty || _isSendingMessage) return;
 
+    // Dismiss keyboard
+    FocusScope.of(context).unfocus();
+
     setState(() {
       _isSendingMessage = true;
     });
@@ -917,27 +920,63 @@ class _ForumPageState extends BaseScreenState<ForumPage> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child:
-                _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : RefreshIndicator(
-                      onRefresh: _loadPosts,
-                      color: accentColor,
-                      backgroundColor:
-                          isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-                      displacement: 40,
-                      child:
-                          _hasError
-                              ? _buildErrorState()
-                              : (_posts.isEmpty
-                                  ? _buildEmptyState()
-                                  : _buildPostsList()),
-                    ),
-          ),
-        ],
+      body: GestureDetector(
+        onTap: () {
+          // Dismiss keyboard when tapping outside
+          FocusScope.of(context).unfocus();
+        },
+        onHorizontalDragStart: (details) {
+          // Detect swipe from left edge (within 20 pixels from left)
+          if (details.globalPosition.dx < 20) {
+            // Dismiss keyboard on edge swipe start
+            FocusScope.of(context).unfocus();
+          }
+        },
+        onHorizontalDragUpdate: (details) {
+          // Continue dismissing keyboard during swipe
+          if (details.globalPosition.dx < 50) {
+            FocusScope.of(context).unfocus();
+          }
+        },
+        onHorizontalDragEnd: (details) {
+          // Dismiss keyboard on swipe end
+          FocusScope.of(context).unfocus();
+          // Try to pop navigation if there's a stack
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: Column(
+          children: [
+            Expanded(
+              child:
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : RefreshIndicator(
+                        onRefresh: _loadPosts,
+                        color: accentColor,
+                        backgroundColor:
+                            isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                        displacement: 40,
+                        child: NotificationListener<ScrollNotification>(
+                          onNotification: (notification) {
+                            // Dismiss keyboard when scrolling
+                            if (notification is ScrollUpdateNotification) {
+                              FocusScope.of(context).unfocus();
+                            }
+                            return false;
+                          },
+                          child:
+                              _hasError
+                                  ? _buildErrorState()
+                                  : (_posts.isEmpty
+                                      ? _buildEmptyState()
+                                      : _buildPostsList()),
+                        ),
+                      ),
+            ),
+          ],
+        ),
       ),
       // WhatsApp-style text input at bottom
       bottomNavigationBar: _buildMessageInput(),

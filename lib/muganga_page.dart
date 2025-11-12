@@ -10,7 +10,6 @@ import 'accessibility_provider.dart';
 import 'localization/localized_text.dart';
 import 'localization/base_screen.dart';
 import 'services/auth_service.dart';
-import 'utils/accessibility_utils.dart';
 
 class MugangaPage extends BaseScreen {
   const MugangaPage({super.key});
@@ -21,8 +20,6 @@ class MugangaPage extends BaseScreen {
 
 class _MugangaPageState extends BaseScreenState<MugangaPage> {
   Map<String, dynamic>? _subscriptionData;
-  bool _isLoading = true;
-  String? _error;
   StreamSubscription<DatabaseEvent>? _subscriptionListener;
 
   @override
@@ -40,18 +37,12 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
   Future<void> _loadSubscriptionData() async {
     if (!mounted) return;
 
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
 
       if (!authService.isLoggedIn || authService.userId == null) {
         setState(() {
           _subscriptionData = null;
-          _isLoading = false;
         });
         return;
       }
@@ -73,21 +64,14 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
               final data = event.snapshot.value as Map<dynamic, dynamic>;
               setState(() {
                 _subscriptionData = Map<String, dynamic>.from(data);
-                _isLoading = false;
               });
             } else {
               setState(() {
                 _subscriptionData = null;
-                _isLoading = false;
               });
             }
           });
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
       debugPrint('Error loading subscription data: $e');
     }
   }
@@ -263,150 +247,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
     );
   }
 
-  Widget _buildLoadingState(bool isDarkMode, bool highContrastMode) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: 100),
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(
-              isDarkMode ? const Color(0xFF9667FF) : const Color(0xFFE53935),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Loading subscription data...',
-            style: TextStyle(
-              color:
-                  highContrastMode
-                      ? (isDarkMode ? Colors.white : Colors.black)
-                      : (isDarkMode ? Colors.white70 : Colors.black54),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState(
-    bool isDarkMode,
-    bool highContrastMode,
-    Color accentColor,
-  ) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 100),
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color:
-                  highContrastMode
-                      ? (isDarkMode ? Colors.white : Colors.black)
-                      : Colors.red,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Error loading subscription data',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color:
-                    highContrastMode
-                        ? (isDarkMode ? Colors.white : Colors.black)
-                        : (isDarkMode ? Colors.white : Colors.black87),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _error ?? 'Unknown error',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color:
-                    highContrastMode
-                        ? (isDarkMode ? Colors.white70 : Colors.black54)
-                        : (isDarkMode ? Colors.white70 : Colors.black54),
-              ),
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: _loadSubscriptionData,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accentColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 12,
-                ),
-              ),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSubscriptionCard(
-    BuildContext context,
-    bool isDarkMode,
-    Color accentColor,
-    bool highContrastMode,
-  ) {
-    if (_subscriptionData == null) {
-      return _buildNoSubscriptionCard(
-        context,
-        isDarkMode,
-        accentColor,
-        highContrastMode,
-      );
-    }
-
-    final status = _subscriptionData!['status'] as String?;
-
-    switch (status) {
-      case 'pending':
-        return _buildPendingSubscriptionCard(
-          context,
-          isDarkMode,
-          accentColor,
-          highContrastMode,
-        );
-      case 'approved':
-        return _buildActiveSubscriptionCard(
-          context,
-          isDarkMode,
-          accentColor,
-          highContrastMode,
-        );
-      case 'rejected':
-        return _buildRejectedSubscriptionCard(
-          context,
-          isDarkMode,
-          accentColor,
-          highContrastMode,
-        );
-      case 'expired':
-        return _buildExpiredSubscriptionCard(
-          context,
-          isDarkMode,
-          accentColor,
-          highContrastMode,
-        );
-      default:
-        return _buildNoSubscriptionCard(
-          context,
-          isDarkMode,
-          accentColor,
-          highContrastMode,
-        );
-    }
-  }
-
+  // ignore: unused_element
   Widget _buildNoSubscriptionCard(
     BuildContext context,
     bool isDarkMode,
@@ -533,6 +374,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildPendingSubscriptionCard(
     BuildContext context,
     bool isDarkMode,
@@ -835,6 +677,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildActiveSubscriptionCard(
     BuildContext context,
     bool isDarkMode,
@@ -983,6 +826,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildRejectedSubscriptionCard(
     BuildContext context,
     bool isDarkMode,
@@ -1096,6 +940,7 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildExpiredSubscriptionCard(
     BuildContext context,
     bool isDarkMode,
@@ -2264,178 +2109,6 @@ class _MugangaPageState extends BaseScreenState<MugangaPage> {
           style: const TextStyle(fontSize: 15, color: Colors.white),
         ),
       ],
-    );
-  }
-
-  Widget _buildFeatureCard({
-    required IconData icon,
-    required String title,
-    required String description,
-    required bool isDarkMode,
-    required Color accentColor,
-    required BuildContext context,
-    required bool highContrastMode,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: EdgeInsets.all(highContrastMode ? 18 : 16),
-      decoration: BoxDecoration(
-        color:
-            highContrastMode
-                ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-                : (isDarkMode
-                    ? const Color(0xFF1E293B)
-                    : const Color(0xFFF1F5F9)),
-        borderRadius: BorderRadius.circular(12),
-        border:
-            highContrastMode
-                ? Border.all(
-                  color: AccessibilityUtils.getAccessibleBorderColor(context),
-                  width: 2.0,
-                )
-                : null,
-        boxShadow:
-            highContrastMode
-                ? null // No shadows in high contrast mode
-                : [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(12),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: highContrastMode ? 52 : 48,
-            height: highContrastMode ? 52 : 48,
-            decoration: BoxDecoration(
-              color:
-                  highContrastMode
-                      ? (isDarkMode ? Colors.white : Colors.black)
-                      : (isDarkMode ? Colors.black : Colors.white),
-              borderRadius: BorderRadius.circular(10),
-              border:
-                  highContrastMode
-                      ? Border.all(
-                        color: AccessibilityUtils.getAccessibleBorderColor(
-                          context,
-                        ),
-                        width: 2.0,
-                      )
-                      : null,
-            ),
-            child: Icon(
-              icon,
-              color:
-                  highContrastMode
-                      ? (isDarkMode ? Colors.black : Colors.white)
-                      : accentColor,
-              size: highContrastMode ? 26 : 24,
-            ),
-          ),
-          SizedBox(width: highContrastMode ? 18 : 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LocalizedText(
-                  title,
-                  style: AccessibilityUtils.getTextStyle(
-                    context,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color:
-                        highContrastMode
-                            ? AccessibilityUtils.getAccessibleColor(
-                              context,
-                              Colors.white,
-                            )
-                            : (isDarkMode ? Colors.white : Colors.black87),
-                  ),
-                ),
-                SizedBox(height: highContrastMode ? 6 : 4),
-                LocalizedText(
-                  description,
-                  style: AccessibilityUtils.getTextStyle(
-                    context,
-                    fontSize: 14,
-                    color:
-                        highContrastMode
-                            ? AccessibilityUtils.getAccessibleColor(
-                              context,
-                              Colors.white70,
-                            )
-                            : (isDarkMode ? Colors.white70 : Colors.black54),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPaymentInfo(
-    bool isDarkMode,
-    Color accentColor,
-    BuildContext context,
-    bool highContrastMode,
-  ) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: EdgeInsets.all(highContrastMode ? 18 : 16),
-      decoration: BoxDecoration(
-        color:
-            highContrastMode
-                ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-                : (isDarkMode
-                    ? const Color(0xFF1E293B)
-                    : const Color(0xFFF1F5F9)),
-        borderRadius: BorderRadius.circular(12),
-        border:
-            highContrastMode
-                ? Border.all(
-                  color: AccessibilityUtils.getAccessibleBorderColor(context),
-                  width: 2.0,
-                )
-                : null,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.favorite,
-            color:
-                highContrastMode
-                    ? AccessibilityUtils.getAccessibleColor(
-                      context,
-                      accentColor,
-                      isPrimary: true,
-                    )
-                    : accentColor,
-            size: highContrastMode ? 22 : 20,
-          ),
-          SizedBox(width: highContrastMode ? 14 : 12),
-          Expanded(
-            child: LocalizedText(
-              'payEasilyWithMtnMobileMoneyAndGetInstantAccessToProfessionalTherapy',
-              style: AccessibilityUtils.getTextStyle(
-                context,
-                fontSize: 14,
-                color:
-                    highContrastMode
-                        ? AccessibilityUtils.getAccessibleColor(
-                          context,
-                          Colors.white70,
-                        )
-                        : (isDarkMode ? Colors.white70 : Colors.black54),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -22,8 +22,8 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.ingabohopecore.hopecorehub"
     compileSdk = flutter.compileSdkVersion
-    // Force use of available NDK version
-    ndkVersion = "26.3.11579264"
+    // Use NDK version required by plugins
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -39,7 +39,7 @@ android {
         applicationId = "com.ingabohopecore.hopecorehub"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23  // Required for Firebase Auth compatibility
+        minSdk = flutter.minSdkVersion  // Required for Firebase Auth compatibility
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

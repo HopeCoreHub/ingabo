@@ -14,7 +14,6 @@ class FirebaseRealtimeService {
   late final DatabaseReference _repliesRef;
 
   // Connection status
-  bool _isConnected = false;
   final StreamController<bool> _connectionStatusController =
       StreamController<bool>.broadcast();
   Stream<bool> get connectionStatus => _connectionStatusController.stream;
@@ -54,7 +53,6 @@ class FirebaseRealtimeService {
       final connectedRef = FirebaseDatabase.instance.ref(".info/connected");
       connectedRef.onValue.listen((event) {
         final connected = event.snapshot.value as bool? ?? false;
-        _isConnected = connected;
         _connectionStatusController.add(connected);
         debugPrint(
           connected

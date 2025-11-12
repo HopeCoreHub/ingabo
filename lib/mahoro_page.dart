@@ -414,6 +414,9 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
   void _handleSubmitted(String text) async {
     if (text.trim().isEmpty) return;
 
+    // Dismiss keyboard
+    FocusScope.of(context).unfocus();
+
     // Request consent for conversation storage on first message
     final authService = Provider.of<AuthService>(context, listen: false);
     if (authService.isLoggedIn && !_conversationStorageConsent) {
@@ -468,14 +471,52 @@ class _MahoroPageState extends BaseScreenState<MahoroPage>
           (highContrastMode && isDarkMode)
               ? Colors.black
               : (isDarkMode ? Colors.black : Colors.white),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildLanguageStatus(),
-            Expanded(child: _buildChatList()),
-            _buildFooter(),
-          ],
+      body: GestureDetector(
+        onTap: () {
+          // Dismiss keyboard when tapping outside
+          FocusScope.of(context).unfocus();
+        },
+        onHorizontalDragStart: (details) {
+          // Detect swipe from left edge (within 20 pixels from left)
+          if (details.globalPosition.dx < 20) {
+            // Dismiss keyboard on edge swipe start
+            FocusScope.of(context).unfocus();
+          }
+        },
+        onHorizontalDragUpdate: (details) {
+          // Continue dismissing keyboard during swipe
+          if (details.globalPosition.dx < 50) {
+            FocusScope.of(context).unfocus();
+          }
+        },
+        onHorizontalDragEnd: (details) {
+          // Dismiss keyboard on swipe end
+          FocusScope.of(context).unfocus();
+          // Try to pop navigation if there's a stack
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildLanguageStatus(),
+              Expanded(
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    // Dismiss keyboard when scrolling
+                    if (notification is ScrollUpdateNotification) {
+                      FocusScope.of(context).unfocus();
+                    }
+                    return false;
+                  },
+                  child: _buildChatList(),
+                ),
+              ),
+              _buildFooter(),
+            ],
+          ),
         ),
       ),
     );

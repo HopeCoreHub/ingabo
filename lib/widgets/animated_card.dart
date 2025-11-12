@@ -37,7 +37,6 @@ class _AnimatedCardState extends State<AnimatedCard>
     with SingleTickerProviderStateMixin {
   bool _isHovering = false;
   late AnimationController _hoverController;
-  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -45,13 +44,6 @@ class _AnimatedCardState extends State<AnimatedCard>
     _hoverController = AnimationController(
       vsync: this,
       duration: ThemeProvider.animationDurationShort,
-    );
-
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.03).animate(
-      CurvedAnimation(
-        parent: _hoverController,
-        curve: ThemeProvider.animationCurveSnappy,
-      ),
     );
   }
 
