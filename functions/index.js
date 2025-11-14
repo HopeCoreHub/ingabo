@@ -10,6 +10,24 @@ admin.initializeApp();
  * The API key is stored securely on the server, not in the app
  */
 exports.mahoroChat = functions.https.onCall(async (data, context) => {
+  // Log incoming request for debugging
+  console.log('Mahoro function called');
+  console.log('Data type:', typeof data);
+  console.log('Data keys:', data ? Object.keys(data) : 'data is null/undefined');
+  if (data) {
+    const legacyData = data.data ? data.data : data;
+    console.log('Inner keys:', legacyData ? Object.keys(legacyData) : []);
+    console.log('Message length:', legacyData.message ? legacyData.message.length : 0);
+    console.log('Has systemPrompt:', !!legacyData.systemPrompt);
+    console.log('Conversation history length:', legacyData.conversationHistory ? legacyData.conversationHistory.length : 0);
+  }
+
+  // Support both callable payload shapes:
+  // - Gen1 SDKs send { message, ... }
+  // - Gen2 SDKs wrap payload under `.data`
+  const requestData = data && typeof data === 'object' && 'data' in data ? data.data : data;
+  console.log('Using request data keys:', requestData ? Object.keys(requestData) : 'no request data');
+
   // Optional: Verify user is authenticated (uncomment if you want to require login)
   // if (!context.auth) {
   //   throw new functions.https.HttpsError(
@@ -18,26 +36,55 @@ exports.mahoroChat = functions.https.onCall(async (data, context) => {
   //   );
   // }
 
-  const { message, systemPrompt, conversationHistory } = data;
+  // Handle case where data might be null or undefined
+  if (!requestData) {
+    console.error('No data received in function call');
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'No data received. Please try again.'
+    );
+  }
+
+  const { message, systemPrompt, conversationHistory } = requestData;
 
   // Validate input
   if (!message || typeof message !== 'string' || message.trim() === '') {
+    console.error('Invalid message:', message, 'Type:', typeof message);
     throw new functions.https.HttpsError(
       'invalid-argument',
       'Message is required and must be a non-empty string'
     );
   }
 
-  // Get API key from environment variable (set via Firebase Console or CLI)
-  const apiKey = functions.config().claude?.api_key;
+  // Get API key - for 2nd Gen functions, we need to use environment variables
+  // Try environment variable first (works for 2nd gen)
+  // Then try functions.config() as fallback (works for 1st gen)
+  let apiKey = process.env.CLAUDE_API_KEY || process.env.claude_api_key;
+  
+  if (!apiKey) {
+    try {
+      const config = functions.config();
+      if (config && config.claude && config.claude.api_key) {
+        apiKey = config.claude.api_key;
+        console.log('API key found in functions.config()');
+      }
+    } catch (error) {
+      console.log('functions.config() not available:', error.message);
+    }
+  } else {
+    console.log('API key found in environment variables');
+  }
   
   if (!apiKey) {
     console.error('Claude API key not configured');
+    console.error('Checked: process.env.CLAUDE_API_KEY, process.env.claude_api_key, functions.config().claude.api_key');
     throw new functions.https.HttpsError(
       'internal',
       'API key not configured. Please contact support.'
     );
   }
+  
+  console.log('API key successfully retrieved (length:', apiKey.length, ')');
 
   try {
     // Prepare messages array
@@ -55,7 +102,7 @@ exports.mahoroChat = functions.https.onCall(async (data, context) => {
 
     // Prepare request body for Claude API
     const requestBody = {
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,
       system: systemPrompt || 'You are Mahoro, a supportive AI companion for mental health. Respond with empathy and care.',
       messages: messages,
