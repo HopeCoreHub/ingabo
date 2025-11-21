@@ -3,8 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme_provider.dart';
 import '../accessibility_provider.dart';
+import '../localization/localized_text.dart';
 
-class AiContentPolicyNotice extends StatelessWidget {
+class AiContentPolicyNotice extends StatefulWidget {
   static const String _policyNoticeShownKey = 'ai_content_policy_notice_shown';
 
   const AiContentPolicyNotice({super.key});
@@ -23,16 +24,36 @@ class AiContentPolicyNotice extends StatelessWidget {
 
   /// Show the policy notice dialog if it hasn't been shown before
   static Future<void> showIfNeeded(BuildContext context) async {
-    final hasShown = await hasBeenShown();
-    if (!hasShown && context.mounted) {
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const AiContentPolicyNotice(),
-      );
-      await markAsShown();
-    }
+    await ensureAccepted(context);
   }
+
+  /// Require the user to accept the AI content notice before proceeding.
+  static Future<bool> ensureAccepted(BuildContext context) async {
+    final hasShown = await hasBeenShown();
+    if (hasShown || !context.mounted) {
+      return true;
+    }
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AiContentPolicyNotice(),
+    );
+
+    if (result == true) {
+      await markAsShown();
+      return true;
+    }
+
+    return false;
+  }
+
+  @override
+  State<AiContentPolicyNotice> createState() => _AiContentPolicyNoticeState();
+}
+
+class _AiContentPolicyNoticeState extends State<AiContentPolicyNotice> {
+  bool _agreed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -42,28 +63,29 @@ class AiContentPolicyNotice extends StatelessWidget {
     final highContrastMode = accessibilityProvider.highContrastMode;
 
     return AlertDialog(
-      backgroundColor: highContrastMode 
-          ? (isDarkMode ? Colors.black : Colors.white)
-          : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
+      backgroundColor:
+          highContrastMode
+              ? (isDarkMode ? Colors.black : Colors.white)
+              : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: highContrastMode 
-            ? BorderSide(color: isDarkMode ? Colors.white : Colors.black, width: 2)
-            : BorderSide.none,
+        side:
+            highContrastMode
+                ? BorderSide(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  width: 2,
+                )
+                : BorderSide.none,
       ),
       title: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withAlpha(25),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.policy,
-              color: Colors.blue,
-              size: 24,
-            ),
+            child: const Icon(Icons.policy, color: Colors.blue, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -88,34 +110,34 @@ class AiContentPolicyNotice extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.05),
+                  color: Colors.blue.withAlpha(12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.withOpacity(0.2)),
+                  border: Border.all(color: Colors.blue.withAlpha(51)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.smart_toy,
-                          color: Colors.blue,
-                          size: 20,
-                        ),
+                        Icon(Icons.smart_toy, color: Colors.blue, size: 20),
                         const SizedBox(width: 8),
-                        Text(
-                          'AI-Generated Content Notice',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: isDarkMode ? Colors.white : Colors.black87,
+                        Expanded(
+                          child: Text(
+                            'AI-Generated Content Notice',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'This app includes AI-generated content from our Mahoro AI companion, powered by Google Gemini. The AI provides mental health support and guidance.',
+                      'This app includes AI-generated content from our Mahoro AI companion, powered by Claude AI. The AI provides mental health support and guidance.',
                       style: TextStyle(
                         fontSize: 14,
                         color: isDarkMode ? Colors.white70 : Colors.black87,
@@ -125,33 +147,33 @@ class AiContentPolicyNotice extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.05),
+                  color: Colors.orange.withAlpha(12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                  border: Border.all(color: Colors.orange.withAlpha(51)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.flag,
-                          color: Colors.orange,
-                          size: 20,
-                        ),
+                        Icon(Icons.flag, color: Colors.orange, size: 20),
                         const SizedBox(width: 8),
-                        Text(
-                          'Content Reporting',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: isDarkMode ? Colors.white : Colors.black87,
+                        Expanded(
+                          child: Text(
+                            'Content Reporting',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
                           ),
                         ),
                       ],
@@ -169,16 +191,12 @@ class AiContentPolicyNotice extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
+                        color: Colors.green.withAlpha(25),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.security,
-                            color: Colors.green,
-                            size: 16,
-                          ),
+                          Icon(Icons.security, color: Colors.green, size: 16),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -186,7 +204,10 @@ class AiContentPolicyNotice extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: isDarkMode ? Colors.white70 : Colors.black87,
+                                color:
+                                    isDarkMode
+                                        ? Colors.white70
+                                        : Colors.black87,
                               ),
                             ),
                           ),
@@ -196,16 +217,12 @@ class AiContentPolicyNotice extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               Row(
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.grey,
-                    size: 16,
-                  ),
+                  Icon(Icons.info_outline, color: Colors.grey, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -219,21 +236,46 @@ class AiContentPolicyNotice extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              CheckboxListTile(
+                value: _agreed,
+                onChanged: (value) {
+                  setState(() {
+                    _agreed = value ?? false;
+                  });
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+                title: LocalizedText(
+                  'aiGuidelinesConsentLabel',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: LocalizedText(
+                  'aiGuidelinesConsentSubtitle',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
             ],
           ),
         ),
       ),
       actions: [
         ElevatedButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed:
+              _agreed
+                  ? () => Navigator.of(context).pop(true)
+                  : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue,
             foregroundColor: Colors.white,
+            disabledBackgroundColor: Colors.blue.withAlpha(100),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Text('I Understand'),
+          child: LocalizedText('iUnderstand'),
         ),
       ],
     );

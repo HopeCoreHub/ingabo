@@ -10,27 +10,18 @@ class AccessibilityProvider extends ChangeNotifier {
     'Roboto',
     'Open Sans',
     'Montserrat',
-    'Lato'
+    'Lato',
   ];
-  
-  // Font size settings
-  String _fontSize = 'Medium (Default)';
-  static const List<String> supportedFontSizes = [
-    'Small',
-    'Medium (Default)',
-    'Large',
-    'Extra Large'
-  ];
-  
+
   // Other accessibility settings
   bool _highContrastMode = false;
   bool _reduceMotion = false;
   bool _textToSpeech = false;
   bool _voiceToText = false;
-  
+
   // Loading state
   bool _isLoading = true;
-  
+
   // Firebase instance
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
@@ -40,73 +31,59 @@ class AccessibilityProvider extends ChangeNotifier {
 
   // Getters
   String get fontFamily => _fontFamily;
-  String get fontSize => _fontSize;
   bool get highContrastMode => _highContrastMode;
   bool get reduceMotion => _reduceMotion;
   bool get textToSpeech => _textToSpeech;
   bool get voiceToText => _voiceToText;
   bool get isLoading => _isLoading;
   List<String> get fontFamilies => supportedFontFamilies;
-  List<String> get fontSizes => supportedFontSizes;
-  
-  // Get font size in double value
-  double getFontSizeValue() {
-    switch (_fontSize) {
-      case 'Small':
-        return 0.85;
-      case 'Medium (Default)':
-        return 1.0;
-      case 'Large':
-        return 1.25;
-      case 'Extra Large':
-        return 1.5;
-      default:
-        return 1.0;
-    }
-  }
-  
+
   // Get actual font family name (without the "(Default)" suffix)
   String getActualFontFamily() {
     return _fontFamily.split(' ')[0];
   }
-  
+
   Future<void> _loadAccessibilityPreferences() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       // First try to get settings from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       _fontFamily = prefs.getString('fontFamily') ?? 'Inter (Default)';
-      _fontSize = prefs.getString('fontSize') ?? 'Medium (Default)';
       _highContrastMode = prefs.getBool('highContrastMode') ?? false;
       _reduceMotion = prefs.getBool('reduceMotion') ?? false;
       _textToSpeech = prefs.getBool('textToSpeech') ?? false;
       _voiceToText = prefs.getBool('voiceToText') ?? false;
-      
+
       // Try to get the user ID from SharedPreferences
       final userId = prefs.getString('userId');
-      
+
       // If user is logged in, try to get settings from Firebase
       if (userId != null) {
         try {
-          final userSettings = await _db.collection('users')
-            .doc(userId)
-            .collection('settings')
-            .doc('user_settings')
-            .get();
-          
+          final userSettings =
+              await _db
+                  .collection('users')
+                  .doc(userId)
+                  .collection('settings')
+                  .doc('user_settings')
+                  .get();
+
           if (userSettings.exists && userSettings.data() != null) {
             final settingsData = userSettings.data()!;
-            
+
             if (settingsData.containsKey('accessibility')) {
-              final accessibilityData = settingsData['accessibility'] as Map<String, dynamic>;
-              
+              final accessibilityData =
+                  settingsData['accessibility'] as Map<String, dynamic>;
+
               _fontFamily = accessibilityData['fontFamily'] ?? _fontFamily;
-              _fontSize = accessibilityData['fontSize'] ?? _fontSize;
-              _highContrastMode = accessibilityData['highContrastMode'] ?? _highContrastMode;
-              _reduceMotion = accessibilityData['reduceMotion'] ?? _reduceMotion;
-              _textToSpeech = accessibilityData['textToSpeech'] ?? _textToSpeech;
+              _highContrastMode =
+                  accessibilityData['highContrastMode'] ?? _highContrastMode;
+              _reduceMotion =
+                  accessibilityData['reduceMotion'] ?? _reduceMotion;
+              _textToSpeech =
+                  accessibilityData['textToSpeech'] ?? _textToSpeech;
               _voiceToText = accessibilityData['voiceToText'] ?? _voiceToText;
             }
           }
@@ -123,94 +100,81 @@ class AccessibilityProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Set font family
   Future<void> setFontFamily(String fontFamily) async {
     if (!supportedFontFamilies.contains(fontFamily)) {
       return;
     }
-    
+
     _fontFamily = fontFamily;
     notifyListeners();
-    
+
     await _saveAccessibilitySettings();
   }
-  
-  // Set font size
-  Future<void> setFontSize(String fontSize) async {
-    if (!supportedFontSizes.contains(fontSize)) {
-      return;
-    }
-    
-    _fontSize = fontSize;
-    notifyListeners();
-    
-    await _saveAccessibilitySettings();
-  }
-  
+
   // Toggle high contrast mode
   Future<void> toggleHighContrastMode(bool value) async {
     _highContrastMode = value;
     notifyListeners();
-    
+
     await _saveAccessibilitySettings();
   }
-  
+
   // Toggle reduce motion
   Future<void> toggleReduceMotion(bool value) async {
     _reduceMotion = value;
     notifyListeners();
-    
+
     await _saveAccessibilitySettings();
   }
-  
+
   // Toggle text-to-speech
   Future<void> toggleTextToSpeech(bool value) async {
     _textToSpeech = value;
     notifyListeners();
-    
+
     await _saveAccessibilitySettings();
   }
-  
+
   // Toggle voice-to-text
   Future<void> toggleVoiceToText(bool value) async {
     _voiceToText = value;
     notifyListeners();
-    
+
     await _saveAccessibilitySettings();
   }
-  
+
   // Save all accessibility settings
   Future<void> _saveAccessibilitySettings() async {
     try {
       // Save to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('fontFamily', _fontFamily);
-      await prefs.setString('fontSize', _fontSize);
       await prefs.setBool('highContrastMode', _highContrastMode);
       await prefs.setBool('reduceMotion', _reduceMotion);
       await prefs.setBool('textToSpeech', _textToSpeech);
       await prefs.setBool('voiceToText', _voiceToText);
-      
+
       // Try to save to Firebase if user is logged in
       final userId = prefs.getString('userId');
-      
+
       if (userId != null) {
         try {
-          await _db.collection('users')
-            .doc(userId)
-            .collection('settings')
-            .doc('user_settings')
-            .set({
-              'accessibility': {
-                'fontFamily': _fontFamily,
-                'fontSize': _fontSize,
-                'highContrastMode': _highContrastMode,
-                'reduceMotion': _reduceMotion,
-                'textToSpeech': _textToSpeech,
-                'voiceToText': _voiceToText,
-              }
-            }, SetOptions(merge: true));
+          await _db
+              .collection('users')
+              .doc(userId)
+              .collection('settings')
+              .doc('user_settings')
+              .set({
+                'accessibility': {
+                  'fontFamily': _fontFamily,
+                  'highContrastMode': _highContrastMode,
+                  'reduceMotion': _reduceMotion,
+                  'textToSpeech': _textToSpeech,
+                  'voiceToText': _voiceToText,
+                },
+              }, SetOptions(merge: true));
         } catch (e) {
           debugPrint('Error saving accessibility settings to Firebase: $e');
           // Continue even if saving to Firebase fails
@@ -220,4 +184,4 @@ class AccessibilityProvider extends ChangeNotifier {
       debugPrint('Error saving accessibility preferences: $e');
     }
   }
-} 
+}

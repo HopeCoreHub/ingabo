@@ -9,7 +9,7 @@ class Post {
   final List<String> replies;
   final bool isAnonymous;
   final Set<String> likedBy;
-  final bool isSyncedWithCloud;  // New field to track sync status
+  final bool isSyncedWithCloud; // New field to track sync status
 
   Post({
     required this.id,
@@ -22,7 +22,7 @@ class Post {
     List<String>? replies,
     this.isAnonymous = true,
     Set<String>? likedBy,
-    this.isSyncedWithCloud = false,  // Default to false (not synced)
+    this.isSyncedWithCloud = false, // Default to false (not synced)
   }) : replies = replies ?? [],
        likedBy = likedBy ?? {};
 
@@ -53,9 +53,10 @@ class Post {
       likes: json['likes'] as int,
       replies: List<String>.from(json['replies'] as List),
       isAnonymous: json['isAnonymous'] as bool,
-      likedBy: json.containsKey('likedBy')
-          ? Set<String>.from(json['likedBy'] as List)
-          : {},
+      likedBy:
+          json.containsKey('likedBy')
+              ? Set<String>.from(json['likedBy'] as List)
+              : {},
       isSyncedWithCloud: json['isSyncedWithCloud'] as bool? ?? false,
     );
   }
@@ -87,4 +88,4 @@ class Post {
       isSyncedWithCloud: isSyncedWithCloud ?? this.isSyncedWithCloud,
     );
   }
-} 
+}

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../theme_provider.dart';
 import '../accessibility_provider.dart';
 import '../services/content_reporting_service.dart';
-
+import '../localization/localized_text.dart';
 
 class ContentReportDialog extends StatefulWidget {
   final String contentId;
@@ -25,7 +25,7 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
   final TextEditingController _customReasonController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
   final ContentReportingService _reportingService = ContentReportingService();
-  
+
   ReportReason? _selectedReason;
   bool _isSubmitting = false;
   bool _hasAlreadyReported = false;
@@ -67,12 +67,18 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
     try {
       debugPrint('🔍 CHECKING REPORT STATUS');
       debugPrint('🔍 Content ID: ${widget.contentId}');
-      debugPrint('🔍 Querying Firebase Realtime Database for existing reports...');
-      
-      final hasReported = await _reportingService.hasUserReportedContent(widget.contentId);
-      
-      debugPrint('🔍 Report check result: ${hasReported ? "User has already reported this content" : "User has not reported this content"}');
-      
+      debugPrint(
+        '🔍 Querying Firebase Realtime Database for existing reports...',
+      );
+
+      final hasReported = await _reportingService.hasUserReportedContent(
+        widget.contentId,
+      );
+
+      debugPrint(
+        '🔍 Report check result: ${hasReported ? "User has already reported this content" : "User has not reported this content"}',
+      );
+
       if (mounted) {
         setState(() {
           _hasAlreadyReported = hasReported;
@@ -86,7 +92,8 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
         setState(() {
           _hasAlreadyReported = false;
           _isCheckingReportStatus = false;
-          _initializationError = 'Failed to load report status. You can still submit a report.';
+          _initializationError =
+              'Failed to load report status. You can still submit a report.';
         });
       }
     }
@@ -98,7 +105,8 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
       return;
     }
 
-    if (_selectedReason == ReportReason.other && _customReasonController.text.trim().isEmpty) {
+    if (_selectedReason == ReportReason.other &&
+        _customReasonController.text.trim().isEmpty) {
       _showErrorSnackBar('Please provide a custom reason.');
       return;
     }
@@ -113,38 +121,48 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
       debugPrint('📋 Content ID: ${widget.contentId}');
       debugPrint('📋 Content Type: ${widget.contentType.name}');
       debugPrint('📋 Report Reason: ${_selectedReason!.name}');
-      debugPrint('📋 Custom Reason: ${_selectedReason == ReportReason.other ? _customReasonController.text.trim() : "N/A"}');
-      debugPrint('📋 Additional Details: ${_detailsController.text.trim().isNotEmpty ? _detailsController.text.trim() : "None"}');
+      debugPrint(
+        '📋 Custom Reason: ${_selectedReason == ReportReason.other ? _customReasonController.text.trim() : "N/A"}',
+      );
+      debugPrint(
+        '📋 Additional Details: ${_detailsController.text.trim().isNotEmpty ? _detailsController.text.trim() : "None"}',
+      );
       debugPrint('📋 Content Preview: "${widget.contentPreview}"');
-      
+
       final success = await _reportingService.submitReport(
         contentId: widget.contentId,
         contentType: widget.contentType,
         reason: _selectedReason!,
-        customReason: _selectedReason == ReportReason.other 
-            ? _customReasonController.text.trim()
-            : null,
-        additionalDetails: _detailsController.text.trim().isNotEmpty 
-            ? _detailsController.text.trim()
-            : null,
+        customReason:
+            _selectedReason == ReportReason.other
+                ? _customReasonController.text.trim()
+                : null,
+        additionalDetails:
+            _detailsController.text.trim().isNotEmpty
+                ? _detailsController.text.trim()
+                : null,
       );
 
       if (mounted) {
         if (success) {
           debugPrint('✅ CONTENT REPORT SUBMITTED SUCCESSFULLY');
-          debugPrint('✅ Report data has been saved to Firebase Realtime Database under "content_reports" node');
+          debugPrint(
+            '✅ Report data has been saved to Firebase Realtime Database under "content_reports" node',
+          );
           debugPrint('✅ User report history updated (if authenticated)');
-          
+
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Report submitted successfully. Thank you for helping keep our community safe.'),
+              content: Text(
+                'Report submitted successfully. Thank you for helping keep our community safe.',
+              ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
               duration: Duration(seconds: 3),
             ),
           );
-          
+
           // Close the dialog and return true to indicate successful report
           Navigator.of(context).pop(true);
         } else {
@@ -169,7 +187,12 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(
+          message,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          softWrap: true,
+        ),
         backgroundColor: Colors.red,
         behavior: SnackBarBehavior.floating,
       ),
@@ -195,33 +218,34 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    
+
     // Show loading dialog while checking report status
     if (_isCheckingReportStatus) {
       return _buildLoadingDialog(isDarkMode, highContrastMode);
     }
-    
+
     if (_hasAlreadyReported) {
       return _buildAlreadyReportedDialog(isDarkMode, highContrastMode);
     }
 
     return AlertDialog(
-      backgroundColor: highContrastMode 
-          ? (isDarkMode ? Colors.black : Colors.white)
-          : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
+      backgroundColor:
+          highContrastMode
+              ? (isDarkMode ? Colors.black : Colors.white)
+              : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: highContrastMode 
-            ? BorderSide(color: isDarkMode ? Colors.white : Colors.black, width: 2)
-            : BorderSide.none,
+        side:
+            highContrastMode
+                ? BorderSide(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  width: 2,
+                )
+                : BorderSide.none,
       ),
       title: Row(
         children: [
-          Icon(
-            Icons.flag,
-            color: Colors.red,
-            size: 24,
-          ),
+          Icon(Icons.flag, color: Colors.red, size: 24),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -246,13 +270,17 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDarkMode 
-                      ? Colors.grey.shade800.withOpacity(0.3)
-                      : Colors.grey.shade100,
+                  color:
+                      isDarkMode
+                          ? Colors.grey.shade800.withAlpha(76)
+                          : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(8),
-                  border: highContrastMode 
-                      ? Border.all(color: isDarkMode ? Colors.white : Colors.black)
-                      : null,
+                  border:
+                      highContrastMode
+                          ? Border.all(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          )
+                          : null,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,15 +307,15 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Show initialization error if any
               if (_initializationError != null) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withAlpha(25),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.orange),
                   ),
@@ -309,14 +337,14 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                 ),
                 const SizedBox(height: 16),
               ],
-              
+
               // Database structure info (for development/demonstration)
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withAlpha(25),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                  border: Border.all(color: Colors.blue.withAlpha(76)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -363,9 +391,9 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Report reason selection
               Text(
                 'Why are you reporting this content?',
@@ -376,11 +404,16 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               ..._reasonLabels.entries.map((entry) {
-                return _buildReasonOption(entry.key, entry.value, isDarkMode, highContrastMode);
+                return _buildReasonOption(
+                  entry.key,
+                  entry.value,
+                  isDarkMode,
+                  highContrastMode,
+                );
               }),
-              
+
               // Custom reason input for "Other"
               if (_selectedReason == ReportReason.other) ...[
                 const SizedBox(height: 12),
@@ -394,17 +427,19 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(
-                        color: highContrastMode 
-                            ? (isDarkMode ? Colors.white : Colors.black)
-                            : Colors.grey,
+                        color:
+                            highContrastMode
+                                ? (isDarkMode ? Colors.white : Colors.black)
+                                : Colors.grey,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(
-                        color: highContrastMode 
-                            ? (isDarkMode ? Colors.white : Colors.black)
-                            : Colors.grey.shade300,
+                        color:
+                            highContrastMode
+                                ? (isDarkMode ? Colors.white : Colors.black)
+                                : Colors.grey.shade300,
                       ),
                     ),
                   ),
@@ -414,9 +449,9 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                   maxLines: 2,
                 ),
               ],
-              
+
               const SizedBox(height: 16),
-              
+
               // Additional details (optional)
               Text(
                 'Additional details (optional)',
@@ -437,17 +472,19 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: highContrastMode 
-                          ? (isDarkMode ? Colors.white : Colors.black)
-                          : Colors.grey,
+                      color:
+                          highContrastMode
+                              ? (isDarkMode ? Colors.white : Colors.black)
+                              : Colors.grey,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: highContrastMode 
-                          ? (isDarkMode ? Colors.white : Colors.black)
-                          : Colors.grey.shade300,
+                      color:
+                          highContrastMode
+                              ? (isDarkMode ? Colors.white : Colors.black)
+                              : Colors.grey.shade300,
                     ),
                   ),
                 ),
@@ -463,7 +500,8 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(false),
+          onPressed:
+              _isSubmitting ? null : () => Navigator.of(context).pop(false),
           child: Text(
             'Cancel',
             style: TextStyle(
@@ -472,7 +510,8 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
           ),
         ),
         ElevatedButton(
-          onPressed: _isSubmitting || _selectedReason == null ? null : _submitReport,
+          onPressed:
+              _isSubmitting || _selectedReason == null ? null : _submitReport,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
@@ -480,24 +519,30 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: _isSubmitting
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-              : const Text('Submit Report'),
+          child:
+              _isSubmitting
+                  ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                  : LocalizedText('submitReport'),
         ),
       ],
     );
   }
 
-  Widget _buildReasonOption(ReportReason reason, String label, bool isDarkMode, bool highContrastMode) {
+  Widget _buildReasonOption(
+    ReportReason reason,
+    String label,
+    bool isDarkMode,
+    bool highContrastMode,
+  ) {
     final isSelected = _selectedReason == reason;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
@@ -512,16 +557,15 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected 
-                  ? Colors.red
-                  : (highContrastMode 
-                      ? (isDarkMode ? Colors.white : Colors.black)
-                      : Colors.grey.shade300),
+              color:
+                  isSelected
+                      ? Colors.red
+                      : (highContrastMode
+                          ? (isDarkMode ? Colors.white : Colors.black)
+                          : Colors.grey.shade300),
               width: isSelected ? 2 : 1,
             ),
-            color: isSelected 
-                ? Colors.red.withOpacity(0.1)
-                : Colors.transparent,
+            color: isSelected ? Colors.red.withAlpha(25) : Colors.transparent,
           ),
           child: Row(
             children: [
@@ -536,13 +580,10 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                   ),
                   color: isSelected ? Colors.red : Colors.transparent,
                 ),
-                child: isSelected
-                    ? const Icon(
-                        Icons.check,
-                        size: 12,
-                        color: Colors.white,
-                      )
-                    : null,
+                child:
+                    isSelected
+                        ? const Icon(Icons.check, size: 12, color: Colors.white)
+                        : null,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -554,9 +595,10 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                       style: TextStyle(
                         fontWeight: FontWeight.w500,
                         fontSize: 14,
-                        color: isSelected 
-                            ? Colors.red
-                            : (isDarkMode ? Colors.white : Colors.black),
+                        color:
+                            isSelected
+                                ? Colors.red
+                                : (isDarkMode ? Colors.white : Colors.black),
                       ),
                     ),
                     Text(
@@ -578,14 +620,19 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
 
   Widget _buildLoadingDialog(bool isDarkMode, bool highContrastMode) {
     return AlertDialog(
-      backgroundColor: highContrastMode 
-          ? (isDarkMode ? Colors.black : Colors.white)
-          : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
+      backgroundColor:
+          highContrastMode
+              ? (isDarkMode ? Colors.black : Colors.white)
+              : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: highContrastMode 
-            ? BorderSide(color: isDarkMode ? Colors.white : Colors.black, width: 2)
-            : BorderSide.none,
+        side:
+            highContrastMode
+                ? BorderSide(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  width: 2,
+                )
+                : BorderSide.none,
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -608,22 +655,23 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
 
   Widget _buildAlreadyReportedDialog(bool isDarkMode, bool highContrastMode) {
     return AlertDialog(
-      backgroundColor: highContrastMode 
-          ? (isDarkMode ? Colors.black : Colors.white)
-          : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
+      backgroundColor:
+          highContrastMode
+              ? (isDarkMode ? Colors.black : Colors.white)
+              : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: highContrastMode 
-            ? BorderSide(color: isDarkMode ? Colors.white : Colors.black, width: 2)
-            : BorderSide.none,
+        side:
+            highContrastMode
+                ? BorderSide(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  width: 2,
+                )
+                : BorderSide.none,
       ),
       title: Row(
         children: [
-          Icon(
-            Icons.check_circle,
-            color: Colors.green,
-            size: 24,
-          ),
+          Icon(Icons.check_circle, color: Colors.green, size: 24),
           const SizedBox(width: 8),
           Text(
             'Already Reported',
@@ -636,9 +684,7 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
       ),
       content: Text(
         'You have already reported this content. Our moderation team will review it and take appropriate action.',
-        style: TextStyle(
-          color: isDarkMode ? Colors.white70 : Colors.black87,
-        ),
+        style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black87),
       ),
       actions: [
         ElevatedButton(
@@ -650,7 +696,7 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Text('OK'),
+          child: LocalizedText('ok'),
         ),
       ],
     );
@@ -684,15 +730,13 @@ class QuickReportButton extends StatelessWidget {
       icon: Icon(
         Icons.flag_outlined,
         size: 16,
-        color: highContrastMode 
-            ? (isDarkMode ? Colors.white : Colors.black)
-            : (isDarkMode ? Colors.white54 : Colors.black54),
+        color:
+            highContrastMode
+                ? (isDarkMode ? Colors.white : Colors.black)
+                : (isDarkMode ? Colors.white54 : Colors.black54),
       ),
       padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(
-        minWidth: 24,
-        minHeight: 24,
-      ),
+      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
       tooltip: 'Report this content',
     );
   }
@@ -700,11 +744,12 @@ class QuickReportButton extends StatelessWidget {
   Future<void> _showReportDialog(BuildContext context) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => ContentReportDialog(
-        contentId: contentId,
-        contentType: contentType,
-        contentPreview: contentPreview,
-      ),
+      builder:
+          (context) => ContentReportDialog(
+            contentId: contentId,
+            contentType: contentType,
+            contentPreview: contentPreview,
+          ),
     );
 
     if (result == true && onReported != null) {
@@ -736,11 +781,7 @@ class ReportMenuOption extends StatelessWidget {
     return PopupMenuItem(
       child: Row(
         children: [
-          Icon(
-            Icons.flag_outlined,
-            size: 18,
-            color: Colors.red,
-          ),
+          Icon(Icons.flag_outlined, size: 18, color: Colors.red),
           const SizedBox(width: 8),
           Text(
             'Report Content',
@@ -760,11 +801,12 @@ class ReportMenuOption extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final result = await showDialog<bool>(
         context: context,
-        builder: (context) => ContentReportDialog(
-          contentId: contentId,
-          contentType: contentType,
-          contentPreview: contentPreview,
-        ),
+        builder:
+            (context) => ContentReportDialog(
+              contentId: contentId,
+              contentType: contentType,
+              contentPreview: contentPreview,
+            ),
       );
 
       if (result == true && onReported != null) {

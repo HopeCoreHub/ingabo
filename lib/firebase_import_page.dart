@@ -17,7 +17,7 @@ class _FirebaseImportPageState extends State<FirebaseImportPage> {
   bool _isLoading = false;
   String _statusMessage = '';
   bool _success = false;
-  
+
   // Firebase instance
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
@@ -42,11 +42,14 @@ class _FirebaseImportPageState extends State<FirebaseImportPage> {
     try {
       // Parse JSON data
       final jsonData = json.decode(_jsonController.text);
-      
+
       // Import to Firebase
-      final firebaseService = Provider.of<FirebaseService>(context, listen: false);
+      final firebaseService = Provider.of<FirebaseService>(
+        context,
+        listen: false,
+      );
       await firebaseService.saveCompleteUserDataStructure(jsonData);
-      
+
       setState(() {
         _isLoading = false;
         _statusMessage = 'Data imported successfully!';
@@ -56,7 +59,7 @@ class _FirebaseImportPageState extends State<FirebaseImportPage> {
       _showError('Error importing data: ${e.toString()}');
     }
   }
-  
+
   Future<void> _createMugangaSubscription() async {
     setState(() {
       _isLoading = true;
@@ -71,13 +74,13 @@ class _FirebaseImportPageState extends State<FirebaseImportPage> {
         _showError('You must be logged in to create a subscription');
         return;
       }
-      
+
       final userId = authService.userId!;
-      
+
       // Create sample subscription data
       final now = DateTime.now();
       final expiryDate = now.add(const Duration(days: 30));
-      
+
       final subscriptionData = {
         'isSubscribed': true,
         'subscriptionDate': now.toIso8601String(),
@@ -92,21 +95,23 @@ class _FirebaseImportPageState extends State<FirebaseImportPage> {
             'id': 'session${DateTime.now().millisecondsSinceEpoch}',
             'therapistId': 'therapist001',
             'therapistName': 'Dr. Alice Mutoni',
-            'scheduledDate': DateTime.now().add(const Duration(days: 2)).toIso8601String(),
+            'scheduledDate':
+                DateTime.now().add(const Duration(days: 2)).toIso8601String(),
             'duration': 60,
             'status': 'scheduled',
-            'notes': 'Initial consultation session'
-          }
-        ]
+            'notes': 'Initial consultation session',
+          },
+        ],
       };
-      
+
       // Save to Firebase
-      await _db.collection('users')
+      await _db
+          .collection('users')
           .doc(userId)
           .collection('muganga_subscriptions')
           .doc('current')
           .set(subscriptionData);
-      
+
       setState(() {
         _isLoading = false;
         _statusMessage = 'Muganga subscription created successfully!';
@@ -128,9 +133,7 @@ class _FirebaseImportPageState extends State<FirebaseImportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Firebase Management'),
-      ),
+      appBar: AppBar(title: const Text('Firebase Management')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -166,13 +169,14 @@ class _FirebaseImportPageState extends State<FirebaseImportPage> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _isLoading ? null : _importToFirebase,
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Import to Firebase'),
+              child:
+                  _isLoading
+                      ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : const Text('Import to Firebase'),
             ),
             const SizedBox(height: 32),
             const Divider(),
@@ -189,13 +193,14 @@ class _FirebaseImportPageState extends State<FirebaseImportPage> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _isLoading ? null : _createMugangaSubscription,
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Create Muganga Subscription'),
+              child:
+                  _isLoading
+                      ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : const Text('Create Muganga Subscription'),
             ),
             const SizedBox(height: 16),
             if (_statusMessage.isNotEmpty)
@@ -217,4 +222,4 @@ class _FirebaseImportPageState extends State<FirebaseImportPage> {
       ),
     );
   }
-} 
+}

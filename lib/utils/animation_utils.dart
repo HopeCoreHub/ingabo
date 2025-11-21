@@ -13,18 +13,16 @@ class AnimationUtils {
     required List<Effect> effects,
     Duration? initialDelay,
   }) {
-    return List.generate(
-      children.length,
-      (index) {
-        final delay = (initialDelay ?? Duration.zero) + 
+    return List.generate(children.length, (index) {
+      final delay =
+          (initialDelay ?? Duration.zero) +
           (staggerDuration * (index + startIndex));
-        
-        return children[index]
+
+      return children[index]
           .animate()
           .effect(delay: delay)
           .animate(effects: effects);
-      },
-    );
+    });
   }
 
   /// Returns a standard set of entrance effects
@@ -65,7 +63,7 @@ class AnimationUtils {
       curve: ThemeProvider.animationCurveSnappy,
     ),
   ];
-  
+
   /// Creates a hero transition with a fade effect
   static Widget heroWithFade(Widget child, String tag) {
     return Hero(
@@ -79,9 +77,10 @@ class AnimationUtils {
       ) {
         return FadeTransition(
           opacity: animation,
-          child: flightDirection == HeroFlightDirection.push
-              ? toHeroContext.widget
-              : fromHeroContext.widget,
+          child:
+              flightDirection == HeroFlightDirection.push
+                  ? toHeroContext.widget
+                  : fromHeroContext.widget,
         );
       },
       child: child,
@@ -99,19 +98,19 @@ class AnimationUtils {
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         final curve = customCurve ?? ThemeProvider.pageTransitionCurve;
-        
+
         // Define secondary page transition (the page being navigated from)
         final secondaryCurvedAnimation = CurvedAnimation(
           parent: secondaryAnimation,
           curve: curve,
         );
-        
+
         // Define primary page transition (the page being navigated to)
         final primaryCurvedAnimation = CurvedAnimation(
           parent: animation,
           curve: curve,
         );
-        
+
         // Apply different transitions based on fullScreenDialog flag
         if (fullScreenDialog) {
           // Full screen dialog uses a slide up and fade in transition
@@ -119,9 +118,15 @@ class AnimationUtils {
             children: [
               // Fade out the previous page
               FadeTransition(
-                opacity: Tween<double>(begin: 1.0, end: 0.5).animate(secondaryCurvedAnimation),
+                opacity: Tween<double>(
+                  begin: 1.0,
+                  end: 0.5,
+                ).animate(secondaryCurvedAnimation),
                 child: ScaleTransition(
-                  scale: Tween<double>(begin: 1.0, end: 0.95).animate(secondaryCurvedAnimation),
+                  scale: Tween<double>(
+                    begin: 1.0,
+                    end: 0.95,
+                  ).animate(secondaryCurvedAnimation),
                   child: Container(color: Colors.transparent),
                 ),
               ),
@@ -152,8 +157,10 @@ class AnimationUtils {
           );
         }
       },
-      transitionDuration: customDuration ?? ThemeProvider.pageTransitionDuration,
-      reverseTransitionDuration: customDuration ?? ThemeProvider.pageTransitionDuration,
+      transitionDuration:
+          customDuration ?? ThemeProvider.pageTransitionDuration,
+      reverseTransitionDuration:
+          customDuration ?? ThemeProvider.pageTransitionDuration,
       fullscreenDialog: fullScreenDialog,
     );
   }
@@ -170,9 +177,10 @@ extension AnimateWidgetExtension on Widget {
 
   /// Adds staggered entrance animation for lists
   Widget withStaggeredAnimation(int index, {Duration? initialDelay}) {
-    final delay = (initialDelay ?? Duration.zero) + 
-      (ThemeProvider.staggerInterval * index);
-    
+    final delay =
+        (initialDelay ?? Duration.zero) +
+        (ThemeProvider.staggerInterval * index);
+
     return animate()
         .effect(delay: delay)
         .animate(effects: AnimationUtils.standardEntranceEffects);
@@ -180,13 +188,15 @@ extension AnimateWidgetExtension on Widget {
 
   /// Adds tap animation to a widget
   Widget withTapAnimation() {
-    return animate(onPlay: (controller) => controller.repeat(reverse: true))
-        .animate(effects: AnimationUtils.tapEffects);
+    return animate(
+      onPlay: (controller) => controller.repeat(reverse: true),
+    ).animate(effects: AnimationUtils.tapEffects);
   }
 }
 
 /// A builder that wraps a widget with staggered animations
-typedef StaggeredWidgetBuilder = Widget Function(BuildContext context, int index);
+typedef StaggeredWidgetBuilder =
+    Widget Function(BuildContext context, int index);
 
 /// A widget that applies staggered animations to its children
 class StaggeredAnimationList extends StatelessWidget {
@@ -215,9 +225,11 @@ class StaggeredAnimationList extends StatelessWidget {
       controller: scrollController,
       itemCount: itemCount,
       itemBuilder: (context, index) {
-        return itemBuilder(context, index)
-            .withStaggeredAnimation(index, initialDelay: initialDelay);
+        return itemBuilder(
+          context,
+          index,
+        ).withStaggeredAnimation(index, initialDelay: initialDelay);
       },
     );
   }
-} 
+}

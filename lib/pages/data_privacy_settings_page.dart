@@ -7,7 +7,8 @@ class DataPrivacySettingsPage extends StatefulWidget {
   const DataPrivacySettingsPage({super.key});
 
   @override
-  State<DataPrivacySettingsPage> createState() => _DataPrivacySettingsPageState();
+  State<DataPrivacySettingsPage> createState() =>
+      _DataPrivacySettingsPageState();
 }
 
 class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
@@ -72,7 +73,7 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
         color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05),
+          color: isDarkMode ? Colors.white12 : Colors.black.withAlpha(12),
         ),
       ),
       child: Column(
@@ -114,7 +115,11 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Data Collection Preferences', Icons.data_usage, isDarkMode),
+        _buildSectionHeader(
+          'Data Collection Preferences',
+          Icons.data_usage,
+          isDarkMode,
+        ),
         const SizedBox(height: 16),
         _buildSettingCard([
           _buildToggleSetting(
@@ -150,7 +155,11 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Your Data Rights', Icons.account_balance, isDarkMode),
+        _buildSectionHeader(
+          'Your Data Rights',
+          Icons.account_balance,
+          isDarkMode,
+        ),
         const SizedBox(height: 16),
         _buildSettingCard([
           _buildActionSetting(
@@ -162,7 +171,9 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
           ),
           _buildActionSetting(
             'Export My Data',
-            _dataExportRequested ? 'Export requested - check your email' : 'Download a copy of all your data',
+            _dataExportRequested
+                ? 'Export requested - check your email'
+                : 'Download a copy of all your data',
             Icons.download_outlined,
             _dataExportRequested ? null : () => _requestDataExport(),
             isDarkMode,
@@ -217,23 +228,36 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Danger Zone', Icons.warning_outlined, isDarkMode, isWarning: true),
+        _buildSectionHeader(
+          'Danger Zone',
+          Icons.warning_outlined,
+          isDarkMode,
+          isWarning: true,
+        ),
         const SizedBox(height: 16),
         Container(
           decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF7F1D1D) : const Color(0xFFFEF2F2),
+            color:
+                isDarkMode ? const Color(0xFF7F1D1D) : const Color(0xFFFEF2F2),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isDarkMode ? const Color(0xFFDC2626) : const Color(0xFFFCA5A5),
+              color:
+                  isDarkMode
+                      ? const Color(0xFFDC2626)
+                      : const Color(0xFFFCA5A5),
             ),
           ),
           child: Column(
             children: [
               _buildActionSetting(
                 'Delete All My Data',
-                _accountDeletionRequested ? 'Deletion requested - contact support to cancel' : 'Permanently delete your account and all associated data',
+                _accountDeletionRequested
+                    ? 'Deletion requested - contact support to cancel'
+                    : 'Permanently delete your account and all associated data',
                 Icons.delete_forever_outlined,
-                _accountDeletionRequested ? null : () => _showDeleteAccountDialog(isDarkMode, authService),
+                _accountDeletionRequested
+                    ? null
+                    : () => _showDeleteAccountDialog(isDarkMode, authService),
                 isDarkMode,
                 isDestructive: true,
                 isDisabled: _accountDeletionRequested,
@@ -245,14 +269,22 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon, bool isDarkMode, {bool isWarning = false}) {
+  Widget _buildSectionHeader(
+    String title,
+    IconData icon,
+    bool isDarkMode, {
+    bool isWarning = false,
+  }) {
     return Row(
       children: [
         Icon(
           icon,
-          color: isWarning 
-            ? (isDarkMode ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626))
-            : const Color(0xFF7C3AED),
+          color:
+              isWarning
+                  ? (isDarkMode
+                      ? const Color(0xFFFCA5A5)
+                      : const Color(0xFFDC2626))
+                  : const Color(0xFF7C3AED),
           size: 20,
         ),
         const SizedBox(width: 8),
@@ -261,9 +293,12 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: isWarning 
-              ? (isDarkMode ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626))
-              : (isDarkMode ? Colors.white : Colors.black),
+            color:
+                isWarning
+                    ? (isDarkMode
+                        ? const Color(0xFFFCA5A5)
+                        : const Color(0xFFDC2626))
+                    : (isDarkMode ? Colors.white : Colors.black),
           ),
         ),
       ],
@@ -276,20 +311,27 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
         color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05),
+          color: isDarkMode ? Colors.white12 : Colors.black.withAlpha(12),
         ),
       ),
       child: Column(children: children),
     );
   }
 
-  Widget _buildToggleSetting(String title, String description, bool value, Function(bool) onChanged, IconData icon, bool isDarkMode) {
+  Widget _buildToggleSetting(
+    String title,
+    String description,
+    bool value,
+    Function(bool) onChanged,
+    IconData icon,
+    bool isDarkMode,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05),
+            color: isDarkMode ? Colors.white12 : Colors.black.withAlpha(12),
             width: 1,
           ),
         ),
@@ -328,19 +370,27 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: const Color(0xFF7C3AED),
+            activeThumbColor: const Color(0xFF7C3AED),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionSetting(String title, String description, IconData icon, VoidCallback? onTap, bool isDarkMode, {bool isDestructive = false, bool isDisabled = false}) {
+  Widget _buildActionSetting(
+    String title,
+    String description,
+    IconData icon,
+    VoidCallback? onTap,
+    bool isDarkMode, {
+    bool isDestructive = false,
+    bool isDisabled = false,
+  }) {
     return Container(
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05),
+            color: isDarkMode ? Colors.white12 : Colors.black.withAlpha(12),
             width: 1,
           ),
         ),
@@ -348,11 +398,14 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
       child: ListTile(
         leading: Icon(
           icon,
-          color: isDisabled 
-            ? (isDarkMode ? Colors.white24 : Colors.black26)
-            : isDestructive 
-              ? (isDarkMode ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626))
-              : (isDarkMode ? Colors.white54 : Colors.black54),
+          color:
+              isDisabled
+                  ? (isDarkMode ? Colors.white24 : Colors.black26)
+                  : isDestructive
+                  ? (isDarkMode
+                      ? const Color(0xFFFCA5A5)
+                      : const Color(0xFFDC2626))
+                  : (isDarkMode ? Colors.white54 : Colors.black54),
           size: 20,
         ),
         title: Text(
@@ -360,27 +413,34 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: isDisabled 
-              ? (isDarkMode ? Colors.white24 : Colors.black26)
-              : isDestructive 
-                ? (isDarkMode ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626))
-                : (isDarkMode ? Colors.white : Colors.black),
+            color:
+                isDisabled
+                    ? (isDarkMode ? Colors.white24 : Colors.black26)
+                    : isDestructive
+                    ? (isDarkMode
+                        ? const Color(0xFFFCA5A5)
+                        : const Color(0xFFDC2626))
+                    : (isDarkMode ? Colors.white : Colors.black),
           ),
         ),
         subtitle: Text(
           description,
           style: TextStyle(
             fontSize: 12,
-            color: isDisabled 
-              ? (isDarkMode ? Colors.white24 : Colors.black26)
-              : (isDarkMode ? Colors.white54 : Colors.black54),
+            color:
+                isDisabled
+                    ? (isDarkMode ? Colors.white24 : Colors.black26)
+                    : (isDarkMode ? Colors.white54 : Colors.black54),
           ),
         ),
-        trailing: isDisabled ? null : Icon(
-          Icons.arrow_forward_ios,
-          color: isDarkMode ? Colors.white54 : Colors.black54,
-          size: 16,
-        ),
+        trailing:
+            isDisabled
+                ? null
+                : Icon(
+                  Icons.arrow_forward_ios,
+                  color: isDarkMode ? Colors.white54 : Colors.black54,
+                  size: 16,
+                ),
         onTap: isDisabled ? null : onTap,
       ),
     );
@@ -389,35 +449,41 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
   void _showDataPreview(bool isDarkMode) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-        title: Text(
-          'Your Data Overview',
-          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDataItem('Profile Information', '1 record', isDarkMode),
-              _buildDataItem('Journal Entries', '23 records', isDarkMode),
-              _buildDataItem('Mood Check-ins', '45 records', isDarkMode),
-              _buildDataItem('Forum Posts', '12 records', isDarkMode),
-              _buildDataItem('Settings & Preferences', '8 records', isDarkMode),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor:
+                isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+            title: Text(
+              'Your Data Overview',
+              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDataItem('Profile Information', '1 record', isDarkMode),
+                  _buildDataItem('Journal Entries', '23 records', isDarkMode),
+                  _buildDataItem('Mood Check-ins', '45 records', isDarkMode),
+                  _buildDataItem('Forum Posts', '12 records', isDarkMode),
+                  _buildDataItem(
+                    'Settings & Preferences',
+                    '8 records',
+                    isDarkMode,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Close',
+                  style: TextStyle(color: const Color(0xFF7C3AED)),
+                ),
+              ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Close',
-              style: TextStyle(color: const Color(0xFF7C3AED)),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -429,7 +495,9 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
         children: [
           Text(
             type,
-            style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black87),
+            style: TextStyle(
+              color: isDarkMode ? Colors.white70 : Colors.black87,
+            ),
           ),
           Text(
             count,
@@ -447,7 +515,9 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
     setState(() => _dataExportRequested = true);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Data export requested. You will receive an email with download instructions within 24 hours.'),
+        content: Text(
+          'Data export requested. You will receive an email with download instructions within 24 hours.',
+        ),
         duration: Duration(seconds: 4),
       ),
     );
@@ -456,61 +526,93 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
   void _showDataCorrectionDialog(bool isDarkMode) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-        title: Text(
-          'Request Data Correction',
-          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-        ),
-        content: Text(
-          'To request corrections to your personal information, please contact our support team with details about what needs to be corrected.',
-          style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black87),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: isDarkMode ? Colors.white54 : Colors.black54)),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor:
+                isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+            title: Text(
+              'Request Data Correction',
+              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            ),
+            content: Text(
+              'To request corrections to your personal information, please contact our support team with details about what needs to be corrected.',
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white54 : Colors.black54,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // TODO: Implement contact support functionality
+                },
+                child: Text(
+                  'Contact Support',
+                  style: TextStyle(color: const Color(0xFF7C3AED)),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement contact support functionality
-            },
-            child: Text('Contact Support', style: TextStyle(color: const Color(0xFF7C3AED))),
-          ),
-        ],
-      ),
     );
   }
 
   void _showActiveSessionsDialog(bool isDarkMode) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-        title: Text(
-          'Active Sessions',
-          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildSessionItem('Current Device', 'Now', true, isDarkMode),
-            _buildSessionItem('iPhone 12', '2 hours ago', false, isDarkMode),
-            _buildSessionItem('Chrome Browser', '1 day ago', false, isDarkMode),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close', style: TextStyle(color: const Color(0xFF7C3AED))),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor:
+                isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+            title: Text(
+              'Active Sessions',
+              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildSessionItem('Current Device', 'Now', true, isDarkMode),
+                _buildSessionItem(
+                  'iPhone 12',
+                  '2 hours ago',
+                  false,
+                  isDarkMode,
+                ),
+                _buildSessionItem(
+                  'Chrome Browser',
+                  '1 day ago',
+                  false,
+                  isDarkMode,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Close',
+                  style: TextStyle(color: const Color(0xFF7C3AED)),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
-  Widget _buildSessionItem(String device, String lastActive, bool isCurrent, bool isDarkMode) {
+  Widget _buildSessionItem(
+    String device,
+    String lastActive,
+    bool isCurrent,
+    bool isDarkMode,
+  ) {
     return ListTile(
       leading: Icon(
         isCurrent ? Icons.smartphone : Icons.devices,
@@ -524,52 +626,84 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
         lastActive,
         style: TextStyle(color: isDarkMode ? Colors.white54 : Colors.black54),
       ),
-      trailing: isCurrent ? 
-        Text('Current', style: TextStyle(color: const Color(0xFF7C3AED), fontSize: 12)) :
-        TextButton(
-          onPressed: () {
-            // TODO: Implement session termination
-          },
-          child: Text('Revoke', style: TextStyle(color: Colors.red)),
-        ),
+      trailing:
+          isCurrent
+              ? Text(
+                'Current',
+                style: TextStyle(color: const Color(0xFF7C3AED), fontSize: 12),
+              )
+              : TextButton(
+                onPressed: () {
+                  // TODO: Implement session termination
+                },
+                child: Text('Revoke', style: TextStyle(color: Colors.red)),
+              ),
     );
   }
 
   void _showLoginHistoryDialog(bool isDarkMode) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-        title: Text(
-          'Login History',
-          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildLoginItem('Now', 'Current location', true, isDarkMode),
-              _buildLoginItem('2 hours ago', 'Same location', false, isDarkMode),
-              _buildLoginItem('Yesterday 3:45 PM', 'Home network', false, isDarkMode),
-              _buildLoginItem('2 days ago 9:22 AM', 'Mobile network', false, isDarkMode),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor:
+                isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+            title: Text(
+              'Login History',
+              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildLoginItem('Now', 'Current location', true, isDarkMode),
+                  _buildLoginItem(
+                    '2 hours ago',
+                    'Same location',
+                    false,
+                    isDarkMode,
+                  ),
+                  _buildLoginItem(
+                    'Yesterday 3:45 PM',
+                    'Home network',
+                    false,
+                    isDarkMode,
+                  ),
+                  _buildLoginItem(
+                    '2 days ago 9:22 AM',
+                    'Mobile network',
+                    false,
+                    isDarkMode,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Close',
+                  style: TextStyle(color: const Color(0xFF7C3AED)),
+                ),
+              ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close', style: TextStyle(color: const Color(0xFF7C3AED))),
-          ),
-        ],
-      ),
     );
   }
 
-  Widget _buildLoginItem(String time, String location, bool isCurrent, bool isDarkMode) {
+  Widget _buildLoginItem(
+    String time,
+    String location,
+    bool isCurrent,
+    bool isDarkMode,
+  ) {
     return ListTile(
       leading: Icon(
         Icons.login,
-        color: isCurrent ? const Color(0xFF7C3AED) : (isDarkMode ? Colors.white54 : Colors.black54),
+        color:
+            isCurrent
+                ? const Color(0xFF7C3AED)
+                : (isDarkMode ? Colors.white54 : Colors.black54),
       ),
       title: Text(
         time,
@@ -585,74 +719,102 @@ class _DataPrivacySettingsPageState extends State<DataPrivacySettingsPage> {
   void _showChangePasswordDialog(bool isDarkMode) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-        title: Text(
-          'Change Password',
-          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-        ),
-        content: Text(
-          'For security reasons, password changes must be done through the main account settings. Would you like to navigate there now?',
-          style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black87),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: isDarkMode ? Colors.white54 : Colors.black54)),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor:
+                isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+            title: Text(
+              'Change Password',
+              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            ),
+            content: Text(
+              'For security reasons, password changes must be done through the main account settings. Would you like to navigate there now?',
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white54 : Colors.black54,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // TODO: Navigate to password change page
+                },
+                child: Text(
+                  'Go to Settings',
+                  style: TextStyle(color: const Color(0xFF7C3AED)),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Navigate to password change page
-            },
-            child: Text('Go to Settings', style: TextStyle(color: const Color(0xFF7C3AED))),
-          ),
-        ],
-      ),
     );
   }
 
   void _showDeleteAccountDialog(bool isDarkMode, AuthService authService) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-        title: Text(
-          'Delete Account',
-          style: TextStyle(color: isDarkMode ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626)),
-        ),
-        content: Text(
-          'This action cannot be undone. All your data including journal entries, mood tracking, and forum posts will be permanently deleted.\n\nAre you sure you want to proceed?',
-          style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black87),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: isDarkMode ? Colors.white54 : Colors.black54)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() => _accountDeletionRequested = true);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Account deletion requested. Our team will contact you within 24 hours to confirm.'),
-                  duration: Duration(seconds: 4),
-                ),
-              );
-            },
-            child: Text(
+      builder:
+          (context) => AlertDialog(
+            backgroundColor:
+                isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+            title: Text(
               'Delete Account',
-              style: TextStyle(color: isDarkMode ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626)),
+              style: TextStyle(
+                color:
+                    isDarkMode
+                        ? const Color(0xFFFCA5A5)
+                        : const Color(0xFFDC2626),
+              ),
             ),
+            content: Text(
+              'This action cannot be undone. All your data including journal entries, mood tracking, and forum posts will be permanently deleted.\n\nAre you sure you want to proceed?',
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white54 : Colors.black54,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  setState(() => _accountDeletionRequested = true);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Account deletion requested. Our team will contact you within 24 hours to confirm.',
+                      ),
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
+                },
+                child: Text(
+                  'Delete Account',
+                  style: TextStyle(
+                    color:
+                        isDarkMode
+                            ? const Color(0xFFFCA5A5)
+                            : const Color(0xFFDC2626),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
-
-
-
-
-
