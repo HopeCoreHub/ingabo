@@ -30,7 +30,6 @@ class SettingsPage extends BaseScreen {
 
 class _SettingsPageState extends BaseScreenState<SettingsPage> {
   bool _isAdmin = false;
-  bool _isCheckingAdmin = true;
 
   @override
   void initState() {
@@ -41,18 +40,17 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
   // Check if the current user has admin privileges
   Future<void> _checkAdminStatus() async {
     final authService = Provider.of<AuthService>(context, listen: false);
-    
+
     if (authService.isLoggedIn && authService.userId != null) {
       try {
         // Check admin status in Firebase Realtime Database
         final userId = authService.userId!;
         final DatabaseReference databaseRef = FirebaseDatabase.instance.ref();
         final snapshot = await databaseRef.child('admins').child(userId).get();
-        
+
         if (mounted) {
           setState(() {
             _isAdmin = snapshot.exists && snapshot.value == true;
-            _isCheckingAdmin = false;
           });
         }
       } catch (e) {
@@ -60,7 +58,6 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         if (mounted) {
           setState(() {
             _isAdmin = false;
-            _isCheckingAdmin = false;
           });
         }
       }
@@ -68,7 +65,6 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       if (mounted) {
         setState(() {
           _isAdmin = false;
-          _isCheckingAdmin = false;
         });
       }
     }
@@ -80,17 +76,17 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    final localizations = AppLocalizations.of(context);
-    
+
     return Scaffold(
-      backgroundColor: (highContrastMode && isDarkMode) 
-          ? Colors.black 
-          : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+      backgroundColor:
+          (highContrastMode && isDarkMode)
+              ? Colors.black
+              : (isDarkMode ? Colors.black : Colors.white),
       appBar: AppBar(
-        backgroundColor: (highContrastMode && isDarkMode) 
-            ? Colors.black 
-            : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
+        backgroundColor:
+            (highContrastMode && isDarkMode)
+                ? Colors.black
+                : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
         elevation: 0,
         title: LocalizedText(
           'settings',
@@ -101,22 +97,9 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
           ),
         ),
         automaticallyImplyLeading: false,
-        systemOverlayStyle: isDarkMode ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            child: IconButton(
-              icon: Icon(
-                Icons.search, 
-                color: isDarkMode ? Colors.white70 : Colors.black54,
-              ),
-              onPressed: () {
-                // Show search dialog
-                _showSearchDialog();
-              },
-            ),
-          ),
-        ],
+        systemOverlayStyle:
+            isDarkMode ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        actions: [],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -144,8 +127,6 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 _buildAdminSection(),
                 const SizedBox(height: 12),
               ],
-              _buildDatabaseSection(),
-              const SizedBox(height: 12),
               _buildEmergencyContactsSection(),
               const SizedBox(height: 12),
               _buildFooter(),
@@ -162,36 +143,48 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     return buildScreen(context);
   }
 
+  // ignore: unused_element
   void _showSearchDialog() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context, listen: false);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(
+      context,
+      listen: false,
+    );
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: highContrastMode 
-              ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-              : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
-          shape: highContrastMode 
-              ? RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(
-                    color: AccessibilityUtils.getAccessibleBorderColor(context),
-                    width: 3.0,
-                  ),
-                )
-              : null,
+          backgroundColor:
+              highContrastMode
+                  ? AccessibilityUtils.getAccessibleSurfaceColor(context)
+                  : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
+          shape:
+              highContrastMode
+                  ? RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color: AccessibilityUtils.getAccessibleBorderColor(
+                        context,
+                      ),
+                      width: 3.0,
+                    ),
+                  )
+                  : null,
           title: LocalizedText(
             'searchSettings',
             style: AccessibilityUtils.getTextStyle(
               context,
               fontWeight: FontWeight.bold,
-              color: highContrastMode 
-                  ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white : Colors.black87)
-                  : (isDarkMode ? Colors.white : Colors.black87),
+              color:
+                  highContrastMode
+                      ? AccessibilityUtils.getAccessibleColor(
+                        context,
+                        isDarkMode ? Colors.white : Colors.black87,
+                      )
+                      : (isDarkMode ? Colors.white : Colors.black87),
             ),
           ),
           content: TextField(
@@ -200,31 +193,46 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
               hintText: 'Search settings...',
               hintStyle: AccessibilityUtils.getTextStyle(
                 context,
-                color: highContrastMode 
-                    ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white54 : Colors.black54)
-                    : (isDarkMode ? Colors.white54 : Colors.black54),
+                color:
+                    highContrastMode
+                        ? AccessibilityUtils.getAccessibleColor(
+                          context,
+                          isDarkMode ? Colors.white54 : Colors.black54,
+                        )
+                        : (isDarkMode ? Colors.white54 : Colors.black54),
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: highContrastMode 
-                    ? BorderSide(
-                        color: AccessibilityUtils.getAccessibleBorderColor(context),
-                        width: 2.0,
-                      )
-                    : const BorderSide(),
+                borderSide:
+                    highContrastMode
+                        ? BorderSide(
+                          color: AccessibilityUtils.getAccessibleBorderColor(
+                            context,
+                          ),
+                          width: 2.0,
+                        )
+                        : const BorderSide(),
               ),
               prefixIcon: Icon(
                 Icons.search,
-                color: highContrastMode 
-                    ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white54 : Colors.black54)
-                    : (isDarkMode ? Colors.white54 : Colors.black54),
+                color:
+                    highContrastMode
+                        ? AccessibilityUtils.getAccessibleColor(
+                          context,
+                          isDarkMode ? Colors.white54 : Colors.black54,
+                        )
+                        : (isDarkMode ? Colors.white54 : Colors.black54),
               ),
             ),
             style: AccessibilityUtils.getTextStyle(
               context,
-              color: highContrastMode 
-                  ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white : Colors.black87)
-                  : (isDarkMode ? Colors.white : Colors.black87),
+              color:
+                  highContrastMode
+                      ? AccessibilityUtils.getAccessibleColor(
+                        context,
+                        isDarkMode ? Colors.white : Colors.black87,
+                      )
+                      : (isDarkMode ? Colors.white : Colors.black87),
             ),
             onChanged: (value) {
               // Search functionality can be implemented here
@@ -239,9 +247,13 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 'cancel',
                 style: AccessibilityUtils.getTextStyle(
                   context,
-                  color: highContrastMode 
-                      ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white60 : Colors.black54)
-                      : (isDarkMode ? Colors.white60 : Colors.black54),
+                  color:
+                      highContrastMode
+                          ? AccessibilityUtils.getAccessibleColor(
+                            context,
+                            isDarkMode ? Colors.white60 : Colors.black54,
+                          )
+                          : (isDarkMode ? Colors.white60 : Colors.black54),
                 ),
               ),
             ),
@@ -257,47 +269,47 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     final authService = Provider.of<AuthService>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    
-    // Get user information
+
+    final bool isGuest = authService.isGuest || !authService.isLoggedIn;
     final username = authService.username ?? 'Guest User';
-    final userId = authService.userId ?? 'No ID';
-    
-    // Define isGuest based on authentication status
-    final bool isGuest = !authService.isLoggedIn || authService.username == null;
-    
+
     // Get first letter of username for avatar
     final String firstLetter = username[0].toUpperCase();
-    
+
     return Container(
       margin: EdgeInsets.fromLTRB(16, 12, 16, 12),
       padding: EdgeInsets.all(highContrastMode ? 18 : 16),
       decoration: BoxDecoration(
-        gradient: highContrastMode 
-            ? null // No gradients in high contrast mode
-            : const LinearGradient(
-                colors: [Color(0xFF8A4FFF), Color(0xFF9667FF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-        color: highContrastMode 
-            ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-            : null,
-        borderRadius: BorderRadius.circular(14),
-        border: highContrastMode 
-            ? Border.all(
-                color: AccessibilityUtils.getAccessibleBorderColor(context),
-                width: 3.0, // Thick border for profile section
-              )
-            : null,
-        boxShadow: highContrastMode 
-            ? null // No shadows in high contrast mode
-            : [
-                BoxShadow(
-                  color: const Color(0xFF8A4FFF).withOpacity(0.25),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+        gradient:
+            highContrastMode
+                ? null // No gradients in high contrast mode
+                : const LinearGradient(
+                  colors: [Color(0xFF8A4FFF), Color(0xFF9667FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
+        color:
+            highContrastMode
+                ? AccessibilityUtils.getAccessibleSurfaceColor(context)
+                : null,
+        borderRadius: BorderRadius.circular(14),
+        border:
+            highContrastMode
+                ? Border.all(
+                  color: AccessibilityUtils.getAccessibleBorderColor(context),
+                  width: 3.0, // Thick border for profile section
+                )
+                : null,
+        boxShadow:
+            highContrastMode
+                ? null // No shadows in high contrast mode
+                : [
+                  BoxShadow(
+                    color: const Color(0xFF8A4FFF).withAlpha(63),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
       ),
       child: Row(
         children: [
@@ -306,14 +318,16 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
             height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: highContrastMode 
-                  ? (isDarkMode ? Colors.white : Colors.black)
-                  : null,
+              color:
+                  highContrastMode
+                      ? (isDarkMode ? Colors.white : Colors.black)
+                      : null,
               border: Border.all(
-                color: highContrastMode 
-                    ? AccessibilityUtils.getAccessibleBorderColor(context)
-                    : Colors.white, 
-                width: highContrastMode ? 3 : 2
+                color:
+                    highContrastMode
+                        ? AccessibilityUtils.getAccessibleBorderColor(context)
+                        : Colors.white,
+                width: highContrastMode ? 3 : 2,
               ),
             ),
             child: Center(
@@ -323,9 +337,10 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                   context,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: highContrastMode 
-                      ? (isDarkMode ? Colors.black : Colors.white)
-                      : Colors.white,
+                  color:
+                      highContrastMode
+                          ? (isDarkMode ? Colors.black : Colors.white)
+                          : Colors.white,
                 ),
               ),
             ),
@@ -342,9 +357,13 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                     context,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: highContrastMode 
-                        ? AccessibilityUtils.getAccessibleColor(context, Colors.white)
-                        : Colors.white,
+                    color:
+                        highContrastMode
+                            ? AccessibilityUtils.getAccessibleColor(
+                              context,
+                              Colors.white,
+                            )
+                            : Colors.white,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -354,16 +373,23 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                       width: highContrastMode ? 9 : 7,
                       height: highContrastMode ? 9 : 7,
                       decoration: BoxDecoration(
-                        color: highContrastMode 
-                            ? (isDarkMode ? Colors.white : Colors.black)
-                            : (isGuest ? Colors.amber : const Color(0xFF4ADE80)),
+                        color:
+                            highContrastMode
+                                ? (isDarkMode ? Colors.white : Colors.black)
+                                : (isGuest
+                                    ? Colors.amber
+                                    : const Color(0xFF4ADE80)),
                         shape: BoxShape.circle,
-                        border: highContrastMode 
-                            ? Border.all(
-                                color: AccessibilityUtils.getAccessibleBorderColor(context),
-                                width: 1.5,
-                              )
-                            : null,
+                        border:
+                            highContrastMode
+                                ? Border.all(
+                                  color:
+                                      AccessibilityUtils.getAccessibleBorderColor(
+                                        context,
+                                      ),
+                                  width: 1.5,
+                                )
+                                : null,
                       ),
                     ),
                     SizedBox(width: highContrastMode ? 7 : 5),
@@ -372,9 +398,13 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                       style: AccessibilityUtils.getTextStyle(
                         context,
                         fontSize: 12,
-                        color: highContrastMode 
-                            ? AccessibilityUtils.getAccessibleColor(context, Colors.white70)
-                            : Colors.white70,
+                        color:
+                            highContrastMode
+                                ? AccessibilityUtils.getAccessibleColor(
+                                  context,
+                                  Colors.white70,
+                                )
+                                : Colors.white70,
                       ),
                     ),
                   ],
@@ -382,48 +412,49 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: () {
-              // Show edit profile or login dialog
-              if (isGuest) {
+          if (isGuest)
+            GestureDetector(
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const AuthPage()),
                 );
-              } else {
-                // Show edit profile dialog or navigate to profile page
-              }
-            },
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: highContrastMode ? 12 : 10, 
-                vertical: highContrastMode ? 7 : 5
-              ),
-              decoration: BoxDecoration(
-                color: highContrastMode 
-                    ? (isDarkMode ? Colors.white : Colors.black)
-                    : Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
-                border: highContrastMode 
-                    ? Border.all(
-                        color: AccessibilityUtils.getAccessibleBorderColor(context),
-                        width: 2.0,
-                      )
-                    : null,
-              ),
-              child: Text(
-                isGuest ? 'Sign In' : 'Edit Profile',
-                style: AccessibilityUtils.getTextStyle(
-                  context,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: highContrastMode 
-                      ? (isDarkMode ? Colors.black : Colors.white)
-                      : Colors.white,
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: highContrastMode ? 12 : 10,
+                  vertical: highContrastMode ? 7 : 5,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      highContrastMode
+                          ? (isDarkMode ? Colors.white : Colors.black)
+                          : Colors.white.withAlpha(51),
+                  borderRadius: BorderRadius.circular(16),
+                  border:
+                      highContrastMode
+                          ? Border.all(
+                            color: AccessibilityUtils.getAccessibleBorderColor(
+                              context,
+                            ),
+                            width: 2.0,
+                          )
+                          : null,
+                ),
+                child: Text(
+                  'Sign In',
+                  style: AccessibilityUtils.getTextStyle(
+                    context,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color:
+                        highContrastMode
+                            ? (isDarkMode ? Colors.black : Colors.white)
+                            : Colors.white,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -434,47 +465,60 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: highContrastMode ? 10 : 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: highContrastMode ? 10 : 8,
+      ),
       child: Row(
         children: [
           Container(
             width: highContrastMode ? 36 : 32,
             height: highContrastMode ? 36 : 32,
             decoration: BoxDecoration(
-              color: highContrastMode 
-                  ? (isDarkMode ? Colors.white : Colors.black)
-                  : accentColor.withOpacity(0.15),
+              color:
+                  highContrastMode
+                      ? (isDarkMode ? Colors.white : Colors.black)
+                      : accentColor.withAlpha(38),
               borderRadius: BorderRadius.circular(8),
-              border: highContrastMode 
-                  ? Border.all(
-                      color: AccessibilityUtils.getAccessibleBorderColor(context),
-                      width: 2.0,
-                    )
-                  : null,
+              border:
+                  highContrastMode
+                      ? Border.all(
+                        color: AccessibilityUtils.getAccessibleBorderColor(
+                          context,
+                        ),
+                        width: 2.0,
+                      )
+                      : null,
             ),
             child: Center(
               child: Icon(
                 icon,
-                color: highContrastMode 
-                    ? (isDarkMode ? Colors.black : Colors.white)
-                    : accentColor,
+                color:
+                    highContrastMode
+                        ? (isDarkMode ? Colors.black : Colors.white)
+                        : accentColor,
                 size: highContrastMode ? 18 : 16,
               ),
             ),
           ),
           SizedBox(width: highContrastMode ? 12 : 10),
           LocalizedText(
-            title.toLowerCase().replaceAll(' & ', ''),
+            title,
             style: AccessibilityUtils.getTextStyle(
               context,
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: highContrastMode 
-                  ? AccessibilityUtils.getAccessibleColor(context, Colors.white)
-                  : (isDarkMode ? Colors.white : Colors.black87),
+              color:
+                  highContrastMode
+                      ? AccessibilityUtils.getAccessibleColor(
+                        context,
+                        Colors.white,
+                      )
+                      : (isDarkMode ? Colors.white : Colors.black87),
             ),
           ),
         ],
@@ -492,33 +536,42 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: highContrastMode ? 14 : 12),
       padding: EdgeInsets.symmetric(
-        horizontal: highContrastMode ? 18 : 16, 
-        vertical: highContrastMode ? 14 : 12
+        horizontal: highContrastMode ? 18 : 16,
+        vertical: highContrastMode ? 14 : 12,
       ),
       decoration: BoxDecoration(
-        color: highContrastMode 
-            ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-            : (isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+        color:
+            highContrastMode
+                ? AccessibilityUtils.getAccessibleSurfaceColor(context)
+                : (isDarkMode
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFFF1F5F9)),
         borderRadius: BorderRadius.circular(12),
-        border: highContrastMode 
-            ? Border.all(
-                color: AccessibilityUtils.getAccessibleBorderColor(context),
-                width: 2.0,
-              )
-            : null,
+        border:
+            highContrastMode
+                ? Border.all(
+                  color: AccessibilityUtils.getAccessibleBorderColor(context),
+                  width: 2.0,
+                )
+                : null,
       ),
       child: Row(
         children: [
           if (leadingIcon != null) ...[
             Icon(
               leadingIcon,
-              color: highContrastMode 
-                  ? AccessibilityUtils.getAccessibleColor(context, const Color(0xFF8A4FFF), isPrimary: true)
-                  : const Color(0xFF8A4FFF),
+              color:
+                  highContrastMode
+                      ? AccessibilityUtils.getAccessibleColor(
+                        context,
+                        const Color(0xFF8A4FFF),
+                        isPrimary: true,
+                      )
+                      : const Color(0xFF8A4FFF),
               size: highContrastMode ? 22 : 20,
             ),
             SizedBox(width: highContrastMode ? 18 : 16),
@@ -533,9 +586,13 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                     context,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: highContrastMode 
-                        ? AccessibilityUtils.getAccessibleColor(context, Colors.white)
-                        : (isDarkMode ? Colors.white : Colors.black87),
+                    color:
+                        highContrastMode
+                            ? AccessibilityUtils.getAccessibleColor(
+                              context,
+                              Colors.white,
+                            )
+                            : (isDarkMode ? Colors.white : Colors.black87),
                   ),
                 ),
                 if (description != null && description.isNotEmpty)
@@ -546,9 +603,15 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                       style: AccessibilityUtils.getTextStyle(
                         context,
                         fontSize: 13,
-                        color: highContrastMode 
-                            ? AccessibilityUtils.getAccessibleColor(context, Colors.white60)
-                            : (isDarkMode ? Colors.white60 : Colors.black54),
+                        color:
+                            highContrastMode
+                                ? AccessibilityUtils.getAccessibleColor(
+                                  context,
+                                  Colors.white60,
+                                )
+                                : (isDarkMode
+                                    ? Colors.white60
+                                    : Colors.black54),
                       ),
                     ),
                   ),
@@ -562,62 +625,19 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     );
   }
 
-  Widget _buildDropdownSetting(String title, String value, String description, {IconData? icon}) {
+  Widget _buildSwitchSetting(
+    String title,
+    String description,
+    bool value,
+    Function(bool) onChanged, {
+    IconData? icon,
+  }) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    
-    return _buildSettingItem(
-      title: title,
-      description: description,
-      leadingIcon: icon,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: highContrastMode 
-              ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-              : (isDarkMode ? const Color(0xFF111827) : Colors.white),
-          borderRadius: BorderRadius.circular(8),
-          border: highContrastMode 
-              ? Border.all(
-                  color: AccessibilityUtils.getAccessibleBorderColor(context),
-                  width: 2.0,
-                )
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                color: highContrastMode 
-                    ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white70 : Colors.black87)
-                    : (isDarkMode ? Colors.white70 : Colors.black87),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.arrow_drop_down,
-              color: highContrastMode 
-                  ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white54 : Colors.black54)
-                  : (isDarkMode ? Colors.white54 : Colors.black54),
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSwitchSetting(String title, String description, bool value, Function(bool) onChanged, {IconData? icon}) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
-    final highContrastMode = accessibilityProvider.highContrastMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
 
     return _buildSettingItem(
       title: title,
@@ -626,18 +646,24 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       child: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: highContrastMode 
-            ? (isDarkMode ? Colors.black : Colors.white)
-            : Colors.white,
-        activeTrackColor: highContrastMode 
-            ? (isDarkMode ? Colors.white : Colors.black)
-            : accentColor,
-        inactiveThumbColor: highContrastMode 
-            ? (isDarkMode ? Colors.white : Colors.black)
-            : Colors.grey,
-        inactiveTrackColor: highContrastMode 
-            ? (isDarkMode ? Colors.black : Colors.white).withOpacity(0.5)
-            : Colors.grey.withOpacity(0.3),
+        activeThumbColor:
+            highContrastMode
+                ? (isDarkMode ? Colors.black : Colors.white)
+                : Colors.white,
+        activeTrackColor:
+            highContrastMode
+                ? (isDarkMode ? Colors.white : Colors.black)
+                : accentColor,
+        inactiveThumbColor:
+            highContrastMode
+                ? (isDarkMode ? Colors.white : Colors.black)
+                : Colors.grey,
+        inactiveTrackColor:
+            highContrastMode
+                ? (isDarkMode ? Colors.black : Colors.white).withValues(
+                  alpha: 127,
+                )
+                : Colors.grey.withAlpha(76),
       ),
     );
   }
@@ -645,7 +671,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
   Widget _buildLinkSetting(String title, {IconData? icon}) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     return GestureDetector(
       onTap: () => _handleLinkSettingTap(title),
       child: _buildSettingItem(
@@ -678,7 +704,9 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       case 'Data & Privacy Settings':
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const DataPrivacySettingsPage()),
+          MaterialPageRoute(
+            builder: (context) => const DataPrivacySettingsPage(),
+          ),
         );
         break;
       default:
@@ -696,15 +724,19 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
   Widget _buildSectionCard(List<Widget> children) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 
   Widget _buildAccessibilitySection() {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
-    
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final highContrastMode = accessibilityProvider.highContrastMode;
+    final fontFamilyDescription = AppLocalizations.of(
+      context,
+    ).translate('chooseFontFamilyDescription');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -713,40 +745,41 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
           _buildFontFamilySelector(
             'fontFamily',
             accessibilityProvider.fontFamily,
-            'Choose a font that\'s comfortable for reading',
+            fontFamilyDescription,
             icon: Icons.font_download_outlined,
           ),
-          _buildFontSizeSelector(
-            'fontSize',
-            accessibilityProvider.fontSize,
-            'Adjust text size for better readability',
-            icon: Icons.format_size,
-          ),
-          _buildSwitchSetting(
-            'highContrastMode',
-            'Increase contrast for better visibility',
-            accessibilityProvider.highContrastMode,
-            (value) => accessibilityProvider.toggleHighContrastMode(value),
-            icon: Icons.contrast,
-          ),
-          _buildSwitchSetting(
-            'reduceMotion',
-            'Minimize animations and transitions',
-            accessibilityProvider.reduceMotion,
-            (value) => accessibilityProvider.toggleReduceMotion(value),
-            icon: Icons.animation,
-          ),
         ]),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Text(
+            AppLocalizations.of(context).translate('fontSizeFollowsSystem'),
+            style: TextStyle(
+              fontSize: 13,
+              color:
+                  highContrastMode
+                      ? AccessibilityUtils.getAccessibleColor(
+                        context,
+                        isDarkMode ? Colors.white70 : Colors.black87,
+                      )
+                      : (isDarkMode ? Colors.white70 : Colors.black54),
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildFontFamilySelector(String title, String value, String description, {IconData? icon}) {
+  Widget _buildFontFamilySelector(
+    String title,
+    String value,
+    String description, {
+    IconData? icon,
+  }) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    
+
     return GestureDetector(
       onTap: () {
         _showFontFamilySelectionDialog();
@@ -756,21 +789,22 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         description: description,
         leadingIcon: icon,
         child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: 12, 
-            vertical: 8
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: highContrastMode 
-                ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-                : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+            color:
+                highContrastMode
+                    ? AccessibilityUtils.getAccessibleSurfaceColor(context)
+                    : (isDarkMode ? Colors.black : Colors.white),
             borderRadius: BorderRadius.circular(8),
-            border: highContrastMode 
-                ? Border.all(
-                    color: AccessibilityUtils.getAccessibleBorderColor(context),
-                    width: 2.0,
-                  )
-                : null,
+            border:
+                highContrastMode
+                    ? Border.all(
+                      color: AccessibilityUtils.getAccessibleBorderColor(
+                        context,
+                      ),
+                      width: 2.0,
+                    )
+                    : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -779,17 +813,25 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 value,
                 style: TextStyle(
                   fontSize: 14,
-                  color: highContrastMode 
-                      ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white70 : Colors.black87)
-                      : (isDarkMode ? Colors.white70 : Colors.black87),
+                  color:
+                      highContrastMode
+                          ? AccessibilityUtils.getAccessibleColor(
+                            context,
+                            isDarkMode ? Colors.white70 : Colors.black87,
+                          )
+                          : (isDarkMode ? Colors.white70 : Colors.black87),
                 ),
               ),
               const SizedBox(width: 4),
               Icon(
                 Icons.arrow_drop_down,
-                color: highContrastMode 
-                    ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white54 : Colors.black54)
-                    : (isDarkMode ? Colors.white54 : Colors.black54),
+                color:
+                    highContrastMode
+                        ? AccessibilityUtils.getAccessibleColor(
+                          context,
+                          isDarkMode ? Colors.white54 : Colors.black54,
+                        )
+                        : (isDarkMode ? Colors.white54 : Colors.black54),
                 size: 20,
               ),
             ],
@@ -799,10 +841,14 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     );
   }
 
-  TextStyle _getPreviewTextStyle(String fontFamily, bool isDarkMode, bool isSelected) {
+  TextStyle _getPreviewTextStyle(
+    String fontFamily,
+    bool isDarkMode,
+    bool isSelected,
+  ) {
     final fontName = fontFamily.split(' ')[0].toLowerCase();
     const defaultFontSize = 16.0; // Ensure we always have a fontSize
-    
+
     try {
       switch (fontName) {
         case 'roboto':
@@ -849,35 +895,47 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
 
   void _showFontFamilySelectionDialog() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context, listen: false);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(
+      context,
+      listen: false,
+    );
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: highContrastMode 
-              ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-              : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
-          shape: highContrastMode 
-              ? RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(
-                    color: AccessibilityUtils.getAccessibleBorderColor(context),
-                    width: 3.0,
-                  ),
-                )
-              : null,
+          backgroundColor:
+              highContrastMode
+                  ? AccessibilityUtils.getAccessibleSurfaceColor(context)
+                  : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
+          shape:
+              highContrastMode
+                  ? RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color: AccessibilityUtils.getAccessibleBorderColor(
+                        context,
+                      ),
+                      width: 3.0,
+                    ),
+                  )
+                  : null,
           title: LocalizedText(
             'selectFontFamily',
             style: AccessibilityUtils.getTextStyle(
               context,
               fontWeight: FontWeight.bold,
-              color: highContrastMode 
-                  ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white : Colors.black87)
-                  : (isDarkMode ? Colors.white : Colors.black87),
+              color:
+                  highContrastMode
+                      ? AccessibilityUtils.getAccessibleColor(
+                        context,
+                        isDarkMode ? Colors.white : Colors.black87,
+                      )
+                      : (isDarkMode ? Colors.white : Colors.black87),
             ),
           ),
           content: SizedBox(
@@ -886,21 +944,35 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ...accessibilityProvider.fontFamilies.map((fontFamily) {
-                  final isSelected = accessibilityProvider.fontFamily == fontFamily;
+                  final isSelected =
+                      accessibilityProvider.fontFamily == fontFamily;
                   return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    tileColor: isSelected 
-                      ? accentColor.withOpacity(0.1)
-                      : Colors.transparent,
-                    leading: isSelected 
-                      ? Icon(Icons.check_circle, color: accentColor)
-                      : Icon(Icons.font_download, color: isDarkMode ? Colors.white54 : Colors.black54),
+                    tileColor:
+                        isSelected
+                            ? accentColor.withAlpha(25)
+                            : Colors.transparent,
+                    leading:
+                        isSelected
+                            ? Icon(Icons.check_circle, color: accentColor)
+                            : Icon(
+                              Icons.font_download,
+                              color:
+                                  isDarkMode ? Colors.white54 : Colors.black54,
+                            ),
                     title: Text(
                       fontFamily,
-                      style: _getPreviewTextStyle(fontFamily, isDarkMode, isSelected),
+                      style: _getPreviewTextStyle(
+                        fontFamily,
+                        isDarkMode,
+                        isSelected,
+                      ),
                     ),
                     onTap: () {
                       accessibilityProvider.setFontFamily(fontFamily);
@@ -929,194 +1001,40 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     );
   }
 
-  Widget _buildFontSizeSelector(String title, String value, String description, {IconData? icon}) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
-    final highContrastMode = accessibilityProvider.highContrastMode;
-    
-    return GestureDetector(
-      onTap: () {
-        _showFontSizeSelectionDialog();
-      },
-      child: _buildSettingItem(
-        title: title,
-        description: description,
-        leadingIcon: icon,
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: 12, 
-            vertical: 8
-          ),
-          decoration: BoxDecoration(
-            color: highContrastMode 
-                ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-                : (isDarkMode ? const Color(0xFF111827) : Colors.white),
-            borderRadius: BorderRadius.circular(8),
-            border: highContrastMode 
-                ? Border.all(
-                    color: AccessibilityUtils.getAccessibleBorderColor(context),
-                    width: 2.0,
-                  )
-                : null,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: highContrastMode 
-                      ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white70 : Colors.black87)
-                      : (isDarkMode ? Colors.white70 : Colors.black87),
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                Icons.arrow_drop_down,
-                color: highContrastMode 
-                    ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white54 : Colors.black54)
-                    : (isDarkMode ? Colors.white54 : Colors.black54),
-                size: 20,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showFontSizeSelectionDialog() {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-          title: LocalizedText(
-            'selectFontSize',
-            style: TextStyle(
-              color: isDarkMode ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ...accessibilityProvider.fontSizes.map((fontSize) {
-                  final isSelected = accessibilityProvider.fontSize == fontSize;
-                  return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    tileColor: isSelected 
-                      ? accentColor.withOpacity(0.1)
-                      : Colors.transparent,
-                    leading: isSelected 
-                      ? Icon(Icons.check_circle, color: accentColor)
-                      : Icon(Icons.format_size, color: isDarkMode ? Colors.white54 : Colors.black54),
-                    title: Text(
-                      fontSize,
-                      style: TextStyle(
-                        fontSize: _getFontSizeValue(fontSize),
-                        color: isDarkMode ? Colors.white : Colors.black87,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                    onTap: () {
-                      accessibilityProvider.setFontSize(fontSize);
-                      Navigator.of(context).pop();
-                    },
-                  );
-                }),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: LocalizedText(
-                'cancel',
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white60 : Colors.black54,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  double _getFontSizeValue(String fontSize) {
-    // Use the base font size (14.0) and apply the accessibility scaling factor
-    const baseFontSize = 14.0;
-    
-    switch (fontSize) {
-      case 'Small':
-        return baseFontSize * 0.85;
-      case 'Medium (Default)':
-        return baseFontSize * 1.0;
-      case 'Large':
-        return baseFontSize * 1.25;
-      case 'Extra Large':
-        return baseFontSize * 1.5;
-      default:
-        return baseFontSize * 1.0;
-    }
-  }
-
   Widget _buildLanguageAudioSection() {
     final languageProvider = Provider.of<LanguageProvider>(context);
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final languageDescription = AppLocalizations.of(
+      context,
+    ).translate('chooseLanguageDescription');
     final currentLanguage = languageProvider.currentLanguage;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Language & Audio', Icons.language),
+        _buildSectionHeader('languageAudio', Icons.language),
         _buildSectionCard([
           _buildLanguageSelector(
             'language',
             currentLanguage,
-            'Choose your preferred language',
+            languageDescription,
             icon: Icons.translate,
-          ),
-          _buildSwitchSetting(
-            'textToSpeech',
-            'Convert text to spoken audio',
-            accessibilityProvider.textToSpeech,
-            (value) => accessibilityProvider.toggleTextToSpeech(value),
-            icon: Icons.record_voice_over,
-          ),
-          _buildSwitchSetting(
-            'voiceToText',
-            'Convert speech to written text',
-            accessibilityProvider.voiceToText,
-            (value) => accessibilityProvider.toggleVoiceToText(value),
-            icon: Icons.keyboard_voice,
           ),
         ]),
       ],
     );
   }
 
-  Widget _buildLanguageSelector(String title, String value, String description, {IconData? icon}) {
+  Widget _buildLanguageSelector(
+    String title,
+    String value,
+    String description, {
+    IconData? icon,
+  }) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    
+
     return GestureDetector(
       onTap: () {
         _showLanguageSelectionDialog();
@@ -1126,21 +1044,22 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         description: description,
         leadingIcon: icon,
         child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: 12, 
-            vertical: 8
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: highContrastMode 
-                ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-                : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+            color:
+                highContrastMode
+                    ? AccessibilityUtils.getAccessibleSurfaceColor(context)
+                    : (isDarkMode ? Colors.black : Colors.white),
             borderRadius: BorderRadius.circular(8),
-            border: highContrastMode 
-                ? Border.all(
-                    color: AccessibilityUtils.getAccessibleBorderColor(context),
-                    width: 2.0,
-                  )
-                : null,
+            border:
+                highContrastMode
+                    ? Border.all(
+                      color: AccessibilityUtils.getAccessibleBorderColor(
+                        context,
+                      ),
+                      width: 2.0,
+                    )
+                    : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -1149,17 +1068,25 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 value,
                 style: TextStyle(
                   fontSize: 14,
-                  color: highContrastMode 
-                      ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white70 : Colors.black87)
-                      : (isDarkMode ? Colors.white70 : Colors.black87),
+                  color:
+                      highContrastMode
+                          ? AccessibilityUtils.getAccessibleColor(
+                            context,
+                            isDarkMode ? Colors.white70 : Colors.black87,
+                          )
+                          : (isDarkMode ? Colors.white70 : Colors.black87),
                 ),
               ),
               const SizedBox(width: 4),
               Icon(
                 Icons.arrow_drop_down,
-                color: highContrastMode 
-                    ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white54 : Colors.black54)
-                    : (isDarkMode ? Colors.white54 : Colors.black54),
+                color:
+                    highContrastMode
+                        ? AccessibilityUtils.getAccessibleColor(
+                          context,
+                          isDarkMode ? Colors.white54 : Colors.black54,
+                        )
+                        : (isDarkMode ? Colors.white54 : Colors.black54),
                 size: 20,
               ),
             ],
@@ -1171,10 +1098,14 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
 
   void _showLanguageSelectionDialog() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+    final languageProvider = Provider.of<LanguageProvider>(
+      context,
+      listen: false,
+    );
     final isDarkMode = themeProvider.isDarkMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -1193,23 +1124,34 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ...languageProvider.languages.map((language) {
-                  final isSelected = languageProvider.currentLanguage == language;
+                  final isSelected =
+                      languageProvider.currentLanguage == language;
                   return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    tileColor: isSelected 
-                      ? accentColor.withOpacity(0.1)
-                      : Colors.transparent,
-                    leading: isSelected 
-                      ? Icon(Icons.check_circle, color: accentColor)
-                      : Icon(Icons.language, color: isDarkMode ? Colors.white54 : Colors.black54),
+                    tileColor:
+                        isSelected
+                            ? accentColor.withAlpha(25)
+                            : Colors.transparent,
+                    leading:
+                        isSelected
+                            ? Icon(Icons.check_circle, color: accentColor)
+                            : Icon(
+                              Icons.language,
+                              color:
+                                  isDarkMode ? Colors.white54 : Colors.black54,
+                            ),
                     title: Text(
                       language,
                       style: TextStyle(
                         color: isDarkMode ? Colors.white : Colors.black87,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                     onTap: () {
@@ -1240,12 +1182,14 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
   }
 
   Widget _buildDataPerformanceSection() {
-    final dataPerformanceProvider = Provider.of<DataPerformanceProvider>(context);
-    
+    final dataPerformanceProvider = Provider.of<DataPerformanceProvider>(
+      context,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Data & Performance', Icons.data_usage),
+        _buildSectionHeader('dataPerformance', Icons.data_usage),
         _buildSectionCard([
           _buildSwitchSetting(
             'lowDataMode',
@@ -1275,11 +1219,11 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
 
   Widget _buildAppearanceSection() {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Appearance', Icons.palette_outlined),
+        _buildSectionHeader('appearance', Icons.palette_outlined),
         _buildSectionCard([
           _buildSwitchSetting(
             'darkMode',
@@ -1297,25 +1241,32 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
 
   Widget _buildNotificationsSection() {
     final notificationProvider = Provider.of<NotificationProvider>(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Notifications', Icons.notifications_outlined),
+        _buildSectionHeader('notifications', Icons.notifications_outlined),
         _buildSectionCard([
           _buildSwitchSetting(
+            'Forum Posts',
+            'New messages in the forum',
+            notificationProvider.forumMessages,
+            (value) => notificationProvider.toggleForumMessages(value),
+            icon: Icons.forum,
+          ),
+          _buildSwitchSetting(
             'forumReplies',
-            'Get notified of new replies',
+            'Forum replies',
             notificationProvider.forumReplies,
             (value) => notificationProvider.toggleForumReplies(value),
             icon: Icons.chat_bubble_outline,
           ),
           _buildSwitchSetting(
-            'weeklyCheckIns',
-            'Mental health reminders',
-            notificationProvider.weeklyCheckIns,
-            (value) => notificationProvider.toggleWeeklyCheckIns(value),
-            icon: Icons.event_note,
+            'dailyAffirmations',
+            'Daily Affirmations',
+            notificationProvider.dailyAffirmations,
+            (value) => notificationProvider.toggleDailyAffirmations(value),
+            icon: Icons.favorite,
           ),
           _buildSwitchSetting(
             'systemUpdates',
@@ -1332,51 +1283,62 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
   Widget _buildPrivacySecuritySection() {
     final authService = Provider.of<AuthService>(context);
     final isLoggedIn = authService.isLoggedIn;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Privacy & Security', Icons.shield_outlined),
+        _buildSectionHeader('privacySecurity', Icons.shield_outlined),
         _buildSectionCard([
           _buildLinkSetting('Privacy Policy', icon: Icons.privacy_tip),
           _buildLinkSetting('Terms of Service', icon: Icons.description),
-          _buildLinkSetting('Data & Privacy Settings', icon: Icons.settings_applications),
+          _buildLinkSetting(
+            'Data & Privacy Settings',
+            icon: Icons.settings_applications,
+          ),
           if (isLoggedIn) _buildLogoutButton(),
         ]),
       ],
     );
   }
 
+  // ignore: unused_element
   Widget _buildDatabaseSection() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Database', Icons.storage_outlined),
+        _buildSectionHeader('database', Icons.storage_outlined),
         _buildSectionCard([
           GestureDetector(
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const FirebaseImportPage()),
+                MaterialPageRoute(
+                  builder: (context) => const FirebaseImportPage(),
+                ),
               );
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: highContrastMode 
-                    ? AccessibilityUtils.getAccessibleSurfaceColor(context)
-                    : (isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                color:
+                    highContrastMode
+                        ? AccessibilityUtils.getAccessibleSurfaceColor(context)
+                        : (isDarkMode
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFFF1F5F9)),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: highContrastMode 
-                      ? AccessibilityUtils.getAccessibleBorderColor(context)
-                      : accentColor.withOpacity(0.5),
+                  color:
+                      highContrastMode
+                          ? AccessibilityUtils.getAccessibleBorderColor(context)
+                          : accentColor.withAlpha(127),
                   width: highContrastMode ? 2.0 : 1,
                 ),
               ),
@@ -1384,9 +1346,14 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 children: [
                   Icon(
                     Icons.cloud_upload_outlined,
-                    color: highContrastMode 
-                        ? AccessibilityUtils.getAccessibleColor(context, accentColor, isPrimary: true)
-                        : accentColor,
+                    color:
+                        highContrastMode
+                            ? AccessibilityUtils.getAccessibleColor(
+                              context,
+                              accentColor,
+                              isPrimary: true,
+                            )
+                            : accentColor,
                     size: 20,
                   ),
                   const SizedBox(width: 16),
@@ -1399,9 +1366,17 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: highContrastMode 
-                                ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white : Colors.black87)
-                                : (isDarkMode ? Colors.white : Colors.black87),
+                            color:
+                                highContrastMode
+                                    ? AccessibilityUtils.getAccessibleColor(
+                                      context,
+                                      isDarkMode
+                                          ? Colors.white
+                                          : Colors.black87,
+                                    )
+                                    : (isDarkMode
+                                        ? Colors.white
+                                        : Colors.black87),
                           ),
                         ),
                         Padding(
@@ -1410,9 +1385,17 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                             'Import user data to Firebase database',
                             style: TextStyle(
                               fontSize: 13,
-                              color: highContrastMode 
-                                  ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white60 : Colors.black54)
-                                  : (isDarkMode ? Colors.white60 : Colors.black54),
+                              color:
+                                  highContrastMode
+                                      ? AccessibilityUtils.getAccessibleColor(
+                                        context,
+                                        isDarkMode
+                                            ? Colors.white60
+                                            : Colors.black54,
+                                      )
+                                      : (isDarkMode
+                                          ? Colors.white60
+                                          : Colors.black54),
                             ),
                           ),
                         ),
@@ -1421,9 +1404,13 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                   ),
                   Icon(
                     Icons.arrow_forward_ios,
-                    color: highContrastMode 
-                        ? AccessibilityUtils.getAccessibleColor(context, isDarkMode ? Colors.white54 : Colors.black54)
-                        : (isDarkMode ? Colors.white54 : Colors.black54),
+                    color:
+                        highContrastMode
+                            ? AccessibilityUtils.getAccessibleColor(
+                              context,
+                              isDarkMode ? Colors.white54 : Colors.black54,
+                            )
+                            : (isDarkMode ? Colors.white54 : Colors.black54),
                     size: 16,
                   ),
                 ],
@@ -1438,7 +1425,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
   Widget _buildLogoutButton() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     return GestureDetector(
       onTap: () => _showLogoutConfirmation(),
       child: Container(
@@ -1447,18 +1434,11 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         decoration: BoxDecoration(
           color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.red.withOpacity(0.5),
-            width: 1,
-          ),
+          border: Border.all(color: Colors.red.withAlpha(127), width: 1),
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.logout,
-              color: Colors.red,
-              size: 20,
-            ),
+            const Icon(Icons.logout, color: Colors.red, size: 20),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -1485,47 +1465,47 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 ],
               ),
             ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.red,
-              size: 16,
-            ),
+            const Icon(Icons.arrow_forward_ios, color: Colors.red, size: 16),
           ],
         ),
       ),
     );
   }
-  
+
   void _showLogoutConfirmation() {
     final authService = Provider.of<AuthService>(context, listen: false);
-    
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: LocalizedText('logout'),
+            content: LocalizedText('areYouSureYouWantToLogout'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: LocalizedText('cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  navigator.pop(); // Close dialog
+                  await authService.logout();
+
+                  // Navigate to auth page
+                  if (mounted) {
+                    navigator.pushReplacement(
+                      MaterialPageRoute(builder: (context) => const AuthPage()),
+                    );
+                  }
+                },
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context); // Close dialog
-              await authService.logout();
-              
-              // Navigate to auth page
-              if (mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AuthPage()),
-                );
-              }
-            },
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1534,59 +1514,86 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: highContrastMode 
-            ? null // No gradients in high contrast mode
-            : const LinearGradient(
-                colors: [Color(0xFF6B1D1D), Color(0xFF8B2121)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-        color: highContrastMode 
-            ? (isDarkMode ? Colors.black : Colors.white)
-            : null,
-        borderRadius: BorderRadius.circular(16),
-        border: highContrastMode 
-            ? Border.all(
-                color: isDarkMode ? Colors.white : Colors.black,
-                width: 2.0,
-              )
-            : null,
-        boxShadow: highContrastMode 
-            ? null // No shadows in high contrast mode
-            : [
-                BoxShadow(
-                  color: const Color(0xFF6B1D1D).withOpacity(0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
+        gradient:
+            highContrastMode
+                ? null // No gradients in high contrast mode
+                : LinearGradient(
+                  colors: [const Color(0xFF9B1C1C), const Color(0xFF771D1D)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
+        color:
+            highContrastMode
+                ? (isDarkMode ? Colors.black : Colors.white)
+                : null,
+        borderRadius: BorderRadius.circular(16),
+        border:
+            highContrastMode
+                ? Border.all(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  width: 2.0,
+                )
+                : null,
+        boxShadow:
+            highContrastMode
+                ? null // No shadows in high contrast mode
+                : [
+                  BoxShadow(
+                    color: const Color(0xFF9B1C1C).withAlpha(76),
+                    blurRadius: 12,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.emergency,
-                color: highContrastMode 
-                    ? (isDarkMode ? Colors.white : Colors.black)
-                    : Colors.white,
-                size: 24,
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color:
+                      highContrastMode
+                          ? (isDarkMode
+                              ? Colors.white.withAlpha(51)
+                              : Colors.black.withAlpha(51))
+                          : Colors.white.withAlpha(51),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.phone_enabled,
+                  color:
+                      highContrastMode
+                          ? (isDarkMode ? Colors.black : Colors.white)
+                          : Colors.white,
+                  size: 18,
+                ),
               ),
-              const SizedBox(width: 12),
-              Text(
-                'Emergency Contacts',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: highContrastMode 
-                      ? (isDarkMode ? Colors.white : Colors.black)
-                      : Colors.white,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'Emergency Contacts',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: AccessibilityUtils.getTextStyle(
+                    context,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color:
+                        highContrastMode
+                            ? (isDarkMode ? Colors.white : Colors.black)
+                            : Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -1595,17 +1602,23 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
             decoration: BoxDecoration(
-              color: highContrastMode 
-                  ? (isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.2))
-                  : Colors.white.withOpacity(0.2),
+              color:
+                  highContrastMode
+                      ? (isDarkMode
+                          ? Colors.white.withAlpha(51)
+                          : Colors.black.withAlpha(51))
+                      : Colors.white.withAlpha(51),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               'Tap on any contact to make an emergency call',
               style: TextStyle(
-                color: highContrastMode 
-                    ? (isDarkMode ? Colors.white.withOpacity(0.9) : Colors.black.withOpacity(0.9))
-                    : Colors.white.withOpacity(0.9),
+                color:
+                    highContrastMode
+                        ? (isDarkMode
+                            ? Colors.white.withAlpha(229)
+                            : Colors.black.withAlpha(229))
+                        : Colors.white.withAlpha(229),
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
               ),
@@ -1614,7 +1627,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
           const SizedBox(height: 16),
           _buildEmergencyContact('Isange One Stop Center', '3029'),
           const SizedBox(height: 8),
-          _buildEmergencyContact('Rwanda National Police', '3512'),
+          _buildEmergencyContact('Rwanda Investigation Bureau (RIB)', '3512'),
           const SizedBox(height: 8),
           _buildEmergencyContact('HopeCore Team', '+250780332779'),
           const SizedBox(height: 16),
@@ -1624,37 +1637,41 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: highContrastMode 
-                    ? (isDarkMode ? Colors.white : Colors.black)
-                    : Colors.white,
+                color:
+                    highContrastMode
+                        ? (isDarkMode ? Colors.white : Colors.black)
+                        : Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: highContrastMode 
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                boxShadow:
+                    highContrastMode
+                        ? null
+                        : [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(51),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     Icons.emergency_outlined,
-                    color: highContrastMode 
-                        ? (isDarkMode ? Colors.black : Colors.white)
-                        : Colors.red,
+                    color:
+                        highContrastMode
+                            ? (isDarkMode ? Colors.black : Colors.white)
+                            : Colors.red,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     'SOS EMERGENCY CALL',
                     style: TextStyle(
-                      color: highContrastMode 
-                          ? (isDarkMode ? Colors.black : Colors.white)
-                          : Colors.red,
+                      color:
+                          highContrastMode
+                              ? (isDarkMode ? Colors.black : Colors.white)
+                              : Colors.red,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -1667,12 +1684,12 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       ),
     );
   }
-  
+
   // Add a dialog for SOS emergency call
   void _showEmergencySOSDialog() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -1680,7 +1697,11 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
           backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
           title: Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.red,
+                size: 28,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Emergency SOS',
@@ -1711,11 +1732,26 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildEmergencyCallOption(context, 'Police Emergency', '112', isDarkMode),
+              _buildEmergencyCallOption(
+                context,
+                'Police Emergency',
+                '112',
+                isDarkMode,
+              ),
               const SizedBox(height: 8),
-              _buildEmergencyCallOption(context, 'Isange One Stop Center', '3029', isDarkMode),
+              _buildEmergencyCallOption(
+                context,
+                'Isange One Stop Center',
+                '3029',
+                isDarkMode,
+              ),
               const SizedBox(height: 8),
-              _buildEmergencyCallOption(context, 'HopeCore Support', '+250780332779', isDarkMode),
+              _buildEmergencyCallOption(
+                context,
+                'HopeCore Support',
+                '+250780332779',
+                isDarkMode,
+              ),
             ],
           ),
           actions: [
@@ -1735,9 +1771,14 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       },
     );
   }
-  
+
   // Build an emergency call option button
-  Widget _buildEmergencyCallOption(BuildContext context, String name, String number, bool isDarkMode) {
+  Widget _buildEmergencyCallOption(
+    BuildContext context,
+    String name,
+    String number,
+    bool isDarkMode,
+  ) {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).pop();
@@ -1747,9 +1788,9 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.red.withOpacity(isDarkMode ? 0.2 : 0.1),
+          color: Colors.red.withAlpha(((isDarkMode ? 0.2 : 0.1) * 255).round()),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.red.withOpacity(0.5)),
+          border: Border.all(color: Colors.red.withAlpha(127)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1779,11 +1820,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                 color: Colors.red,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.call,
-                color: Colors.white,
-                size: 16,
-              ),
+              child: const Icon(Icons.call, color: Colors.white, size: 16),
             ),
           ],
         ),
@@ -1796,33 +1833,44 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    
+
     return GestureDetector(
       onTap: () => _makePhoneCall(number),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: highContrastMode 
-              ? (isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1))
-              : Colors.white.withOpacity(0.1),
+          color:
+              highContrastMode
+                  ? (isDarkMode
+                      ? Colors.white.withAlpha(25)
+                      : Colors.black.withAlpha(25))
+                  : Colors.white.withAlpha(25),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: highContrastMode 
-                ? (isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.2))
-                : Colors.white.withOpacity(0.2),
+            color:
+                highContrastMode
+                    ? (isDarkMode
+                        ? Colors.white.withAlpha(51)
+                        : Colors.black.withAlpha(51))
+                    : Colors.white.withAlpha(51),
             width: 1,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                color: highContrastMode 
-                    ? (isDarkMode ? Colors.white70 : Colors.black87)
-                    : Colors.white70,
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14,
+                  color:
+                      highContrastMode
+                          ? (isDarkMode ? Colors.white70 : Colors.black87)
+                          : Colors.white70,
+                ),
               ),
             ),
             Row(
@@ -1832,25 +1880,30 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: highContrastMode 
-                        ? (isDarkMode ? Colors.white : Colors.black)
-                        : Colors.white,
+                    color:
+                        highContrastMode
+                            ? (isDarkMode ? Colors.white : Colors.black)
+                            : Colors.white,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: highContrastMode 
-                        ? (isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.2))
-                        : Colors.white.withOpacity(0.2),
+                    color:
+                        highContrastMode
+                            ? (isDarkMode
+                                ? Colors.white.withAlpha(51)
+                                : Colors.black.withAlpha(51))
+                            : Colors.white.withAlpha(51),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Icon(
                     Icons.call,
-                    color: highContrastMode 
-                        ? (isDarkMode ? Colors.white : Colors.black)
-                        : Colors.white,
+                    color:
+                        highContrastMode
+                            ? (isDarkMode ? Colors.white : Colors.black)
+                            : Colors.white,
                     size: 14,
                   ),
                 ),
@@ -1861,28 +1914,36 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       ),
     );
   }
-  
+
   Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    final messenger = ScaffoldMessenger.of(context);
     try {
       if (await canLaunchUrl(launchUri)) {
         await launchUrl(launchUri);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        messenger.showSnackBar(
           SnackBar(
-            content: Text('Could not launch phone call to $phoneNumber'),
+            content: Text(
+              AppLocalizations.of(context)
+                  .translate('couldNotLaunchPhoneCall')
+                  .replaceAll('[number]', phoneNumber),
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
       }
     } catch (e) {
       debugPrint('Error making phone call: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      messenger.showSnackBar(
         SnackBar(
-          content: Text('Error making phone call: $e'),
+          content: Text(
+            AppLocalizations.of(context)
+                .translate('errorMakingPhoneCall')
+                .replaceAll('[error]', e.toString()),
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -1892,7 +1953,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
   Widget _buildFooter() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24),
@@ -1900,11 +1961,7 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset(
-            'assets/logo.png',
-            width: 40,
-            height: 40,
-          ),
+          Image.asset('assets/logo.png', width: 40, height: 40),
           const SizedBox(height: 12),
           Text(
             'HopeCore Hub v1.0.0',
@@ -1920,7 +1977,9 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
             'Built with love for survivors and their healing journey ❤️',
             style: TextStyle(
               fontSize: 12,
-              color: (isDarkMode ? Colors.white : Colors.black).withOpacity(0.5),
+              color: (isDarkMode ? Colors.white : Colors.black).withValues(
+                alpha: 127,
+              ),
             ),
             textAlign: TextAlign.center,
           ),
@@ -1932,30 +1991,25 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
   Widget _buildContentPolicySection() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Content Policy & Reporting', Icons.policy),
+        _buildSectionHeader('contentPolicyReporting', Icons.policy),
         _buildSectionCard([
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withAlpha(25),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              border: Border.all(color: Colors.blue.withAlpha(76)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: Colors.blue,
-                      size: 20,
-                    ),
+                    Icon(Icons.info_outline, color: Colors.blue, size: 20),
                     const SizedBox(width: 8),
                     Text(
                       'AI-Generated Content Policy',
@@ -1986,38 +2040,36 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...[ 
+                ...[
                   '• Inappropriate content',
                   '• Harmful or dangerous information',
                   '• Spam or unwanted content',
                   '• Misinformation',
                   '• Harassment or bullying',
                   '• Other concerns',
-                ].map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    item,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDarkMode ? Colors.white60 : Colors.black54,
+                ].map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      item,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDarkMode ? Colors.white60 : Colors.black54,
+                      ),
                     ),
                   ),
-                )),
+                ),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withAlpha(25),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.green.withOpacity(0.3)),
+                    border: Border.all(color: Colors.green.withAlpha(76)),
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.security,
-                        color: Colors.green,
-                        size: 16,
-                      ),
+                      Icon(Icons.security, color: Colors.green, size: 16),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -2043,12 +2095,13 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
   Widget _buildAdminSection() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Admin Controls', Icons.admin_panel_settings),
+        _buildSectionHeader('adminControls', Icons.admin_panel_settings),
         _buildSectionCard([
           GestureDetector(
             onTap: () {
@@ -2060,20 +2113,16 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                color:
+                    isDarkMode
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: accentColor.withOpacity(0.5),
-                  width: 1,
-                ),
+                border: Border.all(color: accentColor.withAlpha(127), width: 1),
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.dashboard,
-                    color: accentColor,
-                    size: 20,
-                  ),
+                  Icon(Icons.dashboard, color: accentColor, size: 20),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -2093,7 +2142,60 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
                             'Manage subscriptions and user data',
                             style: TextStyle(
                               fontSize: 13,
-                              color: isDarkMode ? Colors.white60 : Colors.black54,
+                              color:
+                                  isDarkMode ? Colors.white60 : Colors.black54,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: isDarkMode ? Colors.white54 : Colors.black54,
+                    size: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => _showClaudeApiKeyDialog(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color:
+                    isDarkMode
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: accentColor.withAlpha(127), width: 1),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.vpn_key, color: accentColor, size: 20),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Claude API Key',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            'Manage Mahoro AI API key',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color:
+                                  isDarkMode ? Colors.white60 : Colors.black54,
                             ),
                           ),
                         ),
@@ -2113,4 +2215,226 @@ class _SettingsPageState extends BaseScreenState<SettingsPage> {
       ],
     );
   }
-} 
+
+  Future<void> _showClaudeApiKeyDialog() async {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final TextEditingController controller = TextEditingController();
+    bool obscureText = true;
+    bool hasExistingKey = false;
+
+    // Check if there's an existing key
+    final existingKey = await AuthService.getApiKey();
+    if (existingKey != null && existingKey.isNotEmpty) {
+      controller.text = existingKey;
+      hasExistingKey = true;
+    }
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.vpn_key,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  LocalizedText(
+                    'claudeApiKey',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white : Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LocalizedText(
+                      hasExistingKey
+                          ? 'updateClaudeApiKeyDescription'
+                          : 'enterClaudeApiKeyDescription',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context).translate('apiKeyLabel'),
+                        hintText: 'sk-ant-...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        filled: true,
+                        fillColor: isDarkMode
+                            ? Colors.white.withAlpha(25)
+                            : Colors.grey.withAlpha(25),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscureText ? Icons.visibility : Icons.visibility_off,
+                            color: isDarkMode ? Colors.white54 : Colors.black54,
+                          ),
+                          onPressed: () {
+                            setDialogState(() {
+                              obscureText = !obscureText;
+                            });
+                          },
+                        ),
+                      ),
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black87,
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                      ),
+                      autofocus: !hasExistingKey,
+                      obscureText: obscureText,
+                      maxLines: 3,
+                      minLines: 1,
+                    ),
+                    if (hasExistingKey) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withAlpha(25),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.orange.withAlpha(76),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.orange,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: LocalizedText(
+                                'updatingKeyWillAffectAllUsers',
+                                style: TextStyle(
+                                  color: isDarkMode ? Colors.white70 : Colors.black87,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ),
+                if (hasExistingKey)
+                  TextButton(
+                    onPressed: () async {
+                      await AuthService.storeApiKey('');
+                      if (mounted) {
+                        Navigator.of(dialogContext).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              AppLocalizations.of(context).translate('apiKeyRemoved'),
+                            ),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                    child: LocalizedText(
+                      'remove',
+                      style: const TextStyle(
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final key = controller.text.trim();
+                    if (key.isEmpty) {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context).translate('pleaseEnterValidApiKey'),
+                          ),
+                          backgroundColor: Colors.red,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                      return;
+                    }
+
+                    if (!key.startsWith('sk-ant-')) {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context).translate('invalidApiKeyFormat'),
+                          ),
+                          backgroundColor: Colors.orange,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                      return;
+                    }
+
+                    await AuthService.storeApiKey(key);
+                    if (mounted) {
+                      Navigator.of(dialogContext).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            hasExistingKey
+                                ? AppLocalizations.of(context).translate('apiKeyUpdatedSuccessfully')
+                                : AppLocalizations.of(context).translate('apiKeySaved'),
+                          ),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDarkMode
+                        ? const Color(0xFF8A4FFF)
+                        : const Color(0xFFE53935),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: LocalizedText(hasExistingKey ? 'update' : 'save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}

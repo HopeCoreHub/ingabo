@@ -42,51 +42,37 @@ class AccessibleContainer extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    
+
     // Apply high contrast adjustments if needed
     Color effectiveBackgroundColor;
     Gradient? effectiveGradient;
     List<BoxShadow>? effectiveBoxShadow;
-    
+
     if (highContrastMode) {
       // In high contrast mode, simplify the background
       effectiveBackgroundColor = isDarkMode ? Colors.black : Colors.white;
-      effectiveGradient = null;  // Remove gradients in high contrast mode
-      
+      effectiveGradient = null; // Remove gradients in high contrast mode
+
       // Increase border contrast if borders are used
-      final effectiveBorder = border != null 
-          ? Border.all(
-              color: isDarkMode ? Colors.white : Colors.black,
-              width: 2.0,
-            )
-          : Border.all(
-              color: isDarkMode ? Colors.white : Colors.black,
-              width: 1.0,
-            );
-      
+      final effectiveBorder =
+          border != null
+              ? Border.all(
+                color: isDarkMode ? Colors.white : Colors.black,
+                width: 2.0,
+              )
+              : Border.all(
+                color: isDarkMode ? Colors.white : Colors.black,
+                width: 1.0,
+              );
+
       // Modify or remove shadows for high contrast
-      effectiveBoxShadow = null;  // Remove shadows in high contrast mode
-      
+      effectiveBoxShadow = null; // Remove shadows in high contrast mode
+
       // Create the GestureDetector or Container based on whether onTap is provided
       return onTap != null
           ? GestureDetector(
-              onTap: onTap,
-              child: Container(
-                width: width,
-                height: height,
-                alignment: alignment,
-                padding: padding,
-                margin: margin,
-                decoration: BoxDecoration(
-                  color: effectiveBackgroundColor,
-                  border: effectiveBorder,
-                  borderRadius: borderRadius as BorderRadius?,
-                  boxShadow: effectiveBoxShadow,
-                ),
-                child: child,
-              ),
-            )
-          : Container(
+            onTap: onTap,
+            child: Container(
               width: width,
               height: height,
               alignment: alignment,
@@ -99,33 +85,34 @@ class AccessibleContainer extends StatelessWidget {
                 boxShadow: effectiveBoxShadow,
               ),
               child: child,
-            );
+            ),
+          )
+          : Container(
+            width: width,
+            height: height,
+            alignment: alignment,
+            padding: padding,
+            margin: margin,
+            decoration: BoxDecoration(
+              color: effectiveBackgroundColor,
+              border: effectiveBorder,
+              borderRadius: borderRadius as BorderRadius?,
+              boxShadow: effectiveBoxShadow,
+            ),
+            child: child,
+          );
     } else {
       // Standard mode - use provided values
-      effectiveBackgroundColor = backgroundColor ?? (isDarkMode ? const Color(0xFF1E293B) : Colors.white);
+      effectiveBackgroundColor =
+          backgroundColor ??
+          (isDarkMode ? const Color(0xFF1E293B) : Colors.white);
       effectiveGradient = gradient;
       effectiveBoxShadow = boxShadow;
-      
+
       return onTap != null
           ? GestureDetector(
-              onTap: onTap,
-              child: Container(
-                width: width,
-                height: height,
-                alignment: alignment,
-                padding: padding,
-                margin: margin,
-                decoration: BoxDecoration(
-                  color: effectiveBackgroundColor,
-                  gradient: effectiveGradient,
-                  border: border,
-                  borderRadius: borderRadius as BorderRadius?,
-                  boxShadow: effectiveBoxShadow,
-                ),
-                child: child,
-              ),
-            )
-          : Container(
+            onTap: onTap,
+            child: Container(
               width: width,
               height: height,
               alignment: alignment,
@@ -139,7 +126,23 @@ class AccessibleContainer extends StatelessWidget {
                 boxShadow: effectiveBoxShadow,
               ),
               child: child,
-            );
+            ),
+          )
+          : Container(
+            width: width,
+            height: height,
+            alignment: alignment,
+            padding: padding,
+            margin: margin,
+            decoration: BoxDecoration(
+              color: effectiveBackgroundColor,
+              gradient: effectiveGradient,
+              border: border,
+              borderRadius: borderRadius as BorderRadius?,
+              boxShadow: effectiveBoxShadow,
+            ),
+            child: child,
+          );
     }
   }
 }
@@ -171,7 +174,7 @@ class AccessibleCard extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    
+
     // For high contrast mode, use a more basic card with clear borders
     if (highContrastMode) {
       return Card(
@@ -179,7 +182,8 @@ class AccessibleCard extends StatelessWidget {
         elevation: 0, // No elevation in high contrast mode
         color: isDarkMode ? Colors.black : Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: (borderRadius as BorderRadius?) ?? BorderRadius.circular(8),
+          borderRadius:
+              (borderRadius as BorderRadius?) ?? BorderRadius.circular(8),
           side: BorderSide(
             color: isDarkMode ? Colors.white : Colors.black,
             width: 2.0,
@@ -187,9 +191,10 @@ class AccessibleCard extends StatelessWidget {
         ),
         child: InkWell(
           onTap: onTap,
-          borderRadius: (borderRadius is BorderRadius) 
-              ? borderRadius as BorderRadius 
-              : BorderRadius.circular(8),
+          borderRadius:
+              (borderRadius is BorderRadius)
+                  ? borderRadius as BorderRadius
+                  : BorderRadius.circular(8),
           child: Padding(
             padding: padding ?? const EdgeInsets.all(16),
             child: child,
@@ -203,13 +208,15 @@ class AccessibleCard extends StatelessWidget {
         elevation: elevation ?? 1.0,
         color: color ?? (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
         shape: RoundedRectangleBorder(
-          borderRadius: (borderRadius as BorderRadius?) ?? BorderRadius.circular(8),
+          borderRadius:
+              (borderRadius as BorderRadius?) ?? BorderRadius.circular(8),
         ),
         child: InkWell(
           onTap: onTap,
-          borderRadius: (borderRadius is BorderRadius) 
-              ? borderRadius as BorderRadius 
-              : BorderRadius.circular(8),
+          borderRadius:
+              (borderRadius is BorderRadius)
+                  ? borderRadius as BorderRadius
+                  : BorderRadius.circular(8),
           child: Padding(
             padding: padding ?? const EdgeInsets.all(16),
             child: child,

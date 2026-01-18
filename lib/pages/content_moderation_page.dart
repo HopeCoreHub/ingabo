@@ -5,7 +5,6 @@ import '../accessibility_provider.dart';
 import '../services/content_reporting_service.dart';
 import '../services/auth_service.dart';
 
-
 class ContentModerationPage extends StatefulWidget {
   const ContentModerationPage({super.key});
 
@@ -69,7 +68,7 @@ class _ContentModerationPageState extends State<ContentModerationPage> {
 
   Future<void> _updateReportStatus(String reportId, String status) async {
     final authService = Provider.of<AuthService>(context, listen: false);
-    
+
     final success = await _reportingService.updateReportStatus(
       reportId: reportId,
       status: status,
@@ -80,7 +79,7 @@ class _ContentModerationPageState extends State<ContentModerationPage> {
       // Reload reports
       _loadReports();
       _loadStats();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -107,16 +106,19 @@ class _ContentModerationPageState extends State<ContentModerationPage> {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     final highContrastMode = accessibilityProvider.highContrastMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
 
     return Scaffold(
-      backgroundColor: highContrastMode && isDarkMode 
-          ? Colors.black 
-          : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+      backgroundColor:
+          highContrastMode && isDarkMode
+              ? Colors.black
+              : (isDarkMode ? Colors.black : Colors.white),
       appBar: AppBar(
-        backgroundColor: highContrastMode && isDarkMode 
-            ? Colors.black 
-            : (isDarkMode ? const Color(0xFF111827) : Colors.white),
+        backgroundColor:
+            highContrastMode && isDarkMode
+                ? Colors.black
+                : (isDarkMode ? Colors.black : Colors.white),
         elevation: 0,
         leading: IconButton(
           icon: Icon(
@@ -149,38 +151,54 @@ class _ContentModerationPageState extends State<ContentModerationPage> {
         children: [
           _buildStatsCard(accentColor, isDarkMode, highContrastMode),
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _reports.isEmpty
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _reports.isEmpty
                     ? _buildEmptyState(isDarkMode)
                     : RefreshIndicator(
-                        onRefresh: _loadReports,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _reports.length,
-                          itemBuilder: (context, index) {
-                            return _buildReportCard(_reports[index], isDarkMode, highContrastMode);
-                          },
-                        ),
+                      onRefresh: _loadReports,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _reports.length,
+                        itemBuilder: (context, index) {
+                          return _buildReportCard(
+                            _reports[index],
+                            isDarkMode,
+                            highContrastMode,
+                          );
+                        },
                       ),
+                    ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatsCard(Color accentColor, bool isDarkMode, bool highContrastMode) {
+  Widget _buildStatsCard(
+    Color accentColor,
+    bool isDarkMode,
+    bool highContrastMode,
+  ) {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: highContrastMode 
-            ? (isDarkMode ? Colors.black : Colors.white)
-            : (isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+        color:
+            highContrastMode
+                ? (isDarkMode ? Colors.black : Colors.white)
+                : (isDarkMode
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFFF1F5F9)),
         borderRadius: BorderRadius.circular(12),
-        border: highContrastMode
-            ? Border.all(color: isDarkMode ? Colors.white : Colors.black, width: 2)
-            : null,
+        border:
+            highContrastMode
+                ? Border.all(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  width: 2,
+                )
+                : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,7 +245,12 @@ class _ContentModerationPageState extends State<ContentModerationPage> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color, bool isDarkMode) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    Color color,
+    bool isDarkMode,
+  ) {
     return Column(
       children: [
         Text(
@@ -281,21 +304,32 @@ class _ContentModerationPageState extends State<ContentModerationPage> {
     );
   }
 
-  Widget _buildReportCard(ContentReport report, bool isDarkMode, bool highContrastMode) {
+  Widget _buildReportCard(
+    ContentReport report,
+    bool isDarkMode,
+    bool highContrastMode,
+  ) {
     final contentTypeLabel = report.contentType.name.toUpperCase();
     final reasonLabel = report.reason.name.replaceAll('_', ' ').toUpperCase();
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: highContrastMode 
-            ? (isDarkMode ? Colors.black : Colors.white)
-            : (isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+        color:
+            highContrastMode
+                ? (isDarkMode ? Colors.black : Colors.white)
+                : (isDarkMode
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFFF1F5F9)),
         borderRadius: BorderRadius.circular(12),
-        border: highContrastMode
-            ? Border.all(color: isDarkMode ? Colors.white : Colors.black, width: 1)
-            : null,
+        border:
+            highContrastMode
+                ? Border.all(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  width: 1,
+                )
+                : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,9 +339,9 @@ class _ContentModerationPageState extends State<ContentModerationPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withAlpha(25),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.red.withOpacity(0.3)),
+                  border: Border.all(color: Colors.red.withAlpha(76)),
                 ),
                 child: Text(
                   contentTypeLabel,
@@ -322,9 +356,9 @@ class _ContentModerationPageState extends State<ContentModerationPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: Colors.orange.withAlpha(25),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  border: Border.all(color: Colors.orange.withAlpha(76)),
                 ),
                 child: Text(
                   reasonLabel,

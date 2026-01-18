@@ -87,4 +87,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'hopecore-hub.firebasestorage.app',
     databaseURL: 'https://hopecore-hub-default-rtdb.firebaseio.com',
   );
-} 
+}

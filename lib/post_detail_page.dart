@@ -14,7 +14,7 @@ class PostDetailPage extends StatefulWidget {
   final bool focusReply;
 
   const PostDetailPage({
-    super.key, 
+    super.key,
     required this.post,
     this.focusReply = false,
   });
@@ -33,7 +33,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     super.initState();
     _forumService = ForumService();
     _loadReplies();
-    
+
     // Show reply dialog if focusReply is true
     if (widget.focusReply) {
       // Use a small delay to ensure the page is built before showing dialog
@@ -42,7 +42,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
       });
     }
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -53,7 +53,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   Future<void> _loadReplies() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoading = true;
     });
@@ -61,13 +61,13 @@ class _PostDetailPageState extends State<PostDetailPage> {
     try {
       // Simulate network delay
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       if (!mounted) return;
-      
+
       final replies = await _forumService.getRepliesForPost(widget.post.id);
-      
+
       if (!mounted) return;
-      
+
       setState(() {
         _replies = replies;
         _isLoading = false;
@@ -129,13 +129,11 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   void _showReplyDialog() {
     if (!mounted) return;
-    
+
     showDialog(
       context: context,
-      builder: (context) => ReplyDialog(
-        post: widget.post,
-        onReply: _handleAddReply,
-      ),
+      builder:
+          (context) => ReplyDialog(post: widget.post, onReply: _handleAddReply),
     );
   }
 
@@ -143,27 +141,25 @@ class _PostDetailPageState extends State<PostDetailPage> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final authService = Provider.of<AuthService>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
     // Get first letter of username for avatar
     final String firstLetter = (authService.username ?? 'A')[0].toUpperCase();
-    
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            accentColor,
-            accentColor.withOpacity(0.7),
-          ],
+          colors: [accentColor, accentColor.withAlpha(178)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withOpacity(0.3),
+            color: accentColor.withAlpha(76),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -176,7 +172,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withAlpha(51),
             ),
             child: Center(
               child: Text(
@@ -208,18 +204,21 @@ class _PostDetailPageState extends State<PostDetailPage> {
   // Add method to show sync status (cloud or local)
   Widget _buildSyncStatus(bool isDarkMode) {
     return Tooltip(
-      message: widget.post.isSyncedWithCloud ? 'Saved to cloud' : 'Saved locally',
+      message:
+          widget.post.isSyncedWithCloud ? 'Saved to cloud' : 'Saved locally',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: widget.post.isSyncedWithCloud 
-              ? Colors.green.withOpacity(0.2) 
-              : Colors.orange.withOpacity(0.2),
+          color:
+              widget.post.isSyncedWithCloud
+                  ? Colors.green.withAlpha(51)
+                  : Colors.orange.withAlpha(51),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: widget.post.isSyncedWithCloud 
-                ? Colors.green.withOpacity(0.3) 
-                : Colors.orange.withOpacity(0.3),
+            color:
+                widget.post.isSyncedWithCloud
+                    ? Colors.green.withAlpha(76)
+                    : Colors.orange.withAlpha(76),
             width: 1,
           ),
         ),
@@ -227,11 +226,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              widget.post.isSyncedWithCloud ? Icons.cloud_done : Icons.cloud_off,
+              widget.post.isSyncedWithCloud
+                  ? Icons.cloud_done
+                  : Icons.cloud_off,
               size: 14,
-              color: widget.post.isSyncedWithCloud 
-                  ? Colors.green 
-                  : Colors.orange,
+              color:
+                  widget.post.isSyncedWithCloud ? Colors.green : Colors.orange,
             ),
             const SizedBox(width: 4),
             Text(
@@ -239,9 +239,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: widget.post.isSyncedWithCloud 
-                    ? Colors.green 
-                    : Colors.orange,
+                color:
+                    widget.post.isSyncedWithCloud
+                        ? Colors.green
+                        : Colors.orange,
               ),
             ),
           ],
@@ -254,15 +255,19 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final accentColor = isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
-    
+    final accentColor =
+        isDarkMode ? const Color(0xFF8A4FFF) : const Color(0xFFE53935);
+
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF111827) : Colors.white,
+      backgroundColor: isDarkMode ? Colors.black : Colors.white,
       appBar: AppBar(
-        backgroundColor: isDarkMode ? const Color(0xFF111827) : Colors.white,
+        backgroundColor: isDarkMode ? Colors.black : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.white : Colors.black),
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -324,7 +329,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Widget _buildPostCard() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
@@ -405,9 +410,17 @@ class _PostDetailPageState extends State<PostDetailPage> {
               ),
             ),
           ),
-          Divider(color: isDarkMode ? const Color(0xFF2D3748) : const Color(0xFFE2E8F0), height: 32),
+          Divider(
+            color:
+                isDarkMode ? const Color(0xFF2D3748) : const Color(0xFFE2E8F0),
+            height: 32,
+          ),
           Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
+            padding: const EdgeInsets.only(
+              left: 16.0,
+              right: 16.0,
+              bottom: 16.0,
+            ),
             child: Row(
               children: [
                 IconButton(
@@ -461,7 +474,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Widget _buildReplyCard(Reply reply) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -519,7 +532,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: Text(
               reply.content,
               style: TextStyle(
@@ -571,17 +587,19 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   Future<void> _showPostReportDialog() async {
     // Get a preview of the post content
-    final preview = widget.post.content.length > 100 
-        ? '${widget.post.content.substring(0, 100)}...'
-        : widget.post.content;
+    final preview =
+        widget.post.content.length > 100
+            ? '${widget.post.content.substring(0, 100)}...'
+            : widget.post.content;
 
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => ContentReportDialog(
-        contentId: widget.post.id,
-        contentType: ContentType.forumPost,
-        contentPreview: preview,
-      ),
+      builder:
+          (context) => ContentReportDialog(
+            contentId: widget.post.id,
+            contentType: ContentType.forumPost,
+            contentPreview: preview,
+          ),
     );
 
     if (result == true) {
@@ -589,7 +607,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Thank you for reporting this post. We will review it promptly.'),
+            content: Text(
+              'Thank you for reporting this post. We will review it promptly.',
+            ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 3),
@@ -601,17 +621,19 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   Future<void> _showReplyReportDialog(Reply reply) async {
     // Get a preview of the reply content
-    final preview = reply.content.length > 100 
-        ? '${reply.content.substring(0, 100)}...'
-        : reply.content;
+    final preview =
+        reply.content.length > 100
+            ? '${reply.content.substring(0, 100)}...'
+            : reply.content;
 
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => ContentReportDialog(
-        contentId: reply.id,
-        contentType: ContentType.forumReply,
-        contentPreview: preview,
-      ),
+      builder:
+          (context) => ContentReportDialog(
+            contentId: reply.id,
+            contentType: ContentType.forumReply,
+            contentPreview: preview,
+          ),
     );
 
     if (result == true) {
@@ -619,7 +641,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Thank you for reporting this reply. We will review it promptly.'),
+            content: Text(
+              'Thank you for reporting this reply. We will review it promptly.',
+            ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 3),
@@ -631,7 +655,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   String _getTimeAgo(DateTime dateTime) {
     final difference = DateTime.now().difference(dateTime);
-    
+
     if (difference.inMinutes < 1) {
       return 'Just now';
     } else if (difference.inMinutes < 60) {
@@ -644,4 +668,4 @@ class _PostDetailPageState extends State<PostDetailPage> {
       return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     }
   }
-} 
+}
